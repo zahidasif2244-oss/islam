@@ -1,0 +1,37 @@
+import { createQuranClient, query, getText, cleanUrdu } from '@/lib/db'
+import { json, getColumnText } from '@/lib/api-utils'
+
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const paraId = parseInt(id)
+  const url = new URL(req.url)
+  const tarjma = url.searchParams.get('tarjma') || 'translation_urdu'
+  const tafseer = url.searchParams.get('tafseer') || ''
+
+  const db = createQuranClient()
+  const rows = await query(db, `
+    SELECT id, surat_id, para_id, ayat_number, arabic, arabic_tajweed,
+           translation_urdu, translation_english, translation_roman_urdu, translation_mufti_taqi
+    FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number
+  `, [paraId])
+
+  const verses: any[] = []
+  for (const r of rows) {
+    const v: any = {
+      id: r.id, surah: r.surat_id, para: r.para_id, ayah: r.ayat_number,
+      arabic: getText(r.arabic), arabic_tajweed: getText(r.arabic_tajweed),
+      urdu: cleanUrdu(r.translation_urdu, r.translation_roman_urdu),
+      english: getText(r.translation_english), roman_urdu: getText(r.translation_roman_urdu)
+    }
+    if (tarjma && !['translation_urdu', 'translation_english', 'translation_roman_urdu'].includes(tarjma)) {
+      const [tv] = await query(db, `SELECT "${tarjma}" FROM tbl_QuranComplete WHERE id = ?`, [r.id])
+      if (tv?.[tarjma]) v.tarjma_text = getColumnText(tarjma, tv[tarjma])
+    }
+    if (tafseer) {
+      const [tv] = await query(db, `SELECT "${tafseer}" FROM tbl_QuranComplete WHERE id = ?`, [r.id])
+      if (tv?.[tafseer]) v.tafseer_text = getColumnText(tafseer, tv[tafseer])
+    }
+    verses.push(v)
+  }
+  return json(verses)
+}
