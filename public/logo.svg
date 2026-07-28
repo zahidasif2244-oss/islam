@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a5c3a"/>
+      <stop offset="100%" stop-color="#0d4d2b"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="50%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+      <animateTransform attributeName="gradientTransform" type="rotate" from="0 24 24" to="360 24 24" dur="4s" repeatCount="indefinite"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Glowing border ring -->
+  <rect x="1.5" y="1.5" width="45" height="45" rx="10" fill="none" stroke="url(#glow)" stroke-width="3" opacity="0.8"/>
+
+  <!-- Inner background -->
+  <rect x="4" y="4" width="40" height="40" rx="8" fill="url(#bg)"/>
+
+  <!-- Moon crescent icon -->
+  <path d="M14 16c0 10 8 18 18 18 2 0 4-.4 6-1-4 4-10 6-16 4C14 33 10 25 14 16z" fill="#eab308" opacity="0.9"/>
+
+  <!-- Star -->
+  <path d="M24 10l2.5 5 5.5.8-4 3.9 1 5.5L24 22.5l-5 2.7 1-5.5-4-3.9 5.5-.8z" fill="#22c55e" opacity="0.9"/>
+
+  <!-- Book open icon -->
+  <path d="M18 20v12l6-3 6 3V20l-6-3z" fill="white" opacity="0.9"/>
+  <line x1="24" y1="17" x2="24" y2="29" stroke="white" stroke-width="0.8" opacity="0.5"/>
+</svg>
