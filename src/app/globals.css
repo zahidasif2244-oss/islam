@@ -206,6 +206,17 @@ body {
 .animate-slideRight { animation: slideRight 0.4s ease-out; }
 .animate-bounceSlow { animation: bounceSlow 2s ease-in-out infinite; }
 
+/* Floating heart animation */
+@keyframes floatHeart {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-40px) scale(0.8); opacity: 0; }
+}
+.animate-floatHeart {
+  animation: floatHeart 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
 /* Hide scrollbar for tab bar */
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }

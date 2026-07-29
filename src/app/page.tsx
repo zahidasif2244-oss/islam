@@ -1344,6 +1344,18 @@ function AboutTab() {
         <p className="text-[#666] text-lg mt-1">Full Stack Developer</p>
       </div>
 
+      {/* Dedication */}
+      <div className="text-center mb-6 px-4 py-3 bg-gradient-to-r from-[#fff5f5] via-white to-[#fff5f5] rounded-xl border border-[#ffcdd2] relative overflow-hidden">
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '10%', animationDelay: '0s' }}>❤️</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '30%', animationDelay: '1s' }}>❤️</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '50%', animationDelay: '0.5s' }}>❤️</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '70%', animationDelay: '1.5s' }}>❤️</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '90%', animationDelay: '2s' }}>❤️</span>
+        <p className="text-sm sm:text-base text-[#c62828] font-medium leading-relaxed relative z-10">
+          Dedicated to Prophet Muhammad (PBUH) — mercy to the universe and guide of humanity
+        </p>
+      </div>
+
       {/* Contact + Location */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 border border-[#e0e0e0] flex items-center gap-3 animate-slideRight" style={{animationDelay: '0.1s', animationFillMode: 'both'}}>
