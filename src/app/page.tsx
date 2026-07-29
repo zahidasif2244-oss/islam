@@ -1335,15 +1335,6 @@ function AboutTab() {
 
   return (
     <div className="max-w-3xl mx-auto animate-fadeIn">
-      {/* Header */}
-      <div className="text-center mb-8 animate-slideDown">
-        <div className="w-24 h-24 bg-gradient-to-br from-[#1a5c3a] to-[#3a9a5e] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounceSlow">
-          <span className="text-white text-4xl font-bold">AR</span>
-        </div>
-        <h1 className="text-3xl font-bold text-[#1a5c3a]">Ali Raza</h1>
-        <p className="text-[#666] text-lg mt-1">Full Stack Developer</p>
-      </div>
-
       {/* Dedication */}
       <div className="text-center mb-6 px-4 py-3 bg-gradient-to-r from-[#fff5f5] via-white to-[#fff5f5] rounded-xl border border-[#ffcdd2] relative overflow-hidden">
         <span className="absolute text-lg animate-floatHeart" style={{ left: '10%', animationDelay: '0s' }}>❤️</span>
@@ -1354,6 +1345,15 @@ function AboutTab() {
         <p className="text-sm sm:text-base text-[#c62828] font-medium leading-relaxed relative z-10">
           Dedicated to Prophet Muhammad (PBUH) — mercy to the universe and guide of humanity
         </p>
+      </div>
+
+      {/* Header */}
+      <div className="text-center mb-8 animate-slideDown">
+        <div className="w-24 h-24 bg-gradient-to-br from-[#1a5c3a] to-[#3a9a5e] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounceSlow">
+          <span className="text-white text-4xl font-bold">AR</span>
+        </div>
+        <h1 className="text-3xl font-bold text-[#1a5c3a]">Ali Raza</h1>
+        <p className="text-[#666] text-lg mt-1">Full Stack Developer</p>
       </div>
 
       {/* Contact + Location */}
