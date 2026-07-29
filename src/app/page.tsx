@@ -39,8 +39,8 @@ function urduEl(text: string, cls = '') {
 export default function Home() {
   const [tab, setTab] = useState<Tab>('quran')
   const [homeKey, setHomeKey] = useState(0)
-  const [tarjma, setTarjma] = useState('translation_urdu')
-  const [tafseer, setTafseer] = useState('')
+  const [tarjma, setTarjma] = useState('k_iman')
+  const [tafseer, setTafseer] = useState('tafseer_tibyan')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tarjmaList, setTarjmaList] = useState<any[]>([])
   const [tafseerList, setTafseerList] = useState<any[]>([])
@@ -49,8 +49,8 @@ export default function Home() {
   useEffect(() => {
     api('/quran/translations').then(setTarjmaList).catch(() => {})
     api('/quran/tafseer_types').then(setTafseerList).catch(() => {})
-    const savedTarjma = localStorage.getItem('islam360_tarjma') || 'translation_urdu'
-    const savedTafseer = localStorage.getItem('islam360_tafseer') || ''
+    const savedTarjma = localStorage.getItem('islam360_tarjma') || 'k_iman'
+    const savedTafseer = localStorage.getItem('islam360_tafseer') || 'tafseer_tibyan'
     setTarjma(savedTarjma)
     setTafseer(savedTafseer)
   }, [])
@@ -83,13 +83,8 @@ export default function Home() {
             <span className="text-sm font-bold tracking-wide sm:hidden">QW</span>
           </div>
 
-          {/* Mobile menu toggle */}
-          <button onClick={() => setMobileMenuOpen(o => !o)} className="sm:hidden ml-auto bg-white/10 px-2 py-1 rounded text-xs cursor-pointer" title="Font Size">
-            Aa
-          </button>
-
-          {/* Font size sliders - hidden on mobile, shown on sm+ */}
-          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} sm:flex items-center gap-2 sm:ml-auto`}>
+          {/* Font size sliders - desktop */}
+          <div className="hidden sm:flex items-center gap-2 ml-auto">
             <label className="flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded cursor-pointer" title="Arabic font size">
               <span className="text-white/80 font-semibold">Ar</span>
               <input type="range" min={14} max={50} defaultValue={28} className="w-[50px] h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
@@ -112,8 +107,39 @@ export default function Home() {
             </label>
           </div>
 
+          {/* Mobile font toggle */}
+          <button onClick={() => setMobileMenuOpen(o => !o)} className={`sm:hidden ml-auto bg-white/10 px-2 py-1 rounded text-xs cursor-pointer ${mobileMenuOpen ? 'bg-white/20' : ''}`} title="Font Size">
+            Aa
+          </button>
+
           <button onClick={() => setSettingsOpen(true)} className="bg-transparent border-none text-white cursor-pointer text-lg px-1.5 shrink-0" title="Settings">&#9881;</button>
         </nav>
+
+        {/* Mobile font slider panel */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden bg-[#1a5c3a] px-3 pb-3 flex items-center gap-3 border-t border-white/10">
+            <label className="flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded cursor-pointer">
+              <span className="text-white/80 font-semibold">Arabic</span>
+              <input type="range" min={14} max={50} defaultValue={28} className="w-[80px] h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
+                localStorage.setItem('islam360_arabic_size', e.target.value)
+                const el = document.getElementById('arabicSizeLabel')
+                if (el) el.textContent = e.target.value
+                document.querySelectorAll('.arabic, .arabic-ayah, .r-arabic, .dua-arabic').forEach(el => (el as HTMLElement).style.fontSize = e.target.value + 'px')
+              }} />
+              <span className="text-white/60 min-w-[16px] text-right text-[10px]">28</span>
+            </label>
+            <label className="flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded cursor-pointer">
+              <span className="text-white/80 font-semibold">Urdu</span>
+              <input type="range" min={10} max={40} defaultValue={20} className="w-[80px] h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
+                localStorage.setItem('islam360_urdu_size', e.target.value)
+                const el = document.getElementById('urduSizeLabel')
+                if (el) el.textContent = e.target.value
+                document.querySelectorAll('.translation.urdu, .text.urdu, .dua-urdu').forEach(el => (el as HTMLElement).style.fontSize = e.target.value + 'px')
+              }} />
+              <span className="text-white/60 min-w-[16px] text-right text-[10px]">20</span>
+            </label>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="bg-[#2a7a4e] flex px-3 sm:px-5 gap-0.5 overflow-x-auto scrollbar-none">
@@ -632,7 +658,7 @@ function TafseerTab() {
   useEffect(() => {
     api('/quran/tafseer_types').then(t => {
       setTypes(t)
-      const saved = localStorage.getItem('islam360_tafseer') || ''
+      const saved = localStorage.getItem('islam360_tafseer') || 'tafseer_tibyan'
       if (saved && t.find((x: any) => x.key === saved)) setTfType(saved)
     }).catch(() => {})
   }, [])
