@@ -471,6 +471,19 @@ function WordModalBody({ surah, ayah }: { surah: number; ayah: number }) {
   ))}</div>
 }
 
+function highlightText(text: string, words: string[]) {
+  if (!words || words.length === 0) return text
+  const escaped = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const re = new RegExp(`(${escaped.join('|')})`, 'gi')
+  const parts = text.split(re)
+  const lowerWords = words.map(w => w.toLowerCase())
+  return parts.map((part, i) =>
+    part && lowerWords.some(w => w === part.toLowerCase())
+      ? <mark key={i} className="bg-[#e8b840]/40 text-[#1a5c3a] rounded px-0.5 font-medium">{part}</mark>
+      : part
+  )
+}
+
 function showAyahTafseer(surah: number, ayah: number) {
   openModal(`Surah ${surah}:${ayah} - Tafseer`, <TafseerBody surah={surah} ayah={ayah} />)
 }
@@ -755,7 +768,7 @@ function TafseerTab() {
                 <div key={i} className="result-item" onClick={() => openAyah(r.surah, r.ayah)}>
                   <div className="r-meta">Surah {r.surah}:{(r.surah === 1 || r.surah === 9) ? r.ayah + 1 : r.ayah} | {r.tafseer_label}</div>
                   <div className="r-arabic">{r.arabic}</div>
-                  <div className="r-text">{r.tafseer}</div>
+                  <div className="r-text">{highlightText(r.tafseer, r.searchWords || searchQuery.trim().split(/\s+/))}</div>
                 </div>
               ))}
             </>
@@ -1283,7 +1296,7 @@ function SearchTab() {
             }}>
               <div className="r-meta">{type === 'quran' ? `Surah ${r.surah}:${(r.surah === 1 || r.surah === 9) ? r.ayah + 1 : r.ayah}` : `Hadith #${r.number}`}</div>
               <div className="r-arabic">{r.arabic}</div>
-              <div className="r-text">{type === 'quran' ? (r.urdu || r.english) : (r.urdu || r.english || '')}</div>
+              <div className="r-text">{type === 'quran' ? (r.urdu || r.english) : highlightText(r.urdu || r.english || '', r.searchWords || query.trim().split(/\s+/))}</div>
             </div>
           ))}
           {results.length === 0 && <div className="loading">No results found.</div>}

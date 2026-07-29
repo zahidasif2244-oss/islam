@@ -1,0 +1,3 @@
+error while push via github desktop.
+
+This file uses 'LF' line endings, but Git is configured to convert them to 'CRLF' the next time the file is checked out.

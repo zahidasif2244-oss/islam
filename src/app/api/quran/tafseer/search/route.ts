@@ -16,9 +16,24 @@ export async function GET(req: Request) {
     ? TAFSEER_COLUMNS.filter(([c]) => c === type)
     : TAFSEER_COLUMNS
 
+  const words = q.trim().split(/\s+/).filter(Boolean)
+
   for (const [col, label] of colInfo) {
     const isUrdu = COL_IS_URDU[col] || false
-    const rows = await query(db, `SELECT surat_id, ayat_number, arabic, "${col}" FROM tbl_QuranComplete WHERE "${col}" LIKE ? LIMIT 50`, [`%${q}%`])
+
+    let sql: string
+    let params: string[]
+
+    if (words.length === 1) {
+      sql = `SELECT surat_id, ayat_number, arabic, "${col}" FROM tbl_QuranComplete WHERE "${col}" LIKE ? LIMIT 50`
+      params = [`%${q}%`]
+    } else {
+      const conditions = words.map(w => `"${col}" LIKE ?`)
+      sql = `SELECT surat_id, ayat_number, arabic, "${col}" FROM tbl_QuranComplete WHERE ${conditions.join(' AND ')} LIMIT 50`
+      params = words.map(w => `%${w}%`)
+    }
+
+    const rows = await query(db, sql, params)
     for (const r of rows) {
       const text = r[col]
       if (text === null || text === undefined) continue
@@ -29,6 +44,7 @@ export async function GET(req: Request) {
         tafseer: isUrdu ? decodeUrdu(text) : getText(text),
         tafseer_type: col,
         tafseer_label: label,
+        searchWords: words,
       })
     }
   }
