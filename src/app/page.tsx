@@ -44,6 +44,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [tarjmaList, setTarjmaList] = useState<any[]>([])
   const [tafseerList, setTafseerList] = useState<any[]>([])
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     api('/quran/translations').then(setTarjmaList).catch(() => {})
@@ -75,14 +76,22 @@ export default function Home() {
     <SettingsCtx.Provider value={ctxVal}>
       <div>
         {/* Navbar */}
-        <nav className="bg-[#1a5c3a] text-white px-5 py-3 flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={goHome}>
-            <img src="/logo.svg" alt="Islam360" className="h-11 w-11" />
-            <span className="text-base font-bold tracking-wide hidden sm:inline">Islam Web Portal</span>
+        <nav className="bg-[#1a5c3a] text-white px-3 sm:px-5 py-2 sm:py-3 flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={goHome}>
+            <img src="/logo.svg" alt="Quran Web" className="h-8 w-8 sm:h-11 sm:w-11" />
+            <span className="text-sm sm:text-base font-bold tracking-wide hidden sm:inline">Quran Web</span>
+            <span className="text-sm font-bold tracking-wide sm:hidden">QW</span>
           </div>
-          <div className="flex items-center gap-2 ml-auto">
+
+          {/* Mobile menu toggle */}
+          <button onClick={() => setMobileMenuOpen(o => !o)} className="sm:hidden ml-auto bg-white/10 px-2 py-1 rounded text-xs cursor-pointer" title="Font Size">
+            Aa
+          </button>
+
+          {/* Font size sliders - hidden on mobile, shown on sm+ */}
+          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} sm:flex items-center gap-2 sm:ml-auto`}>
             <label className="flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded cursor-pointer" title="Arabic font size">
-              <span className="text-white/80 font-semibold">Arabic</span>
+              <span className="text-white/80 font-semibold">Ar</span>
               <input type="range" min={14} max={50} defaultValue={28} className="w-[50px] h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
                 localStorage.setItem('islam360_arabic_size', e.target.value)
                 const el = document.getElementById('arabicSizeLabel')
@@ -92,7 +101,7 @@ export default function Home() {
               <span className="text-white/60 min-w-[16px] text-right text-[10px]" id="arabicSizeLabel">28</span>
             </label>
             <label className="flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded cursor-pointer" title="Urdu font size">
-              <span className="text-white/80 font-semibold">Urdu</span>
+              <span className="text-white/80 font-semibold">Ur</span>
               <input type="range" min={10} max={40} defaultValue={20} className="w-[50px] h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
                 localStorage.setItem('islam360_urdu_size', e.target.value)
                 const el = document.getElementById('urduSizeLabel')
@@ -102,21 +111,22 @@ export default function Home() {
               <span className="text-white/60 min-w-[16px] text-right text-[10px]" id="urduSizeLabel">20</span>
             </label>
           </div>
-          <button onClick={() => setSettingsOpen(true)} className="ml-auto bg-transparent border-none text-white cursor-pointer text-lg px-1.5" title="Settings">&#9881;</button>
+
+          <button onClick={() => setSettingsOpen(true)} className="bg-transparent border-none text-white cursor-pointer text-lg px-1.5 shrink-0" title="Settings">&#9881;</button>
         </nav>
 
         {/* Tabs */}
-        <div className="bg-[#2a7a4e] flex px-5 gap-0.5 flex-wrap">
+        <div className="bg-[#2a7a4e] flex px-3 sm:px-5 gap-0.5 overflow-x-auto scrollbar-none">
           {(['quran', 'hadith', 'wordbyword', 'tafseer', 'duas', 'topics', 'fahmul', 'mutradif', 'more', 'search', 'about'] as Tab[]).map(t => (
             <button key={t} onClick={() => showTab(t)}
-              className={`px-4 py-2.5 text-sm border-none cursor-pointer capitalize
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm border-none cursor-pointer capitalize whitespace-nowrap shrink-0
                 ${tab === t ? 'bg-[#f5f5f5] text-[#1a5c3a] font-bold rounded-t-lg' : 'text-[#ddd] hover:bg-[#3a8a5e] hover:text-white'}`}
             >{t === 'wordbyword' ? 'Word-by-Word' : t}</button>
           ))}
         </div>
 
         {/* Content */}
-        <div className="p-4 max-w-[1200px] mx-auto">
+        <div className="p-3 sm:p-4 max-w-[1200px] mx-auto">
           {tab === 'quran' && <QuranTab key={homeKey} />}
           {tab === 'hadith' && <HadithTab />}
           {tab === 'wordbyword' && <WordByWordTab />}
@@ -133,7 +143,7 @@ export default function Home() {
         {/* Settings Modal */}
         {settingsOpen && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-[5%]">
-            <div className="bg-white p-5 rounded-xl w-[90%] max-w-[450px] max-h-[80vh] overflow-y-auto">
+            <div className="bg-white p-4 sm:p-5 rounded-xl w-[95%] sm:w-[90%] max-w-[450px] max-h-[80vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-[#1a5c3a] text-lg font-bold">&#9881; Reading Settings</h3>
                 <button onClick={() => setSettingsOpen(false)} className="text-2xl cursor-pointer text-[#999] hover:text-[#333]">&times;</button>
@@ -158,7 +168,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="bg-[#1a5c3a] text-white/70 text-center text-xs py-4 mt-8">
-          &copy; {new Date().getFullYear()} Islam Web Portal. All rights reserved.
+          &copy; {new Date().getFullYear()} Quran Web. All rights reserved.
         </footer>
 
         {/* Word/Detail Modal */}
@@ -190,7 +200,7 @@ function Modal() {
   if (!modalState.open) return null
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white p-5 rounded-xl w-[95vw] max-w-[95vw] h-[90vh] overflow-y-auto">
+      <div className="bg-white p-3 sm:p-5 rounded-xl w-[98vw] sm:w-[95vw] max-w-[900px] h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-[#1a5c3a] font-bold">{modalState.title}</h3>
           <button onClick={closeModal} className="text-2xl cursor-pointer text-[#999] hover:text-[#333]">&times;</button>
@@ -276,15 +286,15 @@ function QuranTab() {
         <div id="quranVerses">
           {verses.map(v => (
             <div key={v.id} className="quran-ayah" id={`ayah-${v.ayah}`}>
-              <div className="meta">Surah {v.surah}:{(v.surah === 1 || v.surah === 9) ? v.ayah + 1 : (v.ayah > 0 ? v.ayah : 'Basmalah')} | Para {v.para}</div>
-              <div className="float-right flex gap-1">
+              <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                <div className="meta mr-auto">Surah {v.surah}:{(v.surah === 1 || v.surah === 9) ? v.ayah + 1 : (v.ayah > 0 ? v.ayah : 'Basmalah')} | Para {v.para}</div>
                 <button className="bg-[#e8f5e9] border border-[#a5d6a7] rounded px-2 py-0.5 text-xs cursor-pointer hover:bg-[#c8e6c9]" onClick={() => wordModal(v.surah, v.ayah)} title="Word by Word">Words</button>
                 <button className="bg-[#fff3e0] border border-[#e8b840] rounded px-2 py-0.5 text-xs cursor-pointer hover:bg-[#ffe0b2]" onClick={() => showAyahTafseer(v.surah, v.ayah)} title="Tafseer">Tafseer</button>
                 {(v.surah === 1 || v.surah === 9 || v.ayah > 0) && <button className="bg-[#e3f2fd] border border-[#90caf9] rounded px-2 py-0.5 text-xs cursor-pointer hover:bg-[#bbdefb]" onClick={() => playAyah(v.surah, v.ayah)} title="Play Audio">&#9654;</button>}
               </div>
               {showArabic && <div className="arabic">{v.arabic}</div>}
               {showTarjma && <div className="translation urdu">{v.tarjma_text || v.urdu || v.english}</div>}
-              {showTafseer && v.tafseer_text && <div className="translation urdu" style={{ background: '#fffde7', padding: 8, borderRadius: 6, marginTop: 6, borderLeft: '3px solid #e8b840', whiteSpace: 'pre-wrap' }}>{v.tafseer_text}</div>}
+              {showTafseer && v.tafseer_text && <div className="translation urdu" style={{ background: '#fffde7', padding: '6px 8px', borderRadius: 6, marginTop: 6, borderLeft: '3px solid #e8b840', whiteSpace: 'pre-wrap' }}>{v.tafseer_text}</div>}
             </div>
           ))}
         </div>
@@ -303,17 +313,17 @@ function QuranTab() {
         ))}
       </div>
       {view === 'surahs' && (
-        <div style={{ display: 'grid', gap: 4 }}>
+        <div className="grid gap-1">
           {surahNames.map((s: any) => (
-            <div key={s.id} className="list-card" style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => loadVerses(s.id)}>
-                <div className="list-name" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <span className="bg-[#1a5c3a] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs">{s.id}</span>
-                  <span style={{ fontFamily: "'NooreHuda', serif", fontSize: 22 }}>{s.arabic}</span>
-                  <span style={{ fontSize: 14, color: '#666' }}>{s.english}</span>
+            <div key={s.id} className="list-card flex items-center">
+              <div className="flex-1 cursor-pointer" onClick={() => loadVerses(s.id)}>
+                <div className="list-name flex items-center gap-2 sm:gap-3">
+                  <span className="bg-[#1a5c3a] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shrink-0">{s.id}</span>
+                  <span className="font-arabic text-lg sm:text-[22px] text-[#1a3a1a]">{s.arabic}</span>
+                  <span className="text-xs sm:text-sm text-[#666] truncate">{s.english}</span>
                 </div>
               </div>
-              <span style={{ fontSize: 22, cursor: 'pointer', padding: '0 10px' }} onClick={e => { e.stopPropagation(); toggleBm(s.id) }}>
+              <span className="text-lg sm:text-[22px] cursor-pointer px-2 sm:px-2.5 shrink-0" onClick={e => { e.stopPropagation(); toggleBm(s.id) }}>
                 {bookmarks.includes(s.id) ? '⭐' : '☆'}
               </span>
             </div>
@@ -321,34 +331,34 @@ function QuranTab() {
         </div>
       )}
       {view === 'parahs' && (
-        <div style={{ display: 'grid', gap: 4 }}>
+        <div className="grid gap-1">
           {parahNames.map((p: any) => (
             <div key={p.id} className="list-card" onClick={() => loadParah(p.id)}>
-              <div className="list-name" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                <span className="bg-[#1a5c3a] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs">{p.id}</span>
-                <span style={{ fontFamily: "'NooreHuda', serif", fontSize: 20 }}>{p.arabic_name}</span>
-                <span style={{ fontSize: 12, color: '#999' }}>Surah {p.start_surah}:{p.start_ayah} &rarr; {p.end_surah}:{p.end_ayah}</span>
+              <div className="list-name flex items-center gap-2 sm:gap-3">
+                <span className="bg-[#1a5c3a] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shrink-0">{p.id}</span>
+                <span className="font-arabic text-base sm:text-xl text-[#1a3a1a]">{p.arabic_name}</span>
+                <span className="text-[10px] sm:text-xs text-[#999] truncate">Surah {p.start_surah}:{p.start_ayah} &rarr; {p.end_surah}:{p.end_ayah}</span>
               </div>
             </div>
           ))}
         </div>
       )}
       {view === 'bookmarks' && (
-        <div style={{ display: 'grid', gap: 4 }}>
+        <div className="grid gap-1">
           {bookmarks.length === 0 && <div className="loading">No bookmarked surahs yet. ⭐ a surah to add it here.</div>}
           {bookmarks.map(id => {
             const s = surahNames.find((n: any) => n.id === id)
             if (!s) return null
             return (
-              <div key={id} className="list-card" style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => loadVerses(s.id)}>
-                  <div className="list-name" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <span className="bg-[#1a5c3a] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs">{s.id}</span>
-                    <span style={{ fontFamily: "'NooreHuda', serif", fontSize: 22 }}>{s.arabic}</span>
-                    <span style={{ fontSize: 14, color: '#666' }}>{s.english}</span>
+              <div key={id} className="list-card flex items-center">
+                <div className="flex-1 cursor-pointer" onClick={() => loadVerses(s.id)}>
+                  <div className="list-name flex items-center gap-2 sm:gap-3">
+                    <span className="bg-[#1a5c3a] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shrink-0">{s.id}</span>
+                    <span className="font-arabic text-lg sm:text-[22px] text-[#1a3a1a]">{s.arabic}</span>
+                    <span className="text-xs sm:text-sm text-[#666] truncate">{s.english}</span>
                   </div>
                 </div>
-                <span style={{ fontSize: 22, cursor: 'pointer', padding: '0 10px' }} onClick={e => { e.stopPropagation(); toggleBm(s.id) }}>⭐</span>
+                <span className="text-lg sm:text-[22px] cursor-pointer px-2 sm:px-2.5 shrink-0" onClick={e => { e.stopPropagation(); toggleBm(s.id) }}>⭐</span>
               </div>
             )
           })}
@@ -397,7 +407,7 @@ function QuranSearch() {
       <div className="flex gap-2.5 mb-4 flex-wrap items-center">
         <input type="text" placeholder="Search Quran..." value={query} onChange={e => setQuery(e.target.value)}
           onKeyUp={e => e.key === 'Enter' && doSearch()}
-          className="flex-1 p-1.5 border border-[#ccc] rounded min-w-[200px]" />
+          className="flex-1 min-w-0 w-full p-1.5 border border-[#ccc] rounded" />
         <button onClick={doSearch} className="px-4 py-1.5 bg-[#1a5c3a] text-white border-none rounded cursor-pointer">Search</button>
       </div>
       {searched && (
@@ -578,26 +588,28 @@ function WordByWordTab() {
       {data && (
         <div>
           <h3 className="text-[#1a5c3a] mb-2.5">Surah {surah}:{ayah}</h3>
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-[#1a5c3a] text-white">
-                <th className="p-2 text-center w-10">#</th>
-                <th className="p-2 text-center">Arabic</th>
-                <th className="p-2 text-center">Urdu</th>
-                <th className="p-2 text-center">English</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: Math.max(data.arabic.length, data.urdu.length, data.english.length) }, (_, i) => (
-                <tr key={i} className="border-b border-[#e0e0e0]">
-                  <td className="p-1.5 text-center text-xs text-[#888]">{i + 1}</td>
-                  <td className="p-1.5 text-right font-arabic text-[22px] text-[#1a3a1a]" style={{ direction: 'rtl' }}>{data.arabic[i] || ''}</td>
-                  <td className="p-1.5 text-right text-lg text-[#1a5c3a]" style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq','Noto Nastaliq Urdu',serif", direction: 'rtl' }}>{data.urdu[i] || ''}</td>
-                  <td className="p-1.5 text-left text-sm text-[#555]">{data.english[i] || ''}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[400px]">
+              <thead>
+                <tr className="bg-[#1a5c3a] text-white">
+                  <th className="p-1.5 sm:p-2 text-center w-8 sm:w-10 text-xs sm:text-sm">#</th>
+                  <th className="p-1.5 sm:p-2 text-center text-xs sm:text-sm">Arabic</th>
+                  <th className="p-1.5 sm:p-2 text-center text-xs sm:text-sm">Urdu</th>
+                  <th className="p-1.5 sm:p-2 text-center text-xs sm:text-sm">English</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Array.from({ length: Math.max(data.arabic.length, data.urdu.length, data.english.length) }, (_, i) => (
+                  <tr key={i} className="border-b border-[#e0e0e0]">
+                    <td className="p-1 sm:p-1.5 text-center text-[10px] sm:text-xs text-[#888]">{i + 1}</td>
+                    <td className="p-1 sm:p-1.5 text-right font-arabic text-base sm:text-[22px] text-[#1a3a1a]" style={{ direction: 'rtl' }}>{data.arabic[i] || ''}</td>
+                    <td className="p-1 sm:p-1.5 text-right text-sm sm:text-lg text-[#1a5c3a]" style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq','Noto Nastaliq Urdu',serif", direction: 'rtl' }}>{data.urdu[i] || ''}</td>
+                    <td className="p-1 sm:p-1.5 text-left text-[11px] sm:text-sm text-[#555]">{data.english[i] || ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
       {!data && <div className="loading">Enter surah/ayah and click Load.</div>}
@@ -697,7 +709,7 @@ function TafseerTab() {
         <div className="flex gap-2.5 flex-wrap items-center">
           <input type="text" placeholder={`Type Urdu text to search in ${searchLabel}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             onKeyUp={e => e.key === 'Enter' && doSearch()}
-            className="flex-1 p-2 border border-[#ccc] rounded min-w-[200px] text-base" />
+            className="flex-1 min-w-0 w-full p-2 border border-[#ccc] rounded text-base" />
           <button onClick={doSearch} disabled={!tfType || !searchQuery.trim() || searching}
             className="px-4 py-2 bg-[#1a5c3a] text-white border-none rounded cursor-pointer disabled:opacity-40 font-bold">
             {searching ? 'Searching...' : 'Search'}
@@ -1232,7 +1244,7 @@ function SearchTab() {
         )}
         <input type="text" placeholder="Search..." value={query} onChange={e => setQuery(e.target.value)}
           onKeyUp={e => e.key === 'Enter' && doSearch()}
-          className="flex-1 p-1.5 border border-[#ccc] rounded min-w-[200px]" />
+          className="flex-1 min-w-0 w-full p-1.5 border border-[#ccc] rounded" />
         <button onClick={doSearch} className="px-4 py-1.5 bg-[#1a5c3a] text-white border-none rounded cursor-pointer">Search</button>
       </div>
       {searched && (
@@ -1579,11 +1591,11 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
         <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0] mb-4">
           <h4 className="font-bold text-[#1a5c3a] mb-2">&#128279; Manage Web Links</h4>
           <p className="text-xs text-[#999] mb-2">Add external website URLs. They appear under <b>More &rarr; Other Web Links</b> and open inline.</p>
-          <div className="flex gap-2 mb-2">
+          <div className="flex flex-wrap gap-2 mb-2">
             <input type="text" value={linkName} onChange={e => setLinkName(e.target.value)}
-              placeholder="Site name" className="flex-1 p-2 border border-[#ccc] rounded text-sm" />
+              placeholder="Site name" className="flex-1 min-w-[100px] p-2 border border-[#ccc] rounded text-sm" />
             <input type="text" value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
-              placeholder="https://..." className="flex-[2] p-2 border border-[#ccc] rounded text-sm" />
+              placeholder="https://..." className="flex-[2] min-w-[150px] p-2 border border-[#ccc] rounded text-sm" />
             <button onClick={addLink} disabled={!linkName.trim() || !linkUrl.trim()}
               className="px-3 py-2 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer hover:bg-[#2a7a4e] disabled:opacity-40">Add</button>
           </div>

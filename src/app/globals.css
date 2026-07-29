@@ -205,3 +205,43 @@ body {
 .animate-slideDown { animation: slideDown 0.5s ease-out; }
 .animate-slideRight { animation: slideRight 0.4s ease-out; }
 .animate-bounceSlow { animation: bounceSlow 2s ease-in-out infinite; }
+
+/* Hide scrollbar for tab bar */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Responsive: mobile adjustments */
+@media (max-width: 640px) {
+  .quran-ayah { padding: 10px; }
+  .quran-ayah .arabic { font-size: 22px; }
+  .quran-ayah .translation { font-size: 12px; }
+  .quran-ayah .translation.urdu { font-size: 16px; }
+  .surah-header { padding: 14px; }
+  .surah-header h2 { font-size: 24px; }
+  .hadith-card { padding: 10px; }
+  .hadith-card .arabic { font-size: 18px; }
+  .hadith-card .text.urdu { font-size: 16px; }
+  .dua-card { padding: 10px; }
+  .dua-card .dua-arabic { font-size: 20px; }
+  .dua-card .dua-urdu { font-size: 16px; }
+  .list-card { padding: 10px 12px; }
+  .topic-card { padding: 10px 12px; }
+  .topic-card .topic-urdu { font-size: 15px; }
+  .fahmul-card { padding: 10px 12px; }
+  .fahmul-card .fahmul-ayat { font-size: 16px; }
+  .fahmul-card .fahmul-text { font-size: 15px; }
+  .mutradif-card { padding: 10px 12px; }
+  .mutradif-card .m-heading { font-size: 17px; }
+  .mutradif-card .m-details { font-size: 14px; }
+  .word-row { gap: 6px; padding: 6px 0; }
+  .word-row .w-arabic { font-size: 18px; min-width: 40px; }
+  .word-row .w-root { font-size: 10px; min-width: 40px; }
+  .word-row .w-meaning { font-size: 11px; }
+  .word-row .w-meaning.urdu { font-size: 14px; }
+  .rand-hadees { padding: 14px; }
+  .rand-hadees .rh-arabic { font-size: 18px; }
+  .rand-hadees .rh-urdu { font-size: 15px; }
+  .result-item { padding: 8px 12px; }
+  .result-item .r-arabic { font-size: 15px; }
+  .loading { padding: 24px; font-size: 14px; }
+}
