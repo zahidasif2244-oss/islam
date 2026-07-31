@@ -17,20 +17,20 @@ export async function GET(req: Request) {
     : TAFSEER_COLUMNS
 
   const words = q.trim().split(/\s+/).filter(Boolean)
+  const phrase = q.trim()
 
   for (const [col, label] of colInfo) {
     const isUrdu = COL_IS_URDU[col] || false
 
-    let sql: string
-    let params: string[]
-
+    const conditions = words.map(w => `"${col}" LIKE ?`)
+    let sql = `SELECT surat_id, ayat_number, arabic, "${col}" FROM tbl_QuranComplete WHERE ${conditions.join(' AND ')}`
+    let params: string[] = words.map(w => `%${w}%`)
     if (words.length === 1) {
-      sql = `SELECT surat_id, ayat_number, arabic, "${col}" FROM tbl_QuranComplete WHERE "${col}" LIKE ? LIMIT 50`
-      params = [`%${q}%`]
+      sql += ' ORDER BY length("' + col + '") LIMIT 100'
     } else {
-      const conditions = words.map(w => `"${col}" LIKE ?`)
-      sql = `SELECT surat_id, ayat_number, arabic, "${col}" FROM tbl_QuranComplete WHERE ${conditions.join(' AND ')} LIMIT 50`
-      params = words.map(w => `%${w}%`)
+      sql += ` AND "${col}" LIKE ? ORDER BY CASE WHEN "${col}" LIKE ? THEN 0 ELSE 1 END, length("${col}") LIMIT 100`
+      const phraseParam = `%${phrase}%`
+      params = params.concat([phraseParam, phraseParam])
     }
 
     const rows = await query(db, sql, params)

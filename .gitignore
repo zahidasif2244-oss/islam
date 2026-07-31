@@ -22,3 +22,4 @@ Thumbs.db
 # misc
 *.log
 npm-debug.log*
+tsconfig.tsbuildinfo

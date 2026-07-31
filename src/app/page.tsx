@@ -473,7 +473,7 @@ function WordModalBody({ surah, ayah }: { surah: number; ayah: number }) {
 
 function highlightText(text: string, words: string[]) {
   if (!words || words.length === 0) return text
-  const escaped = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const escaped = words.filter(Boolean).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
   const re = new RegExp(`(${escaped.join('|')})`, 'gi')
   const parts = text.split(re)
   const lowerWords = words.map(w => w.toLowerCase())
@@ -481,6 +481,24 @@ function highlightText(text: string, words: string[]) {
     part && lowerWords.some(w => w === part.toLowerCase())
       ? <mark key={i} className="bg-[#e8b840]/40 text-[#1a5c3a] rounded px-0.5 font-medium">{part}</mark>
       : part
+  )
+}
+
+function makeSnippet(text: string, words: string[], before = 120, after = 220) {
+  const escaped = words.filter(Boolean).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  if (escaped.length === 0) return text
+  const re = new RegExp(escaped.join('|'), 'gi')
+  const match = re.exec(text)
+  if (!match) return highlightText(text, words)
+  const start = Math.max(0, match.index - before)
+  const end = Math.min(text.length, match.index + match[0].length + after)
+  const snippet = text.slice(start, end)
+  return (
+    <span>
+      {start > 0 ? <span className="text-[#999]">…</span> : null}
+      {highlightText(snippet, words)}
+      {end < text.length ? <span className="text-[#999]">…</span> : null}
+    </span>
   )
 }
 
@@ -689,17 +707,29 @@ function TafseerTab() {
     }).catch(() => {})
   }
 
-  function doSearch() {
+  function runSearch() {
     if (!searchQuery.trim() || !tfType) return
     setSearching(true)
     setData(null)
     setSearched(true)
-    setSearchResults([])
     api(`/quran/tafseer/search?q=${encodeURIComponent(searchQuery)}&type=${encodeURIComponent(tfType)}`)
       .then(setSearchResults)
       .catch(() => setSearchResults([]))
       .finally(() => setSearching(false))
   }
+
+  useEffect(() => {
+    if (!tfType) return
+    const q = searchQuery.trim()
+    if (!q) {
+      setSearchResults([])
+      setSearched(false)
+      setSearching(false)
+      return
+    }
+    const t = setTimeout(runSearch, 350)
+    return () => clearTimeout(t)
+  }, [searchQuery, tfType])
 
   function openAyah(surahNum: number, ayahNum: number) {
     setSurah(surahNum)
@@ -747,13 +777,14 @@ function TafseerTab() {
         <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search in {searchLabel}</h3>
         <div className="flex gap-2.5 flex-wrap items-center">
           <input type="text" placeholder={`Type Urdu text to search in ${searchLabel}...`} value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-            onKeyUp={e => e.key === 'Enter' && doSearch()}
+            onKeyUp={e => e.key === 'Enter' && runSearch()}
             className="flex-1 min-w-0 w-full p-2 border border-[#ccc] rounded text-base" />
-          <button onClick={doSearch} disabled={!tfType || !searchQuery.trim() || searching}
+          <button onClick={runSearch} disabled={!tfType || !searchQuery.trim() || searching}
             className="px-4 py-2 bg-[#1a5c3a] text-white border-none rounded cursor-pointer disabled:opacity-40 font-bold">
             {searching ? 'Searching...' : 'Search'}
           </button>
         </div>
+        <p className="text-[10px] text-[#a1883a] mt-1">Real-time search — type to search instantly. Multiple words = all words must match (AND). Click a result to deep dive into the full tafseer with highlights.</p>
         {!tfType && <p className="text-xs text-[#e65100] mt-1">Please select a tafseer type first</p>}
       </div>
 
@@ -768,7 +799,7 @@ function TafseerTab() {
                 <div key={i} className="result-item" onClick={() => openAyah(r.surah, r.ayah)}>
                   <div className="r-meta">Surah {r.surah}:{(r.surah === 1 || r.surah === 9) ? r.ayah + 1 : r.ayah} | {r.tafseer_label}</div>
                   <div className="r-arabic">{r.arabic}</div>
-                  <div className="r-text">{highlightText(r.tafseer, r.searchWords || searchQuery.trim().split(/\s+/))}</div>
+                  <div className="r-text">{makeSnippet(r.tafseer, r.searchWords || searchQuery.trim().split(/\s+/))}</div>
                 </div>
               ))}
             </>
@@ -784,7 +815,7 @@ function TafseerTab() {
           {data.ayahData && <div className="arabic">{data.ayahData.arabic}</div>}
           {data.ayahData && <div className="translation urdu">{data.ayahData.tarjma_text || data.ayahData.urdu || data.ayahData.english}</div>}
           {data.tafseerData[tfType] ? (
-            <div className="translation urdu" style={{ background: '#fffde7', padding: 8, borderRadius: 6, marginTop: 6, borderLeft: '3px solid #e8b840', whiteSpace: 'pre-wrap' }}>{data.tafseerData[tfType]}</div>
+            <div className="translation urdu" style={{ background: '#fffde7', padding: 8, borderRadius: 6, marginTop: 6, borderLeft: '3px solid #e8b840', whiteSpace: 'pre-wrap' }}>{searchQuery.trim() ? highlightText(data.tafseerData[tfType], searchQuery.trim().split(/\s+/)) : data.tafseerData[tfType]}</div>
           ) : <div className="loading">No tafseer available.</div>}
         </div>
       )}
@@ -1363,10 +1394,9 @@ function AboutTab() {
       {/* Header */}
       <div className="text-center mb-8 animate-slideDown">
         <div className="w-24 h-24 bg-gradient-to-br from-[#1a5c3a] to-[#3a9a5e] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounceSlow">
-          <span className="text-white text-4xl font-bold">AR</span>
+          <img src="/logo.svg" alt="Quran Web" className="h-14 w-14" />
         </div>
-        <h1 className="text-3xl font-bold text-[#1a5c3a]">Ali Raza</h1>
-        <p className="text-[#666] text-lg mt-1">Full Stack Developer</p>
+        <h1 className="text-3xl font-bold text-[#1a5c3a]">Quran Web Team run by CEO Ali Raza</h1>
       </div>
 
       {/* Contact + Location */}
