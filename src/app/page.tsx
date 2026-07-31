@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react'
+import { arabicSnippet } from '@/lib/arabic'
 
 type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about'
 
@@ -396,15 +397,52 @@ function QuranTab() {
 }
 
 function QuranSearch() {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<any[]>([])
-  const [searched, setSearched] = useState(false)
+  const [refQuery, setRefQuery] = useState('')
+  const [refResult, setRefResult] = useState<any[]>([])
+  const [refSearching, setRefSearching] = useState(false)
+  const [urduQuery, setUrduQuery] = useState('')
+  const [urduResults, setUrduResults] = useState<any[]>([])
+  const [urduSearching, setUrduSearching] = useState(false)
+  const [arabicQuery, setArabicQuery] = useState('')
+  const [arabicResults, setArabicResults] = useState<any[]>([])
+  const [arabicSearching, setArabicSearching] = useState(false)
 
-  function doSearch() {
-    if (!query.trim()) return
-    setSearched(true)
-    api(`/quran/search?q=${encodeURIComponent(query)}`).then(setResults)
-  }
+  useEffect(() => {
+    const q = refQuery.trim()
+    const match = q.match(/^(\d{1,3}):(\d{1,3})$/)
+    if (!match) { setRefResult([]); setRefSearching(false); return }
+    setRefSearching(true)
+    const t = setTimeout(() => {
+      api(`/quran/ayahs?surah=${match[1]}&start=${match[2]}`)
+        .then(r => { setRefResult(r || []); setRefSearching(false) })
+        .catch(() => { setRefResult([]); setRefSearching(false) })
+    }, 350)
+    return () => clearTimeout(t)
+  }, [refQuery])
+
+  useEffect(() => {
+    const q = urduQuery.trim()
+    if (!q) { setUrduResults([]); setUrduSearching(false); return }
+    setUrduSearching(true)
+    const t = setTimeout(() => {
+      api(`/quran/search_text?q=${encodeURIComponent(q)}&lang=urdu`)
+        .then(r => { setUrduResults(r || []); setUrduSearching(false) })
+        .catch(() => { setUrduResults([]); setUrduSearching(false) })
+    }, 350)
+    return () => clearTimeout(t)
+  }, [urduQuery])
+
+  useEffect(() => {
+    const q = arabicQuery.trim()
+    if (!q) { setArabicResults([]); setArabicSearching(false); return }
+    setArabicSearching(true)
+    const t = setTimeout(() => {
+      api(`/quran/search_text?q=${encodeURIComponent(q)}&lang=arabic`)
+        .then(r => { setArabicResults(r || []); setArabicSearching(false) })
+        .catch(() => { setArabicResults([]); setArabicSearching(false) })
+    }, 350)
+    return () => clearTimeout(t)
+  }, [arabicQuery])
 
   function openAyah(r: any) {
     const displayAyah = (r.surah === 1 || r.surah === 9) ? r.ayah + 1 : (r.ayah > 0 ? r.ayah : 'Basmalah')
@@ -425,30 +463,82 @@ function QuranSearch() {
     })
   }
 
+  const matchBadge = (r: any) => r.match_count && r.total_words > 1 && (
+    <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${r.match_count >= r.total_words ? 'bg-[#c8e6c9] text-[#1a5c3a]' : r.phrase_match ? 'bg-[#ffe0b2] text-[#e65100]' : 'bg-[#eceff1] text-[#546e7a]'}`}>
+      {r.match_count}/{r.total_words} words{r.phrase_match ? ' · phrase' : ''}
+    </span>
+  )
+
+  const ayahLabel = (r: any) => `Surah ${r.surah}:${(r.surah === 1 || r.surah === 9) ? r.ayah + 1 : (r.ayah > 0 ? r.ayah : 'Basmalah')}`
+
   return (
     <div>
-      <div style={{ marginBottom: 10, fontSize: 12, color: '#666' }}>
-        Type text or ayat reference (e.g. 2:255)
+      <div className="bg-[#e8f5e9] p-3 rounded-lg mb-4">
+        <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Surah:Ayah Number</h3>
+        <input type="text" inputMode="numeric" placeholder="Type reference, e.g. 2:255" value={refQuery} onChange={e => setRefQuery(e.target.value)}
+          className="w-full p-2 border border-[#ccc] rounded text-base" />
+        <p className="text-[10px] text-[#558b2f] mt-1">Real-time — use format Surah:Ayah, e.g. 2:255.</p>
+        {refSearching && <div className="loading">Loading ayah...</div>}
+        {!refSearching && refQuery.trim() && refQuery.trim().includes(':') && (
+          <div className="mt-2">
+            {refResult.length > 0 ? refResult.map((r, i) => (
+              <div key={i} className="result-item" onClick={() => openAyah(r)}>
+                <div className="r-meta">{ayahLabel(r)}</div>
+                <div className="r-arabic">{r.arabic}</div>
+                <div className="r-text">{r.urdu || r.english}</div>
+              </div>
+            )) : <div className="loading">No ayah found for &quot;{refQuery.trim()}&quot;</div>}
+          </div>
+        )}
       </div>
-      <div className="flex gap-2.5 mb-4 flex-wrap items-center">
-        <input type="text" placeholder="Search Quran..." value={query} onChange={e => setQuery(e.target.value)}
-          onKeyUp={e => e.key === 'Enter' && doSearch()}
-          className="flex-1 min-w-0 w-full p-1.5 border border-[#ccc] rounded" />
-        <button onClick={doSearch} className="px-4 py-1.5 bg-[#1a5c3a] text-white border-none rounded cursor-pointer">Search</button>
+
+      <div className="bg-[#fffde7] p-3 rounded-lg mb-4 border border-[#e8d84a]">
+        <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Urdu Words</h3>
+        <input type="text" placeholder="Type Urdu words to search in translations..." value={urduQuery} onChange={e => setUrduQuery(e.target.value)}
+          className="w-full p-2 border border-[#ccc] rounded text-base" />
+        <p className="text-[10px] text-[#a1883a] mt-1">Real-time — multiple words match ANY word, best matches rank first.</p>
+        {urduSearching && <div className="loading">Searching...</div>}
+        {!urduSearching && urduQuery.trim() && (
+          <div className="mt-2">
+            {urduResults.length > 0 ? (
+              <>
+                <p className="text-sm text-[#1a5c3a] font-bold mb-2">Found {urduResults.length} results for &quot;{urduQuery.trim()}&quot;</p>
+                {urduResults.map((r, i) => (
+                  <div key={i} className="result-item" onClick={() => openAyah(r)}>
+                    <div className="r-meta">{ayahLabel(r)}{matchBadge(r)}</div>
+                    <div className="r-arabic">{r.arabic}</div>
+                    <div className="r-text">{makeSnippet(r.urdu || r.english || '', r.searchWords || urduQuery.trim().split(/\s+/))}</div>
+                  </div>
+                ))}
+              </>
+            ) : <div className="loading">No results found for &quot;{urduQuery.trim()}&quot;</div>}
+          </div>
+        )}
       </div>
-      {searched && (
-        <div>
-          <h3 style={{ marginBottom: 10 }}>Found {results.length} results</h3>
-          {results.map((r: any, i: number) => (
-            <div key={i} className="result-item" onClick={() => openAyah(r)}>
-              <div className="r-meta">Surah {r.surah}:{(r.surah === 1 || r.surah === 9) ? r.ayah + 1 : r.ayah}</div>
-              <div className="r-arabic">{r.arabic}</div>
-              <div className="r-text">{r.urdu || r.english}</div>
-            </div>
-          ))}
-          {results.length === 0 && <div className="loading">No results found.</div>}
-        </div>
-      )}
+
+      <div className="bg-[#e3f2fd] p-3 rounded-lg mb-4 border border-[#90caf9]">
+        <h3 className="text-[#1565c0] text-sm font-bold mb-2">Search by Arabic Words</h3>
+        <input type="text" placeholder="Type Arabic words to search in Quran text..." value={arabicQuery} onChange={e => setArabicQuery(e.target.value)}
+          className="w-full p-2 border border-[#ccc] rounded text-base" />
+        <p className="text-[10px] text-[#1565c0] mt-1">Real-time — multiple words match ANY word, best matches rank first.</p>
+        {arabicSearching && <div className="loading">Searching...</div>}
+        {!arabicSearching && arabicQuery.trim() && (
+          <div className="mt-2">
+            {arabicResults.length > 0 ? (
+              <>
+                <p className="text-sm text-[#1565c0] font-bold mb-2">Found {arabicResults.length} results for &quot;{arabicQuery.trim()}&quot;</p>
+                {arabicResults.map((r, i) => (
+                  <div key={i} className="result-item" onClick={() => openAyah(r)}>
+                    <div className="r-meta">{ayahLabel(r)}{matchBadge(r)}</div>
+                    <div className="r-arabic">{arabicSnippet(r.arabic || '', r.searchWords || arabicQuery.trim().split(/\s+/))}</div>
+                    <div className="r-text">{r.urdu || r.english}</div>
+                  </div>
+                ))}
+              </>
+            ) : <div className="loading">No results found for &quot;{arabicQuery.trim()}&quot;</div>}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -522,12 +612,17 @@ function TafseerBody({ surah, ayah }: { surah: number; ayah: number }) {
 function HadithTab() {
   const [books, setBooks] = useState<any[]>([])
   const [bookId, setBookId] = useState('')
-  const [number, setNumber] = useState('')
   const [list, setList] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [pages, setPages] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [numQuery, setNumQuery] = useState('')
+  const [numResults, setNumResults] = useState<any[]>([])
+  const [numSearching, setNumSearching] = useState(false)
+  const [wordQuery, setWordQuery] = useState('')
+  const [wordResults, setWordResults] = useState<any[]>([])
+  const [wordSearching, setWordSearching] = useState(false)
 
   useEffect(() => {
     api('/hadith/books').then(b => { setBooks(b); if (b.length) { setBookId(b[0].id); loadBook(b[0].id, 1) } })
@@ -540,14 +635,31 @@ function HadithTab() {
     }).catch(() => setLoading(false))
   }
 
-  function fetchHadith() {
-    const num = parseInt(number)
-    if (!num || !bookId) return
-    api(`/hadith/hadith/${bookId}/${num}`).then((h: any) => {
-      if (h && !h.error) openHadithDetail(h, bookId)
-    })
-  }
+  useEffect(() => {
+    const q = numQuery.trim()
+    if (!q || !bookId) { setNumResults([]); setNumSearching(false); return }
+    setNumSearching(true)
+    const t = setTimeout(() => {
+      api(`/hadith/number/${bookId}?q=${encodeURIComponent(q)}`)
+        .then(r => { setNumResults(r || []); setNumSearching(false) })
+        .catch(() => { setNumResults([]); setNumSearching(false) })
+    }, 350)
+    return () => clearTimeout(t)
+  }, [numQuery, bookId])
 
+  useEffect(() => {
+    const q = wordQuery.trim()
+    if (!q || !bookId) { setWordResults([]); setWordSearching(false); return }
+    setWordSearching(true)
+    const t = setTimeout(() => {
+      api(`/hadith/search/${bookId}?q=${encodeURIComponent(q)}`)
+        .then(r => { setWordResults(r || []); setWordSearching(false) })
+        .catch(() => { setWordResults([]); setWordSearching(false) })
+    }, 350)
+    return () => clearTimeout(t)
+  }, [wordQuery, bookId])
+
+  const searchActive = numQuery.trim().length > 0 || wordQuery.trim().length > 0
   const bookName = books.find((b: any) => b.id === bookId)?.name || bookId
 
   return (
@@ -561,36 +673,89 @@ function HadithTab() {
         ))}
       </div>
 
-      <div className="flex gap-2 mb-4 items-end">
-        <div>
-          <label className="text-xs text-[#666] block mb-0.5">Hadith Number</label>
-          <input type="number" value={number} onChange={e => setNumber(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') fetchHadith() }}
-            className="w-28 p-1.5 border border-[#ccc] rounded text-sm" />
-        </div>
-        <button onClick={fetchHadith}
-          className="px-4 py-1.5 bg-[#1a5c3a] text-white border border-[#1a5c3a] rounded text-sm cursor-pointer hover:bg-[#2d7a4e]">Search</button>
-        <span className="text-[11px] text-[#888]">select book then search for hadith number</span>
+      <div className="bg-[#e8f5e9] p-3 rounded-lg mb-4">
+        <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Hadith Number</h3>
+        <input type="text" inputMode="numeric" placeholder={`Type hadith number in ${bookName}...`} value={numQuery} onChange={e => setNumQuery(e.target.value)}
+          className="w-full p-2 border border-[#ccc] rounded text-base" />
+        <p className="text-[10px] text-[#558b2f] mt-1">Real-time — partial number matches with exact match first.</p>
+        {numSearching && <div className="loading">Searching numbers...</div>}
+        {!numSearching && numQuery.trim() && (
+          <div className="mt-2">
+            {numResults.length > 0 ? (
+              <>
+                <p className="text-sm text-[#1a5c3a] font-bold mb-2">Found {numResults.length} hadiths matching &quot;{numQuery.trim()}&quot;</p>
+                {numResults.map((r, i) => (
+                  <div key={i} className="result-item" onClick={() => openHadithDetail(r, bookId)}>
+                    <div className="r-meta">Hadith #{r.number}{r.international_number ? ` | International: ${r.international_number}` : ''}</div>
+                    <div className="r-arabic">{r.arabic}</div>
+                    {r.urdu && <div className="r-text">{makeSnippet(r.urdu, [''])}</div>}
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div className="loading">No hadith found for &quot;{numQuery.trim()}&quot;</div>
+            )}
+          </div>
+        )}
       </div>
 
-      {loading && <div className="loading">Loading hadiths...</div>}
-      {!loading && list.length === 0 && <div className="loading">Select a book to view hadiths.</div>}
-      {list.map(h => (
-        <div key={h.number} className="hadith-card" style={{ cursor: 'pointer' }} onClick={() => openHadithDetail(h, bookId)}>
-          <div className="hadith-number">Hadith #{h.number}</div>
-          <div className="arabic">{h.arabic}</div>
-          {h.urdu && <div className="text urdu">{h.urdu}</div>}
-          {h.urdu_ravi && <div className="narrator">{h.urdu_ravi}</div>}
-          {h.english && <div className="text english">{h.english}</div>}
-        </div>
-      ))}
-      {pages > 1 && (
-        <div className="flex gap-2 mt-4 justify-center items-center">
-          <button disabled={page <= 1} onClick={() => loadBook(bookId, page - 1)}
-            className="px-4 py-1.5 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer disabled:opacity-40">Prev</button>
-          <span className="text-sm text-[#666]">Page {page} of {pages}</span>
-          <button disabled={page >= pages} onClick={() => loadBook(bookId, page + 1)}
-            className="px-4 py-1.5 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer disabled:opacity-40">Next</button>
-        </div>
+      <div className="bg-[#fffde7] p-3 rounded-lg mb-4 border border-[#e8d84a]">
+        <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Urdu Words</h3>
+        <input type="text" placeholder={`Type Urdu words to search in ${bookName}...`} value={wordQuery} onChange={e => setWordQuery(e.target.value)}
+          className="w-full p-2 border border-[#ccc] rounded text-base" />
+        <p className="text-[10px] text-[#a1883a] mt-1">Real-time — multiple words match ANY word, best matches (phrase / most words) rank first. Click a result to open full hadith.</p>
+        {wordSearching && <div className="loading">Searching...</div>}
+        {!wordSearching && wordQuery.trim() && (
+          <div className="mt-2">
+            {wordResults.length > 0 ? (
+              <>
+                <p className="text-sm text-[#1a5c3a] font-bold mb-2">Found {wordResults.length} results for &quot;{wordQuery.trim()}&quot;</p>
+                {wordResults.map((r, i) => (
+                  <div key={i} className="result-item" onClick={() => openHadithDetail(r, bookId)}>
+                    <div className="r-meta">
+                      Hadith #{r.number}{r.international_number ? ` | International: ${r.international_number}` : ''}
+                      {r.match_count && r.total_words > 1 && (
+                        <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${r.match_count >= r.total_words ? 'bg-[#c8e6c9] text-[#1a5c3a]' : r.phrase_match ? 'bg-[#ffe0b2] text-[#e65100]' : 'bg-[#eceff1] text-[#546e7a]'}`}>
+                          {r.match_count}/{r.total_words} words{r.phrase_match ? ' · phrase' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <div className="r-arabic">{r.arabic}</div>
+                    <div className="r-text">{makeSnippet(r.urdu || r.english || '', r.searchWords || wordQuery.trim().split(/\s+/))}</div>
+                    {r.urdu_ravi && <div className="narrator">{r.urdu_ravi}</div>}
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div className="loading">No results found for &quot;{wordQuery.trim()}&quot;</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {!searchActive && (
+        <>
+          {loading && <div className="loading">Loading hadiths...</div>}
+          {!loading && list.length === 0 && <div className="loading">Select a book to view hadiths.</div>}
+          {list.map(h => (
+            <div key={h.number} className="hadith-card" style={{ cursor: 'pointer' }} onClick={() => openHadithDetail(h, bookId)}>
+              <div className="hadith-number">Hadith #{h.number}</div>
+              <div className="arabic">{h.arabic}</div>
+              {h.urdu && <div className="text urdu">{h.urdu}</div>}
+              {h.urdu_ravi && <div className="narrator">{h.urdu_ravi}</div>}
+              {h.english && <div className="text english">{h.english}</div>}
+            </div>
+          ))}
+          {pages > 1 && (
+            <div className="flex gap-2 mt-4 justify-center items-center">
+              <button disabled={page <= 1} onClick={() => loadBook(bookId, page - 1)}
+                className="px-4 py-1.5 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer disabled:opacity-40">Prev</button>
+              <span className="text-sm text-[#666]">Page {page} of {pages}</span>
+              <button disabled={page >= pages} onClick={() => loadBook(bookId, page + 1)}
+                className="px-4 py-1.5 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer disabled:opacity-40">Next</button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -784,7 +949,7 @@ function TafseerTab() {
             {searching ? 'Searching...' : 'Search'}
           </button>
         </div>
-        <p className="text-[10px] text-[#a1883a] mt-1">Real-time search — type to search instantly. Multiple words = all words must match (AND). Click a result to deep dive into the full tafseer with highlights.</p>
+        <p className="text-[10px] text-[#a1883a] mt-1">Real-time search — type to search instantly. Multiple words match ANY word, best matches (phrase / most words) rank first. Click a result to deep dive into the full tafseer with highlights.</p>
         {!tfType && <p className="text-xs text-[#e65100] mt-1">Please select a tafseer type first</p>}
       </div>
 
@@ -797,7 +962,14 @@ function TafseerTab() {
               <p className="text-sm text-[#1a5c3a] font-bold mb-2">Found {searchResults.length} results for &quot;{searchQuery}&quot; in {searchLabel}</p>
               {searchResults.map((r, i) => (
                 <div key={i} className="result-item" onClick={() => openAyah(r.surah, r.ayah)}>
-                  <div className="r-meta">Surah {r.surah}:{(r.surah === 1 || r.surah === 9) ? r.ayah + 1 : r.ayah} | {r.tafseer_label}</div>
+                  <div className="r-meta">
+                    Surah {r.surah}:{(r.surah === 1 || r.surah === 9) ? r.ayah + 1 : r.ayah} | {r.tafseer_label}
+                    {r.match_count && r.total_words > 1 && (
+                      <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${r.match_count >= r.total_words ? 'bg-[#c8e6c9] text-[#1a5c3a]' : r.phrase_match ? 'bg-[#ffe0b2] text-[#e65100]' : 'bg-[#eceff1] text-[#546e7a]'}`}>
+                        {r.match_count}/{r.total_words} words{r.phrase_match ? ' · phrase' : ''}
+                      </span>
+                    )}
+                  </div>
                   <div className="r-arabic">{r.arabic}</div>
                   <div className="r-text">{makeSnippet(r.tafseer, r.searchWords || searchQuery.trim().split(/\s+/))}</div>
                 </div>
