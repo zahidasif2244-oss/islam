@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ہمارے بارے میں - دعا اور شفا</title>
+    <meta name="description" content="دعا اور شفا کے بارے میں جانیں — روزانہ دعائیں، قرآنی آیات اور اسلامی حکمت پیش کرنے کا ہمارا مشن۔"/>
+    <link rel="icon" href="icon.png"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#13b6ec',
+                    'primary-dark': '#0ea5d6',
+                    'background-light': '#f6f8f8',
+                    'background-dark': '#101d22',
+                    'surface-light': '#ffffff',
+                    'surface-dark': '#1a2c33',
+                    'text-main-light': '#111618',
+                    'text-main-dark': '#e2e8f0',
+                    'text-sub-light': '#617f89',
+                    'text-sub-dark': '#94a3b8',
+                    'border-light': '#f0f3f4',
+                    'border-dark': '#2d3f47',
+                }
+            }
+        }
+    }
+    </script>
+    <link href="styles.css" rel="stylesheet"/>
+    <style>
+        @font-face {
+            font-family: 'UrduFont';
+            src: url('fonts/urdu.ttf') format('truetype');
+            font-weight: normal; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'ArabicFont';
+            src: url('fonts/arabic.ttf') format('truetype');
+            font-weight: normal; font-style: normal; font-display: swap;
+        }
+        body { font-family: 'UrduFont', serif; }
+
+        .hero-bg {
+            background: linear-gradient(135deg, #0ea5d6 0%, #13b6ec 40%, #0891b2 100%);
+        }
+        .arabic-quote {
+            font-family: 'ArabicFont', serif;
+            font-size: 1.9rem;
+            line-height: 3.4;
+            letter-spacing: 0.06em;
+            color: #13b6ec;
+        }
+        .card-fade {
+            opacity: 0; transform: translateY(24px);
+            animation: fadeUp 0.5s ease forwards;
+        }
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card-fade:nth-child(1) { animation-delay: 0.05s; }
+        .card-fade:nth-child(2) { animation-delay: 0.15s; }
+        .card-fade:nth-child(3) { animation-delay: 0.25s; }
+        .card-fade:nth-child(4) { animation-delay: 0.35s; }
+        .stat-num { font-family: 'UrduFont', serif; font-size: 2.5rem; font-weight: 700; color: #13b6ec; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark antialiased min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur border-b border-border-light dark:border-border-dark px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <a href="home.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="icon.png" alt="دعا اور شفا" class="w-10 h-10 rounded-lg shrink-0" onerror="this.style.display='none'"/>
+                <h2 class="text-xl font-bold text-text-main-light dark:text-text-main-dark whitespace-nowrap">دعا اور شفا</h2>
+            </a>
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-text-sub-light dark:text-text-sub-dark">
+                <a class="hover:text-primary transition-colors" href="home.html">ہوم</a>
+                <a class="hover:text-primary transition-colors" href="home.html#categories">زمرہ جات</a>
+                <a class="text-primary font-semibold" href="about.html">ہمارے بارے میں</a>
+                <a class="hover:text-primary transition-colors" href="contact.html">رابطہ کریں</a>
+            </nav>
+            <div class="flex items-center gap-2">
+                <button aria-label="Toggle Dark Mode" id="darkModeToggle" class="flex items-center justify-center w-10 h-10 rounded-full bg-background-light dark:bg-background-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors text-text-main-light dark:text-text-main-dark shrink-0">
+                    <span class="material-symbols-outlined">light_mode</span>
+                </button>
+                <a href="login.html" class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white hover:bg-primary-dark transition-colors shrink-0" title="ایڈمن">
+                    <span class="material-symbols-outlined">admin_panel_settings</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+
+        <!-- Hero -->
+        <section class="hero-bg text-white py-20 px-6 text-center">
+            <div class="max-w-3xl mx-auto">
+                <div class="flex items-center justify-center w-20 h-20 rounded-2xl bg-white/15 backdrop-blur mx-auto mb-6">
+                    <span class="material-symbols-outlined text-5xl">auto_stories</span>
+                </div>
+                    <h1 class="text-4xl md:text-5xl font-bold mb-4" style="line-height:2.2;">ہمارے بارے میں</h1>
+                <p class="text-white/80 text-lg" style="font-size:1.25rem; line-height:2.4;">
+                    دعا اور شفا — روحانی علم اور اسلامی حکمت کا ایک قابلِ اعتماد ذریعہ
+                </p>
+            </div>
+        </section>
+
+        <!-- Mission -->
+        <section class="max-w-4xl mx-auto px-6 py-16">
+            <div class="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark p-8 sm:p-12 mb-10 shadow-sm">
+                <div class="text-center mb-8">
+                    <span class="arabic-quote block mb-2">بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ</span>
+                    <p class="text-text-sub-light dark:text-text-sub-dark text-sm">اللہ کے نام سے شروع جو بڑا مہربان نہایت رحم والا ہے</p>
+                </div>
+                <div class="border-t border-border-light dark:border-border-dark pt-8">
+                    <h2 class="text-2xl font-bold text-text-main-light dark:text-text-main-dark mb-4" style="font-size:1.9rem; line-height:2.4;">ہمارا مشن</h2>
+                    <p class="text-text-sub-light dark:text-text-sub-dark mb-4" style="font-size:1.3rem; line-height:2.8; text-align:justify;">
+                        دعا اور شفا ایک اسلامی تعلیمی پلیٹ فارم ہے جو مسلمانوں کو روزانہ کی دعائیں، قرآنی آیات، احادیث نبوی ﷺ اور اسلامی حکمت فراہم کرتا ہے۔ ہمارا مقصد ہر مسلمان کو اپنے رب سے قریب کرنا اور ان کی روزمرہ زندگی کو اسلامی اصولوں کے مطابق گزارنے میں مدد کرنا ہے۔
+                    </p>
+                    <p class="text-text-sub-light dark:text-text-sub-dark" style="font-size:1.3rem; line-height:2.8; text-align:justify;">
+                        ہم اردو زبان میں اسلامی مواد فراہم کرتے ہیں تاکہ پاکستان اور دنیا بھر کے اردو بولنے والے مسلمانوں تک علم کی روشنی پہنچائی جا سکے۔
+                    </p>
+                </div>
+            </div>
+
+            <!-- Values Cards -->
+            <h2 class="text-2xl font-bold text-text-main-light dark:text-text-main-dark mb-6 text-center" style="font-size:1.9rem;">ہماری اقدار</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16">
+                <div class="card-fade bg-surface-light dark:bg-surface-dark rounded-2xl p-6 border border-border-light dark:border-border-dark shadow-sm flex gap-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-2xl">menu_book</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-1" style="font-size:1.3rem; line-height:2.2;">صحیح علم</h3>
+                        <p class="text-text-sub-light dark:text-text-sub-dark" style="font-size:1.1rem; line-height:2.4;">تمام مواد قرآن و سنت کی روشنی میں تیار کیا جاتا ہے۔</p>
+                    </div>
+                </div>
+                <div class="card-fade bg-surface-light dark:bg-surface-dark rounded-2xl p-6 border border-border-light dark:border-border-dark shadow-sm flex gap-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
+                        <span class="material-symbols-outlined text-2xl">volunteer_activism</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-1" style="font-size:1.3rem; line-height:2.2;">خدمتِ خلق</h3>
+                        <p class="text-text-sub-light dark:text-text-sub-dark" style="font-size:1.1rem; line-height:2.4;">ہمارا سارا مواد مفت اور ہر کسی کے لیے قابلِ رسائی ہے۔</p>
+                    </div>
+                </div>
+                <div class="card-fade bg-surface-light dark:bg-surface-dark rounded-2xl p-6 border border-border-light dark:border-border-dark shadow-sm flex gap-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                        <span class="material-symbols-outlined text-2xl">translate</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-1" style="font-size:1.3rem; line-height:2.2;">اردو زبان</h3>
+                        <p class="text-text-sub-light dark:text-text-sub-dark" style="font-size:1.1rem; line-height:2.4;">اردو میں اسلامی مواد تاکہ ہر کوئی آسانی سے سمجھ سکے۔</p>
+                    </div>
+                </div>
+                <div class="card-fade bg-surface-light dark:bg-surface-dark rounded-2xl p-6 border border-border-light dark:border-border-dark shadow-sm flex gap-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                        <span class="material-symbols-outlined text-2xl">update</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-1" style="font-size:1.3rem; line-height:2.2;">روزانہ مواد</h3>
+                        <p class="text-text-sub-light dark:text-text-sub-dark" style="font-size:1.1rem; line-height:2.4;">ہر روز نئی دعائیں، آیات اور اسلامی حکمت کا اضافہ۔</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20 p-8 grid grid-cols-2 sm:grid-cols-3 gap-8 text-center mb-16">
+                <div>
+                    <div class="stat-num">۵۰۰+</div>
+                    <p class="text-text-sub-light dark:text-text-sub-dark text-sm mt-1" style="font-size:1.05rem;">پوسٹس</p>
+                </div>
+                <div>
+                    <div class="stat-num">۱۰+</div>
+                    <p class="text-text-sub-light dark:text-text-sub-dark text-sm mt-1" style="font-size:1.05rem;">زمرہ جات</p>
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                    <div class="stat-num">روزانہ</div>
+                    <p class="text-text-sub-light dark:text-text-sub-dark text-sm mt-1" style="font-size:1.05rem;">نئی اپ ڈیٹ</p>
+                </div>
+            </div>
+
+            <!-- Dedication Section -->
+            <div class="mt-16 text-center border-t border-border-light dark:border-border-dark pt-12">
+                <p class="text-text-sub-light dark:text-text-sub-dark font-medium uppercase tracking-widest text-sm mb-4">Dedication</p>
+                <p class="text-xl md:text-2xl font-bold text-text-main-light dark:text-text-main-dark italic" style="line-height:1.8;">
+                    "THIS WEBSITE IS DEDICATED TO BELOVED PARENTS, AND MUHAMMAD ANZAL, ZUKHRUF, AND ALL FAMILY MEMBERS"
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark mt-auto">
+        <div class="max-w-7xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">mosque</span>
+                <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark">دعا اور شفا</span>
+            </div>
+            <p class="text-sm text-text-sub-light dark:text-text-sub-dark">© 2024 دعا اور شفا۔ جملہ حقوق محفوظ ہیں</p>
+            <nav class="flex gap-4 text-sm text-text-sub-light dark:text-text-sub-dark">
+                <a href="about.html" class="hover:text-primary transition-colors">ہمارے بارے میں</a>
+                <a href="contact.html" class="hover:text-primary transition-colors">رابطہ کریں</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>دعا اور شفا - روزانہ حکمت</title>
+    <link rel="icon" href="icon.png"/>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#13b6ec',
+                        'primary-dark': '#0ea5d6',
+                        'background-light': '#f6f8f8',
+                        'background-dark': '#101d22',
+                        'surface-light': '#ffffff',
+                        'surface-dark': '#1a2c33',
+                        'text-main-light': '#111618',
+                        'text-main-dark': '#e2e8f0',
+                        'text-sub-light': '#617f89',
+                        'text-sub-dark': '#94a3b8',
+                        'border-light': '#f0f3f4',
+                        'border-dark': '#2d3f47',
+                    },
+                    fontFamily: {
+                        display: ['UrduFont', 'Noto Nastaliq Urdu', 'serif'],
+                        urdu: ['UrduFont', 'Noto Nastaliq Urdu', 'serif'],
+                        arabic: ['ArabicFont', 'Noto Naskh Arabic', 'serif']
+                    },
+                    fontSize: {
+                        'urdu': ['1.35rem', { lineHeight: '2.6' }],
+                        'urdu-lg': ['1.55rem', { lineHeight: '2.8' }],
+                        'urdu-xl': ['1.75rem', { lineHeight: '3' }],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="styles.css" rel="stylesheet" />
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-urdu antialiased min-h-screen flex flex-col transition-colors duration-200">
+    <header
+        class="sticky top-0 z-50 w-full bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur border-b border-border-light dark:border-border-dark px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <a href="home.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="icon.png" alt="دعا اور شفا" class="w-10 h-10 rounded-lg shrink-0" onerror="this.style.display='none'"/>
+                <h2
+                    class="text-xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark whitespace-nowrap">
+                    دعا اور شفا</h2>
+            </a>
+            <div class="hidden lg:flex flex-1 max-w-md mx-6 relative">
+                <span
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-text-sub-light dark:text-text-sub-dark">
+                    <span class="material-symbols-outlined">search</span>
+                </span>
+                <input id="searchInput"
+                    class="w-full pr-10 pl-4 py-2 rounded-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm transition-all"
+                    placeholder="تلاش کریں..." type="text" />
+            </div>
+            <nav
+                class="hidden md:flex items-center gap-6 text-sm font-medium text-text-sub-light dark:text-text-sub-dark whitespace-nowrap">
+                <a class="hover:text-primary transition-colors" href="home.html">ہوم</a>
+                <button class="hover:text-primary transition-colors category-nav-btn" data-category="all">سب</button>
+                <button class="hover:text-primary transition-colors category-nav-btn"
+                    data-category="quran">قرآن</button>
+                <button class="hover:text-primary transition-colors category-nav-btn"
+                    data-category="hadith">حدیث</button>
+                <button class="hover:text-primary transition-colors category-nav-btn"
+                    data-category="dua">دعائیں</button>
+                <button class="hover:text-primary transition-colors category-nav-btn"
+                    data-category="history">تاریخ</button>
+                <button class="hover:text-primary transition-colors category-nav-btn"
+                    data-category="ethics">اخلاقیات</button>
+            </nav>
+            <div class="flex items-center gap-2">
+                <button aria-label="Toggle Dark Mode"
+                    class="flex items-center justify-center w-10 h-10 rounded-full bg-background-light dark:bg-background-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors text-text-main-light dark:text-text-main-dark shrink-0"
+                    id="darkModeToggle">
+                    <span class="material-symbols-outlined">light_mode</span>
+                </button>
+                <a href="login.html"
+                    class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white hover:bg-primary-dark transition-colors shrink-0"
+                    title="ایڈمن">
+                    <span class="material-symbols-outlined">admin_panel_settings</span>
+                </a>
+            </div>
+        </div>
+    </header>
+    <main class="flex-grow w-full max-w-7xl mx-auto px-6 py-8">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+            <div class="w-full md:w-auto">
+                <div class="flex flex-col md:flex-row md:items-center justify-between w-full mb-3">
+                    <h1
+                        class="text-3xl md:text-4xl font-bold text-text-main-light dark:text-text-main-dark tracking-tight">
+                    </h1>
+                    <div
+                        class="flex flex-col md:flex-row gap-1 md:gap-4 text-sm text-text-sub-light dark:text-text-sub-dark mt-2 md:mt-0">
+                        <span class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">calendar_month</span>
+                            <span id="gregorianDate"></span> (عیسوی)
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">nights_stay</span>
+                            <span id="hijriDate"></span> (ہجری)
+                        </span>
+                    </div>
+                </div>
+                <p class="text-text-sub-light dark:text-text-sub-dark text-lg"></p>
+            </div>
+            <div class="flex flex-wrap gap-2 md:self-end">
+                <button
+                    class="category-btn px-4 py-2 rounded-full bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary-dark transition-colors"
+                    data-category="all">سب</button>
+                <button
+                    class="category-btn px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-medium hover:border-primary hover:text-primary transition-colors"
+                    data-category="quran">قرآن</button>
+                <button
+                    class="category-btn px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-medium hover:border-primary hover:text-primary transition-colors"
+                    data-category="hadith">حدیث</button>
+                <button
+                    class="category-btn px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-medium hover:border-primary hover:text-primary transition-colors"
+                    data-category="dua">دعائیں</button>
+                <button
+                    class="category-btn px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-medium hover:border-primary hover:text-primary transition-colors"
+                    data-category="history">تاریخ</button>
+                <button
+                    class="category-btn px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-medium hover:border-primary hover:text-primary transition-colors"
+                    data-category="ethics">اخلاقیات</button>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="postsContainer">
+            <!-- Posts will be loaded dynamically -->
+        </div>
+        <div class="flex items-center justify-center mt-12 gap-2" dir="ltr">
+            <a aria-label="اگلا صفحہ"
+                class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-light dark:bg-surface-dark text-text-main-light dark:text-text-main-dark border border-border-light dark:border-border-dark hover:border-primary hover:text-primary transition-colors"
+                href="#">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </a>
+            <a class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-bold shadow-sm"
+                href="#">۱</a>
+            <a class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-light dark:bg-surface-dark text-text-main-light dark:text-text-main-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors"
+                href="#">۲</a>
+            <a class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-light dark:bg-surface-dark text-text-main-light dark:text-text-main-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors"
+                href="#">۳</a>
+            <span
+                class="flex items-center justify-center w-10 h-10 text-text-sub-light dark:text-text-sub-dark">...</span>
+            <a class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-light dark:bg-surface-dark text-text-main-light dark:text-text-main-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors"
+                href="#">۱۰</a>
+            <a aria-label="پچھلا صفحہ"
+                class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-light dark:bg-surface-dark text-text-main-light dark:text-text-main-dark border border-border-light dark:border-border-dark hover:border-primary hover:text-primary transition-colors"
+                href="#">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </a>
+        </div>
+    </main>
+    <footer class="bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark mt-auto">
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="md:col-span-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="material-symbols-outlined text-primary text-2xl">mosque</span>
+                        <h2 class="text-lg font-bold text-text-main-light dark:text-text-main-dark">دعا اور شفا</h2>
+                    </div>
+                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark mb-4">ہر روز علم اور حکمت کی روشنی
+                        بانٹنا۔ ہمارے سیکھنے والوں کی برادری میں شامل ہوں۔</p>
+                    <div class="flex gap-4">
+                        <a aria-label="Facebook"
+                            class="text-text-sub-light dark:text-text-sub-dark hover:text-primary transition-colors"
+                            href="#">
+                            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path clip-rule="evenodd"
+                                    d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+                                    fill-rule="evenodd"></path>
+                            </svg>
+                        </a>
+                        <a aria-label="Twitter"
+                            class="text-text-sub-light dark:text-text-sub-dark hover:text-primary transition-colors"
+                            href="#">
+                            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84">
+                                </path>
+                            </svg>
+                        </a>
+                        <a aria-label="Instagram"
+                            class="text-text-sub-light dark:text-text-sub-dark hover:text-primary transition-colors"
+                            href="#">
+                            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path clip-rule="evenodd"
+                                    d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772 4.902 4.902 0 011.772-1.153c.636-.247 1.363-.416 2.427-.465C9.673 2.013 10.03 2 12.315 2zm-1.028 1.488c-2.584 0-2.91.01-3.955.058-.992.046-1.532.2-1.898.34-.48.187-.822.41-1.176.764-.354.354-.577.696-.764 1.176-.14.366-.294.906-.34 1.898-.048 1.045-.058 1.371-.058 3.955v1.028c0 2.584.01 2.91.058 3.955.046.992.2 1.532.34 1.898.187.48.41.822.764 1.176.354.354.696.577 1.176.764.366.14.906.294 1.898.34 1.045.048 1.371.058 3.955.058h1.028c2.584 0 2.91-.01 3.955-.058.992-.046 1.532-.2 1.898-.34.48-.187.822-.41 1.176-.764.354-.354.577-.696.764-1.176.14-.366.294-.906.34-1.898.048-1.045.058-1.371.058-3.955V9.415c0-2.584-.01-2.91-.058-3.955-.046-.992-.2-1.532-.34-1.898-.187-.48-.41-.822-.764-1.176-.354-.354-.696-.577-1.176-.764-.366-.14-.906-.294-1.898-.34-1.045-.048-1.371-.058-3.955-.058H11.287zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.488a3.648 3.648 0 100 7.296 3.648 3.648 0 000-7.296zM15.895 5.25a1.096 1.096 0 110 2.192 1.096 1.096 0 010-2.192z"
+                                    fill-rule="evenodd"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h3
+                        class="text-sm font-bold text-text-main-light dark:text-text-main-dark uppercase tracking-wider mb-4">
+                        دریافت کریں</h3>
+                    <ul class="space-y-3 text-sm text-text-sub-light dark:text-text-sub-dark">
+                        <li><a class="hover:text-primary transition-colors" href="home.html">ہوم</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="#categories">زمرہ جات</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="about.html">ہمارے بارے میں</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="contact.html">رابطہ کریں</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3
+                        class="text-sm font-bold text-text-main-light dark:text-text-main-dark uppercase tracking-wider mb-4">
+                        کمپنی</h3>
+                    <ul class="space-y-3 text-sm text-text-sub-light dark:text-text-sub-dark">
+                        <li><a class="hover:text-primary transition-colors" href="about.html">ہمارے بارے میں</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="contact.html">رابطہ کریں</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="login.html">ایڈمن لاگ ان</a></li>
+                        <li><a class="hover:text-primary transition-colors" href="#privacy">رازداری کی پالیسی</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3
+                        class="text-sm font-bold text-text-main-light dark:text-text-main-dark uppercase tracking-wider mb-4">
+                        اپ ڈیٹ رہیں</h3>
+                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark mb-4">تازہ ترین پوسٹس براہ راست اپنے
+                        ان باکس میں روزانہ حاصل کریں۔</p>
+                    <form class="flex flex-col gap-2">
+                        <input
+                            class="w-full px-4 py-2 rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm transition-all"
+                            placeholder="اپنا ای میل درج کریں" required="" type="email" />
+                        <button
+                            class="w-full px-4 py-2 rounded-lg bg-primary text-white font-medium hover:bg-primary-dark transition-colors text-sm"
+                            type="submit">سبسکرائب کریں</button>
+                    </form>
+                </div>
+            </div>
+            <div
+                class="border-t border-border-light dark:border-border-dark mt-12 pt-8 text-center text-sm text-text-sub-light dark:text-text-sub-dark">
+                © ۲۰۲۳ دعا اور شفا۔ جملہ حقوق محفوظ ہیں۔
+            </div>
+        </div>
+    </footer>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // ---- Mock Post Data (inline fallback) ----
+        var MOCK_POSTS = [
+            { id: '1', title: 'پہلی پوسٹ - دعائے صبح', content: 'اللہ کے ذکر سے دلوں کو سکون ملتا ہے۔ یہ صبح کی دعا ہے جو ہمیں اللہ سے قریب کرتی ہے۔', excerpt: 'اللہ کے ذکر سے دلوں کو سکون ملتا ہے۔', status: 'published', category_id: '1', created_at: new Date(Date.now() - 86400000).toISOString(), categoryKey: 'dua', categories: { name: 'دعائیں' } },
+            { id: '2', title: 'قرآن کریم - سورۃ الفاتحہ', content: 'قرآن کریم ہدایت کا سرچشمہ ہے۔ سورۃ الفاتحہ قرآن کا آغاز ہے اور نماز کی بنیاد ہے۔', excerpt: 'قرآن کریم ہدایت کا سرچشمہ ہے۔', status: 'published', category_id: '2', created_at: new Date(Date.now() - 43200000).toISOString(), categoryKey: 'quran', categories: { name: 'قرآن' } },
+            { id: '3', title: 'حدیث نبوی ﷺ', content: 'حدیث رسول ﷺ ہماری راہنمائی کرتی ہے۔ رسول اللہ ﷺ نے فرمایا: مسلمان وہ ہے جس کے ہاتھ اور زبان سے دوسرے مسلمان محفوظ رہیں۔', excerpt: 'حدیث رسول ﷺ ہماری راہنمائی کرتی ہے۔', status: 'published', category_id: '3', created_at: new Date(Date.now() - 21600000).toISOString(), categoryKey: 'hadith', categories: { name: 'حدیث' } },
+            { id: '4', title: 'اخلاقیات اسلام', content: 'اسلامی اخلاقیات ہمیں بہتر انسان بناتی ہیں۔ صبر، شکر اور صدقے کی اہمیت۔', excerpt: 'اسلامی اخلاقیات ہمیں بہتر انسان بناتی ہیں۔', status: 'published', category_id: '4', created_at: new Date().toISOString(), categoryKey: 'ethics', categories: { name: 'اخلاقیات' } }
+        ];
+
+        // ---- Render Posts ----
+        function renderPosts(posts) {
+            var container = document.getElementById('postsContainer');
+            if (!container) { console.error('postsContainer not found!'); return; }
+            container.innerHTML = '';
+            if (!posts || posts.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-text-sub-light dark:text-text-sub-dark">کوئی پوسٹ نہیں ملی۔</p></div>';
+                return;
+            }
+            posts.forEach(function (post) {
+                var categoryName = (post.categories && post.categories.name) ? post.categories.name : 'عام';
+                var categoryKey = post.categoryKey || post.category || '';
+                // Map category names to keys if not provided
+                if (!categoryKey && categoryName) {
+                    var nameToKey = { 'دعائیں': 'dua', 'قرآن': 'quran', 'حدیث': 'hadith', 'تاریخ': 'history', 'اخلاقیات': 'ethics' };
+                    categoryKey = nameToKey[categoryName] || categoryName.toLowerCase();
+                }
+                var createdAt = new Date(post.created_at).toLocaleDateString('ur-PK');
+                var readingTime = Math.ceil(((post.content || '').length) / 500) || 3;
+                var a = document.createElement('a');
+                a.href = 'post.html?id=' + post.id;
+                a.className = 'group bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-border-light dark:border-border-dark flex flex-col post-item';
+                a.dataset.category = categoryKey;
+                a.innerHTML =
+                    '<div class="relative w-full aspect-video overflow-hidden bg-gray-200 dark:bg-gray-700">' +
+                    (post.image_url ?
+                        '<img src="' + post.image_url + '" alt="' + post.title + '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\'">' : '') +
+                    '<div class="w-full h-full flex items-center justify-center bg-primary/10" ' + (post.image_url ? 'style="display:none"' : '') + '>' +
+                    '<span class="material-symbols-outlined text-4xl text-primary">article</span>' +
+                    '</div>' +
+                    '<span class="absolute top-3 right-3 bg-white/90 dark:bg-black/80 backdrop-blur text-xs font-semibold px-2 py-1 rounded text-primary">' + categoryName + '</span>' +
+                    '</div>' +
+                    '<div class="p-4 flex flex-col flex-grow">' +
+                    '<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-2 line-clamp-2 group-hover:text-primary transition-colors">' + post.title + '</h3>' +
+                    '<p class="text-sm text-text-sub-light dark:text-text-sub-dark line-clamp-3 mb-4 flex-grow">' + (post.excerpt || post.content.substring(0, 120) + '...') + '</p>' +
+                    '<div class="flex items-center justify-between pt-3 border-t border-border-light dark:border-border-dark text-xs text-text-sub-light dark:text-text-sub-dark">' +
+                    '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-base">calendar_today</span> ' + createdAt + '</span>' +
+                    '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-base">schedule</span> ' + readingTime + ' منٹ</span>' +
+                    '</div>' +
+                    '</div>';
+                container.appendChild(a);
+            });
+            console.log('Rendered', posts.length, 'posts');
+        }
+
+        // ---- Load and Render ----
+        function loadPosts() {
+            console.log('loadPosts called');
+            // Try app.js Posts API first
+            if (typeof Posts !== 'undefined' && typeof Posts.getAll === 'function') {
+                Posts.getAll('published').then(function (result) {
+                    var data = result.data || [];
+                    console.log('Posts from API:', data.length);
+                    if (data.length > 0) {
+                        renderPosts(data);
+                    } else {
+                        renderPosts(MOCK_POSTS);
+                    }
+                }).catch(function (err) {
+                    console.warn('Posts.getAll error, using mock:', err);
+                    renderPosts(MOCK_POSTS);
+                });
+            } else {
+                console.log('Posts API not available, using inline mock');
+                renderPosts(MOCK_POSTS);
+            }
+        }
+
+        // ---- Category Filter ----
+        function setupFilters() {
+            document.querySelectorAll('.category-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var category = this.dataset.category;
+                    // Update URL without reload
+                    if (category === 'all') {
+                        var url = new URL(window.location.href);
+                        url.searchParams.delete('category');
+                        window.history.replaceState({}, '', url);
+                    } else {
+                        var url = new URL(window.location.href);
+                        url.searchParams.set('category', category);
+                        window.history.replaceState({}, '', url);
+                    }
+                    filterPostsByCategory(category);
+                    // Update active button
+                    document.querySelectorAll('.category-btn').forEach(function (b) {
+                        b.className = 'category-btn px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm font-medium hover:border-primary hover:text-primary transition-colors';
+                    });
+                    this.className = 'category-btn px-4 py-2 rounded-full bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary-dark transition-colors';
+                });
+            });
+
+            // Handle search
+            var searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    var term = this.value.toLowerCase();
+                    document.querySelectorAll('.post-item').forEach(function (post) {
+                        post.style.display = post.textContent.toLowerCase().indexOf(term) !== -1 ? 'flex' : 'none';
+                    });
+                });
+            }
+
+            // Check URL for category parameter on load
+            var urlParams = new URLSearchParams(window.location.search);
+            var categoryParam = urlParams.get('category');
+            if (categoryParam) {
+                // Simulate click on the matching category button
+                document.querySelectorAll('.category-btn').forEach(function (btn) {
+                    if (btn.dataset.category === categoryParam) {
+                        btn.click();
+                    }
+                });
+            }
+        }
+
+        // ---- Filter Posts by Category ----
+        function filterPostsByCategory(category) {
+            document.querySelectorAll('.post-item').forEach(function (post) {
+                post.style.display = (category === 'all' || post.dataset.category === category) ? 'flex' : 'none';
+            });
+        }
+
+        // ---- Dates ----
+        function updateDates() {
+            try {
+                // Use Pakistan timezone
+                const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Karachi' }));
+                console.log('Updating dates for Pakistan time:', now);
+
+                const gregEl = document.getElementById('gregorianDate');
+                const hijriEl = document.getElementById('hijriDate');
+
+                if (!gregEl || !hijriEl) {
+                    console.warn('Date elements not found:', { gregEl, hijriEl });
+                    return;
+                }
+
+                // Gregorian Date in Urdu with Pakistan timezone
+                try {
+                    const gregFormatter = new Intl.DateTimeFormat('ur-PK', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        timeZone: 'Asia/Karachi'
+                    });
+                    gregEl.textContent = gregFormatter.format(now);
+                } catch (e) {
+                    console.warn('Urdu Gregorian formatter failed, using default:', e);
+                    gregEl.textContent = now.toLocaleDateString('ur-PK', { timeZone: 'Asia/Karachi' });
+                }
+
+                // Hijri Date with Pakistan timezone
+                try {
+                    const hijriOptions = {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        timeZone: 'Asia/Karachi'
+                    };
+
+                    // Try Urdu with Islamic calendar
+                    let hijriString = now.toLocaleDateString('ur-PK-u-ca-islamic-civil', hijriOptions);
+
+                    // Detect if it fallbacks to Gregorian (contains Gregorian month name or current year)
+                    const gregMonths = ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر'];
+                    const hasGregMonth = gregMonths.some(m => hijriString.includes(m));
+                    const hasGregYear = hijriString.includes(now.getFullYear().toString());
+
+                    if (hasGregMonth || hasGregYear) {
+                        console.log('Urdu Hijri formatting not fully supported, using Arabic locale for values');
+                        // Fallback to ar-SA for correct Hijri digits/months
+                        hijriString = now.toLocaleDateString('ar-SA-u-ca-islamic-civil', hijriOptions);
+                    }
+
+                    hijriEl.textContent = hijriString;
+                } catch (e) {
+                    console.warn('Hijri formatter failed:', e);
+                    hijriEl.textContent = '---';
+                }
+            } catch (e) {
+                console.error('Error in updateDates:', e);
+            }
+        }
+
+        // ---- Initialize (DOM already loaded at end of body) ----
+        updateDates();
+        loadPosts();
+        setupFilters();
+
+        // ---- Handle Header Category Navigation Buttons ----
+        document.querySelectorAll('.category-nav-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var category = this.dataset.category;
+                var url = new URL(window.location.href);
+                if (category === 'all') {
+                    url.searchParams.delete('category');
+                } else {
+                    url.searchParams.set('category', category);
+                }
+                window.location.href = url.toString();
+            });
+        });
+    </script>
+</body>
+
+</html>

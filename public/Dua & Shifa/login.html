@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ایڈمن ڈیش بورڈ - دعا اور شفا</title>
+    <link rel="icon" href="icon.png"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wg,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+ tailwind.config = {
+     darkMode: 'class',
+     theme: {
+         extend: {
+             colors: {
+                 primary: '#13b6ec',
+                 'primary-dark': '#0ea5d6',
+                 'background-light': '#f6f8f8',
+                 'background-dark': '#101d22',
+                 'surface-light': '#ffffff',
+                 'surface-dark': '#1a2c33',
+                 'text-main-light': '#111618',
+                 'text-main-dark': '#e2e8f0',
+                 'text-sub-light': '#617f89',
+                 'text-sub-dark': '#94a3b8',
+                 'border-light': '#f0f3f4',
+                 'border-dark': '#2d3f47',
+             },
+              fontFamily: {
+                  display: ['UrduFont', 'Noto Nastaliq Urdu', 'serif'],
+                 urdu: ['UrduFont', 'Noto Nastaliq Urdu', 'serif'],
+                 arabic: ['ArabicFont', 'Noto Naskh Arabic', 'serif']
+              },
+             fontSize: {
+                 'urdu': ['1.35rem', { lineHeight: '2.6' }],
+                 'urdu-lg': ['1.55rem', { lineHeight: '2.8' }],
+                 'urdu-xl': ['1.75rem', { lineHeight: '3' }],
+             }
+         }
+     }
+ }
+</script>
+    <link href="styles.css" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-urdu antialiased min-h-screen flex flex-col transition-colors duration-200">
+    
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur border-b border-border-light dark:border-border-dark px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <a href="home.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="icon.png" alt="دعا اور شفا" class="w-10 h-10 rounded-lg shrink-0" onerror="this.style.display='none'"/>
+                <h2 class="text-xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark whitespace-nowrap">دعا اور شفا</h2>
+            </a>
+            <div class="flex items-center gap-2">
+                <button aria-label="Toggle Dark Mode" class="flex items-center justify-center w-10 h-10 rounded-full bg-background-light dark:bg-background-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors text-text-main-light dark:text-text-main-dark shrink-0" id="darkModeToggle">
+                    <span class="material-symbols-outlined">light_mode</span>
+                </button>
+                <button onclick="logout()" id="logoutButton" class="flex items-center gap-2 rounded-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 text-sm font-bold shadow-sm transition-all shrink-0" title="لاگ آؤٹ">
+                    <span class="material-symbols-outlined text-lg">logout</span>
+                    <span>لاگ آؤٹ</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+
+
+    <!-- Login Form -->
+    <div id="loginForm" class="hidden flex-grow w-full max-w-md mx-auto px-6 py-12">
+        <div class="w-full bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark p-6">
+            <h1 class="text-2xl font-bold text-text-main-light dark:text-text-main-dark mb-4 text-center">لاگ ان</h1>
+            <form id="authForm" class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">ای میل</label>
+                    <input id="email" type="email" required class="rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3" placeholder="ای میل درج کریں"/>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">پاس ورڈ</label>
+                    <input id="password" type="password" required class="rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3" placeholder="پاس ورڈ درج کریں"/>
+                </div>
+                <button type="submit" id="loginButton" class="rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white hover:bg-primary-dark shadow-lg shadow-primary/25 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                    <span>لاگ ان</span>
+                </button>
+            </form>
+            <div id="loginError" class="text-red-500 text-sm mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="hidden flex-grow w-full max-w-6xl mx-auto px-6 py-12">
+        
+        <!-- Welcome Section -->
+        <div class="text-center mb-12">
+            <div class="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mx-auto mb-4">
+                <span class="material-symbols-outlined text-5xl">dashboard</span>
+            </div>
+            <h1 class="text-3xl font-bold text-text-main-light dark:text-text-main-dark mb-2">ایڈمن ڈیش بورڈ</h1>
+            <p class="text-text-sub-light dark:text-text-sub-dark">اپنے زمرہ جات اور پوسٹس کا انتظام کریں</p>
+        </div>
+
+        <!-- Quick Links Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            
+            <!-- Create Post -->
+            <a href="create_post.html" class="block p-6 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark hover:border-primary hover:shadow-lg transition-all group">
+                <div class="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl">add_circle</span>
+                </div>
+                <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-1">نئی پوسٹ بنائیں</h3>
+                <p class="text-sm text-text-sub-light dark:text-text-sub-dark">نیا مضمون یا دعا شامل کریں</p>
+            </a>
+
+            <!-- All Posts -->
+            <a href="post_dashboard.html" class="block p-6 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark hover:border-primary hover:shadow-lg transition-all group">
+                <div class="flex items-center justify-center w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 mb-4 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl">article</span>
+                </div>
+                <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-1">پوسٹس</h3>
+                <p class="text-sm text-text-sub-light dark:text-text-sub-dark">تمام پوسٹس دیکھیں، ترمیم اور حذف کریں</p>
+            </a>
+
+            <!-- Create Category -->
+            <a href="category_dashboard.html" class="block p-6 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark hover:border-primary hover:shadow-lg transition-all group">
+                <div class="flex items-center justify-center w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 mb-4 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl">category</span>
+                </div>
+                <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-1">زمرہ جات</h3>
+                <p class="text-sm text-text-sub-light dark:text-text-sub-dark">زمرہ جات بنائیں، ترمیم اور حذف کریں</p>
+            </a>
+
+            <!-- View Site -->
+            <a href="home.html" class="block p-6 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark hover:border-primary hover:shadow-lg transition-all group">
+                <div class="flex items-center justify-center w-14 h-14 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 mb-4 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl">language</span>
+                </div>
+                <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-1">ویب سائٹ دیکھیں</h3>
+                <p class="text-sm text-text-sub-light dark:text-text-sub-dark">اپنی ویب سائٹ کا پیش نظر</p>
+            </a>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark p-6">
+            <h2 class="text-xl font-bold text-text-main-light dark:text-text-main-dark mb-6">اعدادوشمار</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-4 rounded-lg bg-background-light dark:bg-background-dark">
+                    <span id="totalPosts" class="text-3xl font-bold text-primary">0</span>
+                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">کل پوسٹس</p>
+                </div>
+                <div class="text-center p-4 rounded-lg bg-background-light dark:bg-background-dark">
+                    <span id="publishedPosts" class="text-3xl font-bold text-green-600">0</span>
+                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">شائع شدہ</p>
+                </div>
+                <div class="text-center p-4 rounded-lg bg-background-light dark:bg-background-dark">
+                    <span id="draftPosts" class="text-3xl font-bold text-orange-600">0</span>
+                    <p class="text-sm text-text-sub-light dark:text-text-sub-dark mt-1">ڈرافٹ</p>
+                </div>
+                <div class="text-center p-4 rounded-lg bg-background-light dark:bg-background-dark">
+                    <span id="totalCategories" class="text-3xl font-bold text-purple-600">0</span>
+                    <a class="hover:text-primary transition-colors" href="category_dashboard.html">زمرہ جات</a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="hidden bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark mt-auto">
+        <div class="max-w-7xl mx-auto px-6 py-8">
+            <div class="text-center text-sm text-text-sub-light dark:text-text-sub-dark">
+                <p>© 2024 دعا اور شفا۔ جملہ حقوق محفوظ ہیں</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Initialize theme
+        document.addEventListener('DOMContentLoaded', function() {
+            Theme.init();
+        });
+
+        // Initialize on page load and show appropriate UI
+        async function checkAuth() {
+            const user = await waitForBackend();
+            const loginForm = document.getElementById('loginForm');
+            const main = document.querySelector('main');
+            const footer = document.querySelector('footer');
+            const logoutButton = document.getElementById('logoutButton');
+
+            if (user) {
+                loginForm.classList.add('hidden');
+                main.classList.remove('hidden');
+                footer.classList.remove('hidden');
+                logoutButton.classList.remove('hidden');
+                loadStats();
+            } else {
+                loginForm.classList.remove('hidden');
+                main.classList.add('hidden');
+                footer.classList.add('hidden');
+                logoutButton.classList.add('hidden');
+            }
+        }
+
+        // Login form handler
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('loginError');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            UI.setButtonLoading(submitBtn);
+            const { data, error } = await Auth.login(email, password);
+            UI.resetButton(submitBtn);
+
+            if (error) {
+                loginError.textContent = error.message;
+                loginError.classList.remove('hidden');
+            } else {
+                loginError.classList.add('hidden');
+                checkAuth(); // Re-check instead of reload
+            }
+        });
+
+        // Initialize on page load
+        checkAuth();
+
+        // Load stats
+        async function loadStats() {
+            try {
+                // Posts stats
+                const { data: posts, error: postsError } = await Posts.getStats();
+                if (!postsError && posts) {
+                    document.getElementById('totalPosts').textContent = posts.total || 0;
+                    document.getElementById('publishedPosts').textContent = posts.published || 0;
+                    document.getElementById('draftPosts').textContent = posts.draft || 0;
+                }
+
+                // Categories count
+                const { data: categories, error: catError } = await Categories.getAll();
+                if (!catError && categories) {
+                    document.getElementById('totalCategories').textContent = categories.length || 0;
+                }
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('کیا آپ لاگ آؤٹ کرنا چاہتے ہیں؟')) {
+                Auth.logout();
+            }
+        }
+    </script>
+</body>
+</html>

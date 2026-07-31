@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>پوسٹ - دعا اور شفا</title>
+    <meta name="description" content="دعا اور شفا - روزانہ کی دعائیں، قرآنی آیات اور اسلامی حکمت"/>
+    <link rel="icon" href="icon.png"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#13b6ec',
+                    'primary-dark': '#0ea5d6',
+                    'background-light': '#f6f8f8',
+                    'background-dark': '#101d22',
+                    'surface-light': '#ffffff',
+                    'surface-dark': '#1a2c33',
+                    'text-main-light': '#111618',
+                    'text-main-dark': '#e2e8f0',
+                    'text-sub-light': '#617f89',
+                    'text-sub-dark': '#94a3b8',
+                    'border-light': '#f0f3f4',
+                    'border-dark': '#2d3f47',
+                },
+                fontFamily: {
+                    display: ['UrduFont', 'serif'],
+                    urdu: ['UrduFont', 'serif'],
+                    arabic: ['ArabicFont', 'serif']
+                }
+            }
+        }
+    }
+    </script>
+    <link href="styles.css" rel="stylesheet"/>
+    <style>
+        /* ---- Local Font Declarations ---- */
+        @font-face {
+            font-family: 'UrduFont';
+            src: url('fonts/urdu.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'ArabicFont';
+            src: url('fonts/arabic.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* ---- Base Reading Typography ---- */
+        body {
+            font-family: 'UrduFont', serif;
+            font-size: 1.15rem;
+            line-height: 2.4;
+        }
+
+        /* ---- Post Reading Body ---- */
+        #postBody {
+            font-family: 'UrduFont', 'Noto Nastaliq Urdu', serif;
+            font-size: 1.45rem;
+            line-height: 3;
+            letter-spacing: 0.02em;
+            text-align: justify;
+            color: inherit;
+        }
+
+        /* Paragraphs in post body */
+        #postBody p {
+            font-family: 'UrduFont', 'Noto Nastaliq Urdu', serif;
+            font-size: 1.45rem;
+            line-height: 3;
+            margin-bottom: 0.8em;
+            text-align: justify;
+        }
+
+        /* Arabic passages inside post */
+        #postBody .arabic,
+        #postBody [lang="ar"],
+        .arabic-verse {
+            font-family: 'ArabicFont', 'Noto Naskh Arabic', serif;
+            font-size: 1.75rem;
+            line-height: 3.4;
+            letter-spacing: 0.06em;
+            direction: rtl;
+            text-align: center;
+            color: #0ea5d6;
+            display: block;
+            margin: 1.5em auto;
+            padding: 1rem 1.5rem;
+            background: rgba(19, 182, 236, 0.05);
+            border-right: 4px solid #13b6ec;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Inline Arabic within Urdu text */
+        #postBody .arabic-inline {
+            font-family: 'ArabicFont', 'Noto Naskh Arabic', serif;
+            font-size: 1.6rem;
+            color: #0ea5d6;
+        }
+
+        /* Post title */
+        #postTitle {
+            font-family: 'UrduFont', 'Noto Nastaliq Urdu', serif;
+            font-size: 2.2rem;
+            line-height: 2.6;
+            font-weight: 700;
+        }
+
+        /* Progress bar */
+        #readingProgress {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(to left, #13b6ec, #0ea5d6);
+            z-index: 100;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* Smooth scroll indicator on article */
+        article {
+            scroll-margin-top: 80px;
+        }
+
+        /* Category badge */
+        .category-badge {
+            font-family: 'UrduFont', 'Noto Nastaliq Urdu', serif;
+            font-size: 0.85rem;
+            padding: 0.3rem 0.85rem;
+            border-radius: 999px;
+            background: rgba(19,182,236,0.12);
+            color: #13b6ec;
+            display: inline-block;
+        }
+
+        /* Share button */
+        .share-btn {
+            transition: transform 0.15s ease, background 0.2s ease;
+        }
+        .share-btn:hover {
+            transform: scale(1.08);
+        }
+
+        /* Loading shimmer */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .shimmer {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        .dark .shimmer {
+            background: linear-gradient(90deg, #1a2c33 25%, #243740 50%, #1a2c33 75%);
+            background-size: 200% 100%;
+        }
+
+        @media (max-width: 640px) {
+            #postTitle { font-size: 1.7rem; line-height: 2.4; }
+            #postBody { font-size: 1.25rem; line-height: 2.8; }
+            #postBody p { font-size: 1.25rem; line-height: 2.8; }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-urdu antialiased min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Reading Progress Bar -->
+    <div id="readingProgress"></div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur border-b border-border-light dark:border-border-dark px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <a href="home.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="icon.png" alt="دعا اور شفا" class="w-10 h-10 rounded-lg shrink-0" onerror="this.style.display='none'"/>
+                <h2 class="text-xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark whitespace-nowrap">دعا اور شفا</h2>
+            </a>
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-text-sub-light dark:text-text-sub-dark whitespace-nowrap">
+                <a class="hover:text-primary transition-colors" href="home.html">ہوم</a>
+                <a class="hover:text-primary transition-colors" href="home.html#categories">زمرہ جات</a>
+                <a class="hover:text-primary transition-colors" href="about.html">ہمارے بارے میں</a>
+                <a class="hover:text-primary transition-colors" href="contact.html">رابطہ کریں</a>
+            </nav>
+            <div class="flex items-center gap-2">
+                <button aria-label="Toggle Dark Mode" class="flex items-center justify-center w-10 h-10 rounded-full bg-background-light dark:bg-background-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors text-text-main-light dark:text-text-main-dark shrink-0" id="darkModeToggle">
+                    <span class="material-symbols-outlined">light_mode</span>
+                </button>
+                <a href="login.html" class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white hover:bg-primary-dark transition-colors shrink-0" title="ایڈمن">
+                    <span class="material-symbols-outlined">admin_panel_settings</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
+
+        <!-- Back Link -->
+        <a href="home.html" class="inline-flex items-center gap-2 text-text-sub-light dark:text-text-sub-dark hover:text-primary transition-colors mb-8 text-base">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <span>واپس جائیں</span>
+        </a>
+
+        <!-- Loading Skeleton -->
+        <div id="loadingState">
+            <div class="rounded-2xl overflow-hidden border border-border-light dark:border-border-dark">
+                <div class="shimmer h-8 w-2/3 rounded mb-4 mx-8 mt-8"></div>
+                <div class="shimmer h-4 w-1/3 rounded mb-8 mx-8"></div>
+                <div class="space-y-3 px-8 pb-8">
+                    <div class="shimmer h-4 w-full rounded"></div>
+                    <div class="shimmer h-4 w-full rounded"></div>
+                    <div class="shimmer h-4 w-5/6 rounded"></div>
+                    <div class="shimmer h-4 w-full rounded"></div>
+                    <div class="shimmer h-4 w-4/5 rounded"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Post Article - Plain Paragraph View -->
+        <article id="postContent" class="hidden">
+
+            <!-- Featured Image -->
+            <div id="imageContainer" class="hidden w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800 mb-8">
+                <img id="postImage" src="" alt="" class="w-full h-full object-cover">
+            </div>
+
+            <!-- Post Header -->
+            <div class="mb-8">
+                <!-- Category + Meta row -->
+                <div class="flex flex-wrap items-center gap-3 mb-5">
+                    <a id="postCategory" href="#" class="category-badge hover:bg-primary/20 transition-colors"></a>
+                    <span class="flex items-center gap-1 text-sm text-text-sub-light dark:text-text-sub-dark">
+                        <span class="material-symbols-outlined text-base">calendar_today</span>
+                        <span id="postDate"></span>
+                    </span>
+                    <span class="flex items-center gap-1 text-sm text-text-sub-light dark:text-text-sub-dark">
+                        <span class="material-symbols-outlined text-base">schedule</span>
+                        <span id="postReadTime"></span>
+                    </span>
+                </div>
+
+                <!-- Title -->
+                <h1 id="postTitle" class="text-text-main-light dark:text-text-main-dark mb-6"></h1>
+            </div>
+
+            <!-- Audio Player (hidden until audio exists) -->
+            <div id="audioContainer" class="hidden mb-8">
+                <div class="bg-background-light dark:bg-background-dark rounded-xl p-4 border border-border-light dark:border-border-dark">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-primary text-2xl">headphones</span>
+                        <span class="font-bold text-text-main-light dark:text-text-main-dark">آڈیو سنیں</span>
+                    </div>
+                    <div id="audioEmbed"></div>
+                </div>
+            </div>
+
+            <!-- Reading Guidance -->
+            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 dark:from-primary/10 dark:to-primary/5">
+                <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
+                    <div class="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-white shrink-0">
+                        <span class="material-symbols-outlined text-2xl">auto_stories</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-2">پڑھیں، سمجھیں، سوچیں</h3>
+                        <p class="text-text-sub-light dark:text-text-sub-dark" style="font-family:'UrduFont','Noto Nastaliq Urdu',serif; font-size:1.1rem; line-height:2;">
+                            اس تحریر کو غور سے پڑھیں، اس کے معنی سمجھنے کی کوشش کریں، اور اپنے ذہن میں اس پر غور و فکر کریں۔ یہ صرف پڑھنے کے لیے ہے - کوئی ترمیم نہیں کی جا سکتی۔
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-surface-dark/50">
+                        <span class="material-symbols-outlined text-primary">visibility</span>
+                        <div>
+                            <div class="font-medium text-text-main-light dark:text-text-main-dark">پڑھیں</div>
+                            <div class="text-sm text-text-sub-light dark:text-sub-dark">غور سے مطالعہ کریں</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-surface-dark/50">
+                        <span class="material-symbols-outlined text-primary">psychology</span>
+                        <div>
+                            <div class="font-medium text-text-main-light dark:text-text-main-dark">سمجھیں</div>
+                            <div class="text-sm text-text-sub-light dark:text-sub-dark">معنی اور مفہوم</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-surface-dark/50">
+                        <span class="material-symbols-outlined text-primary">lightbulb</span>
+                        <div>
+                            <div class="font-medium text-text-main-light dark:text-text-main-dark">سوچیں</div>
+                            <div class="text-sm text-text-sub-light dark:text-sub-dark">ذہن میں غور کریں</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post Body - Plain Paragraphs -->
+            <div id="postBody" class="text-text-main-light dark:text-text-main-dark prose mt-8"></div>
+
+            <!-- Thinking Prompt -->
+            <div class="mt-12 p-5 rounded-xl bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-primary mt-1">tips_and_updates</span>
+                    <div>
+                        <h4 class="font-bold text-text-main-light dark:text-text-main-dark mb-2">آپ کی رائے</h4>
+                        <p class="text-text-sub-light dark:text-text-sub-dark" style="font-family:'UrduFont','Noto Nastaliq Urdu',serif; font-size:1.05rem; line-height:2;">
+                            کیا آپ نے اس تحریر سے کوئی نئی بات سیکھی؟ اپنے خیالات ذہن میں مرتب کریں۔
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Share Footer -->
+            <div class="mt-12 pt-6 border-t border-border-light dark:border-border-dark flex flex-wrap items-center justify-between gap-4">
+                <span class="text-sm text-text-sub-light dark:text-text-sub-dark">یہ پوسٹ شیئر کریں:</span>
+                <div class="flex items-center gap-3">
+                    <button onclick="sharePost('whatsapp')" class="share-btn flex items-center gap-1.5 px-4 py-2 rounded-full bg-green-500 text-white text-sm hover:bg-green-600">
+                        <span class="material-symbols-outlined text-base">share</span> واٹس ایپ
+                    </button>
+                    <button onclick="sharePost('copy')" id="copyBtn" class="share-btn flex items-center gap-1.5 px-4 py-2 rounded-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark text-sm hover:border-primary hover:text-primary">
+                        <span class="material-symbols-outlined text-base">content_copy</span> لنک کاپی
+                    </button>
+                </div>
+            </div>
+        </article>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden text-center py-16">
+            <div class="flex items-center justify-center w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/20 text-red-500 mx-auto mb-6">
+                <span class="material-symbols-outlined text-4xl">error</span>
+            </div>
+            <h2 class="text-2xl font-bold text-text-main-light dark:text-text-main-dark mb-3">پوسٹ نہیں ملی</h2>
+            <p class="text-text-sub-light dark:text-text-sub-dark mb-6">معذرت، یہ پوسٹ دستیاب نہیں ہے یا حذف کر دی گئی ہے۔</p>
+            <a href="home.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors font-medium">
+                <span class="material-symbols-outlined">home</span>
+                <span>ہوم پیج پر جائیں</span>
+            </a>
+        </div>
+
+        <!-- Related Posts Suggestion -->
+        <div id="relatedSection" class="hidden mt-8">
+            <h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark mb-4">مزید پڑھیں</h3>
+            <div id="relatedPosts" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark mt-auto">
+        <div class="max-w-7xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">mosque</span>
+                <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark">دعا اور شفا</span>
+            </div>
+            <p class="text-sm text-text-sub-light dark:text-text-sub-dark">© 2024 دعا اور شفا۔ جملہ حقوق محفوظ ہیں</p>
+            <nav class="flex gap-4 text-sm text-text-sub-light dark:text-text-sub-dark">
+                <a href="about.html" class="hover:text-primary transition-colors">ہمارے بارے میں</a>
+                <a href="contact.html" class="hover:text-primary transition-colors">رابطہ کریں</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // ---- Mock Post Data (inline fallback) ----
+        var MOCK_POSTS = [
+            { id: '1', title: 'پہلی پوسٹ - دعائے صبح', content: 'اللہ کے ذکر سے دلوں کو سکون ملتا ہے۔ یہ صبح کی دعا ہے جو ہمیں اللہ سے قریب کرتی ہے۔\n\nدعا کرنے سے پہلے اللہ کا ذکر کریں اور اس کی رحمت طلب کریں۔ صبح کی دعا اللہ سے شکرگزاری کے ساتھ شروع ہونی چاہیئے۔', excerpt: 'اللہ کے ذکر سے دلوں کو سکون ملتا ہے۔', status: 'published', category_id: '1', created_at: new Date(Date.now() - 86400000).toISOString(), categoryKey: 'dua', categories: { name: 'دعائیں' } },
+            { id: '2', title: 'قرآن کریم - سورۃ الفاتحہ', content: 'قرآن کریم ہدایت کا سرچشمہ ہے۔ سورۃ الفاتحہ قرآن کا آغاز ہے اور نماز کی بنیاد ہے۔\n\nیہ سورۃ ہر نماز میں پڑھی جاتی ہے اور اس کی بہت اہمیت ہے۔', excerpt: 'قرآن کریم ہدایت کا سرچشمہ ہے۔', status: 'published', category_id: '2', created_at: new Date(Date.now() - 43200000).toISOString(), categoryKey: 'quran', categories: { name: 'قرآن' } },
+            { id: '3', title: 'حدیث نبوی ﷺ', content: 'حدیث رسول ﷺ ہماری راہنمائی کرتی ہے۔\n\nرسول اللہ ﷺ نے فرمایا: مسلمان وہ ہے جس کے ہاتھ اور زبان سے دوسرے مسلمان محفوظ رہیں۔', excerpt: 'حدیث رسول ﷺ ہماری راہنمائی کرتی ہے۔', status: 'published', category_id: '3', created_at: new Date(Date.now() - 21600000).toISOString(), categoryKey: 'hadith', categories: { name: 'حدیث' } },
+            { id: '4', title: 'اخلاقیات اسلام', content: 'اسلامی اخلاقیات ہمیں بہتر انسان بناتی ہیں۔\n\nصبر، شکر اور صدقے کی اہمیت بہت زیادہ ہے۔', excerpt: 'اسلامی اخلاقیات ہمیں بہتر انسان بناتی ہیں۔', status: 'published', category_id: '4', created_at: new Date().toISOString(), categoryKey: 'ethics', categories: { name: 'اخلاقیات' } }
+        ];
+
+        // ---- Init Theme ----
+        document.addEventListener('DOMContentLoaded', function () { Theme.init(); });
+
+        // ---- Reading Progress Bar ----
+        window.addEventListener('scroll', function () {
+            const article = document.getElementById('postContent');
+            if (!article || article.classList.contains('hidden')) return;
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('readingProgress').style.width = pct + '%';
+        });
+
+        // ---- Load Post ----
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+
+        async function loadPost() {
+            if (!postId) { showError(); return; }
+
+            try {
+                let post = null;
+                let error = null;
+
+                try {
+                    const result = await Posts.getById(postId);
+                    post = result.data;
+                    error = result.error;
+                } catch (e) {
+                    error = e;
+                }
+
+                // Fallback to mock data if Firebase fails
+                if (error || !post) {
+                    const mockPost = MOCK_POSTS.find(p => p.id === postId);
+                    if (mockPost) {
+                        post = mockPost;
+                        error = null;
+                    }
+                }
+
+                if (error || !post) { showError(); return; }
+
+                // Page title
+                document.title = post.title + ' - دعا اور شفا';
+
+                // Fill metadata
+                if (post.image_url) {
+                    const img = document.getElementById('postImage');
+                    if (img) {
+                        img.src = post.image_url;
+                        img.alt = post.title;
+                        document.getElementById('imageContainer').classList.remove('hidden');
+                    }
+                }
+                
+                document.getElementById('postTitle').textContent = post.title;
+                // Set category as clickable link to filter by category on home
+                const categoryLink = document.getElementById('postCategory');
+                const categoryName = post.categories ? post.categories.name : 'عام';
+                const categoryKey = post.categoryKey || post.category || '';
+                categoryLink.textContent = categoryName;
+                categoryLink.href = 'home.html?category=' + (categoryKey || categoryName);
+                document.getElementById('postDate').textContent = new Date(post.created_at).toLocaleDateString('ur-PK');
+
+                const wordCount = (post.content || '').length;
+                const readMins = Math.max(1, Math.ceil(wordCount / 800));
+                document.getElementById('postReadTime').textContent = readMins + ' منٹ مطالعہ';
+
+                // Render content — detect arabic lines and wrap them
+                const formatted = renderContent(post.content || '');
+                document.getElementById('postBody').innerHTML = formatted;
+
+                // Audio
+                if (post.audio_url && post.audio_url.trim()) {
+                    document.getElementById('audioEmbed').innerHTML = post.audio_url;
+                    document.getElementById('audioContainer').classList.remove('hidden');
+                }
+
+                // Show article
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('postContent').classList.remove('hidden');
+
+                // Load related posts
+                loadRelated(post.category_id, post.id);
+
+            } catch (err) {
+                console.error('Error loading post:', err);
+                showError();
+            }
+        }
+
+        function showError() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+
+        // Detect Arabic text ranges and format content as paragraphs
+        function renderContent(text) {
+            if (!text || !text.trim()) return '';
+            
+            // First replace single newlines with spaces (lines within a paragraph)
+            const normalized = text.replace(/\n(?!\n)/g, ' ');
+            // Then split into paragraphs (separated by double newlines)
+            const paragraphs = normalized.split(/\n{2,}/).filter(p => p.trim().length > 0);
+            
+            return paragraphs.map(paragraph => {
+                const trimmed = paragraph.trim();
+                if (!trimmed) return '';
+                
+                // Check if entire paragraph is mostly Arabic (for standalone verses)
+                const arabicRatio = (trimmed.match(/[\u0600-\u06FF]/g) || []).length / Math.max(trimmed.length, 1);
+                
+                // If paragraph is >70% Arabic, treat as Arabic verse block
+                if (arabicRatio > 0.7) {
+                    return `<div class="arabic-verse">${trimmed}</div>`;
+                }
+                
+                // Otherwise treat as regular paragraph
+                return `<p>${trimmed}</p>`;
+            }).join('');
+        }
+
+        // Load related posts (same category, exclude current)
+        async function loadRelated(categoryId, currentId) {
+            try {
+                let posts = [];
+                try {
+                    const result = await Posts.getAll('published');
+                    posts = result.data || [];
+                } catch (e) {
+                    // Use mock posts as fallback
+                }
+                
+                // Add mock posts if Firebase failed
+                if (posts.length === 0) {
+                    posts = MOCK_POSTS;
+                }
+                
+                const related = (posts || [])
+                    .filter(p => p.id !== currentId && p.category_id === categoryId)
+                    .slice(0, 2);
+                if (!related.length) return;
+
+                const container = document.getElementById('relatedPosts');
+                related.forEach(p => {
+                    const a = document.createElement('a');
+                    a.href = 'post.html?id=' + p.id;
+                    a.className = 'group flex flex-col gap-2 p-4 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:border-primary transition-colors';
+                    a.innerHTML = `
+                        <span class="category-badge text-xs">${p.categories ? p.categories.name : 'عام'}</span>
+                        <h4 style="font-family:'UrduFont','Noto Nastaliq Urdu',serif; font-size:1.2rem; line-height:2.2;"
+                            class="font-bold text-text-main-light dark:text-text-main-dark group-hover:text-primary transition-colors line-clamp-2">${p.title}</h4>
+                        <p class="text-sm text-text-sub-light dark:text-text-sub-dark line-clamp-2">${(p.excerpt || p.content || '').substring(0, 80)}…</p>
+                    `;
+                    container.appendChild(a);
+                });
+                document.getElementById('relatedSection').classList.remove('hidden');
+            } catch (e) { /* silent */ }
+        }
+
+        // Share functionality
+        function sharePost(method) {
+            const url = window.location.href;
+            const title = document.getElementById('postTitle').textContent;
+            if (method === 'whatsapp') {
+                window.open('https://wa.me/?text=' + encodeURIComponent(title + '\n' + url), '_blank');
+            } else if (method === 'copy') {
+                navigator.clipboard.writeText(url).then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '<span class="material-symbols-outlined text-base">check</span> کاپی ہو گیا!';
+                    btn.classList.add('border-green-500', 'text-green-600');
+                    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('border-green-500', 'text-green-600'); }, 2000);
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadPost);
+    </script>
+</body>
+</html>

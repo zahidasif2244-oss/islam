@@ -9,7 +9,7 @@ export async function GET() {
     .filter(e => e.isDirectory() && e.name !== 'fonts')
     .map(e => ({
       name: e.name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-      url: `/${e.name}/index.html`
+      url: `/${encodeURIComponent(e.name)}/`
     }))
   return NextResponse.json(folders)
 }

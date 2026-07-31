@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>نئی پوسٹ - دعا اور شفا</title>
+    <link rel="icon" href="icon.png"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+tailwind.config = {
+    darkMode: 'class',
+    theme: {
+        extend: {
+            colors: {
+                primary: '#13b6ec',
+                'primary-dark': '#0ea5d6',
+                'background-light': '#f6f8f8',
+                'background-dark': '#101d22',
+                'surface-light': '#ffffff',
+                'surface-dark': '#1a2c33',
+                'text-main-light': '#111618',
+                'text-main-dark': '#e2e8f0',
+                'text-sub-light': '#617f89',
+                'text-sub-dark': '#94a3b8',
+                'border-light': '#f0f3f4',
+                'border-dark': '#2d3f47',
+            },
+            fontFamily: {
+                display: ['UrduFont', 'Noto Nastaliq Urdu', 'serif'],
+                urdu: ['UrduFont', 'Noto Nastaliq Urdu', 'serif'],
+                arabic: ['ArabicFont', 'Noto Naskh Arabic', 'serif']
+            },
+            fontSize: {
+                'urdu': ['1.35rem', { lineHeight: '2.6' }],
+                'urdu-lg': ['1.55rem', { lineHeight: '2.8' }],
+                'urdu-xl': ['1.75rem', { lineHeight: '3' }],
+            }
+        }
+    }
+}
+</script>
+    <link href="styles.css" rel="stylesheet"/>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-urdu antialiased min-h-screen flex flex-col transition-colors duration-200">
+    
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur border-b border-border-light dark:border-border-dark px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <a href="home.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="icon.png" alt="دعا اور شفا" class="w-10 h-10 rounded-lg shrink-0" onerror="this.style.display='none'"/>
+                <h2 class="text-xl font-bold tracking-tight text-text-main-light dark:text-text-main-dark whitespace-nowrap">دعا اور شفا</h2>
+            </a>
+            <div class="hidden lg:flex flex-1 max-w-md mx-6 relative">
+                <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-text-sub-light dark:text-text-sub-dark">
+                    <span class="material-symbols-outlined">search</span>
+                </span>
+                <input class="w-full pr-10 pl-4 py-2 rounded-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm transition-all" placeholder="تلاش کریں..." type="text"/>
+            </div>
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-text-sub-light dark:text-text-sub-dark whitespace-nowrap">
+                <a class="hover:text-primary transition-colors" href="home.html">ہوم</a>
+                <a class="hover:text-primary transition-colors" href="post_dashboard.html">پوسٹس</a>
+                <a class="hover:text-primary transition-colors" href="category_dashboard.html">زمرہ جات</a>
+                <a class="hover:text-primary transition-colors text-primary" href="create_post.html">نئی پوسٹ</a>
+            </nav>
+            <div class="flex items-center gap-2">
+
+                <button aria-label="Toggle Dark Mode" class="flex items-center justify-center w-10 h-10 rounded-full bg-background-light dark:bg-background-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors text-text-main-light dark:text-text-main-dark shrink-0" id="darkModeToggle">
+                    <span class="material-symbols-outlined">light_mode</span>
+                </button>
+                <button onclick="Auth.logout()" id="authButton" class="flex items-center gap-2 rounded-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 text-sm font-bold shadow-sm transition-all shrink-0" title="لاگ آؤٹ">
+                    <span class="material-symbols-outlined text-lg">logout</span>
+                    <span class="hidden sm:inline">لاگ آؤٹ</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-4xl mx-auto px-6 py-8">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-text-main-light dark:text-text-main-dark tracking-tight" id="pageTitle">نئی پوسٹ بنائیں</h1>
+                <p class="text-text-sub-light dark:text-text-sub-dark text-lg mt-2">علم اور حکمت بانٹیں</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="post_dashboard.html" class="px-4 py-2 rounded-lg text-sm font-medium text-text-sub-light dark:text-text-sub-dark hover:bg-background-light dark:hover:bg-background-dark transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    واپس
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form id="postForm" class="flex flex-col gap-6">
+            <input type="hidden" id="postId">
+            
+            <!-- Title -->
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">عنوان *</label>
+                <input id="title" required type="text"
+                    class="w-full rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3 text-lg"
+                    placeholder="پوسٹ کا عنوان درج کریں"/>
+            </div>
+
+            <!-- Category & Status -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">زمرہ *</label>
+                    <select id="category" required
+                        class="w-full rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3">
+                        <option value="">زمرہ لوڈ ہو رہا ہے...</option>
+                    </select>
+                    <p id="categoryError" class="text-red-500 text-sm hidden"></p>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">حالت</label>
+                    <select id="status"
+                        class="w-full rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3">
+                        <option value="draft">ڈرافٹ</option>
+                        <option value="published">شائع کریں</option>
+                        <option value="archived">محفوظ</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Excerpt -->
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">خلاصہ</label>
+                <textarea id="excerpt" rows="2"
+                    class="w-full rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3 resize-none"
+                    placeholder="پوسٹ کی مختصر خلاصہ..."></textarea>
+            </div>
+
+            <!-- Image URL -->
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">تصویر کا لنک</label>
+                <div class="flex gap-2">
+                    <input id="imageUrl" type="url"
+                        class="flex-1 rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3"
+                        placeholder="https://..."/>
+                    <button type="button" onclick="previewImage()" class="px-4 py-3 rounded-lg bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">preview</span>
+                    </button>
+                </div>
+                <img id="imagePreview" class="hidden w-full max-h-48 object-cover rounded-lg mt-2"/>
+            </div>
+
+            <!-- Audio Iframe -->
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">آڈیو ایمبیڈ کوڈ (iframe)</label>
+                <div class="flex gap-2">
+                    <textarea id="audioUrl" rows="3"
+                        class="flex-1 rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3 font-mono text-sm"
+                        placeholder='<iframe src="https://drive.google.com/file/d/.../preview" width="100%" height="60" frameborder="0" style="border:none; overflow: hidden;"></iframe>'></textarea>
+                    <button type="button" onclick="previewAudio()" class="px-4 py-3 rounded-lg bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-sub-light dark:text-text-sub-dark hover:text-primary transition-colors self-start">
+                        <span class="material-symbols-outlined">preview</span>
+                    </button>
+                </div>
+                <div id="audioPreviewContainer" class="hidden w-full mt-2"></div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex flex-col gap-2">
+                <label class="text-sm font-medium text-text-main-light dark:text-text-main-dark">مواد *</label>
+                <textarea id="content" required rows="12"
+                    class="w-full rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark focus:ring-2 focus:ring-primary focus:border-primary outline-none px-4 py-3 resize-y"
+                    placeholder="پوسٹ کا مواد یہاں لکھیں..."></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-end gap-4 pt-4 border-t border-border-light dark:border-border-dark">
+                <a href="post_dashboard.html" class="px-6 py-3 rounded-lg text-sm font-semibold text-text-sub-light dark:text-text-sub-dark hover:text-text-main-light dark:hover:text-text-main-dark hover:bg-background-light dark:hover:bg-background-dark transition-colors">
+                    منسوخ
+                </a>
+                <button type="submit" id="saveButton" class="px-8 py-3 rounded-lg text-sm font-bold text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/25 transition-all transform active:scale-95 flex items-center gap-2">
+                    <span class="material-symbols-outlined">save</span>
+                    <span id="saveButtonText">محفوظ کریں</span>
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark mt-auto">
+        <div class="max-w-7xl mx-auto px-6 py-8">
+            <div class="text-center text-sm text-text-sub-light dark:text-text-sub-dark">
+                <p>© 2024 دعا اور شفا۔ جملہ حقوق محفوظ ہیں</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Initialize theme
+        document.addEventListener('DOMContentLoaded', function() {
+            Theme.init();
+        });
+
+        // Page-specific create post code
+        let editingId = null;
+
+        // Load categories
+        async function loadCategories() {
+            const categorySelect = document.getElementById('category');
+            
+            try {
+                const { data: categories, error } = await Categories.getAll('active');
+
+                if (error) {
+                    console.error('Error loading categories:', error);
+                    categorySelect.innerHTML = '<option value="">زمرہ دستیاب نہیں</option>';
+                    return;
+                }
+
+                if (!categories || categories.length === 0) {
+                    categorySelect.innerHTML = '<option value="">کوئی زمرہ نہیں ملی</option>';
+                    return;
+                }
+
+                Categories.populateSelect(categorySelect, categories);
+            } catch (err) {
+                console.error('Exception loading categories:', err);
+                categorySelect.innerHTML = '<option value="">خرابی</option>';
+            }
+        }
+
+        // Check for edit mode
+        async function checkEditMode() {
+            const editId = URLUtils.getParam('edit');
+            
+            if (editId) {
+                editingId = editId;
+                document.getElementById('pageTitle').textContent = 'پوسٹ ترمیم کریں';
+                document.getElementById('saveButtonText').textContent = 'تازہ کریں';
+                
+                const { data: post, error } = await Posts.getById(editId);
+                
+                if (error) {
+                    alert('پوسٹ لوڈ کرنے میں خرابی');
+                    return;
+                }
+                
+                document.getElementById('postId').value = post.id;
+                document.getElementById('title').value = post.title;
+                document.getElementById('category').value = post.category_id;
+                document.getElementById('status').value = post.status;
+                document.getElementById('excerpt').value = post.excerpt || '';
+                document.getElementById('content').value = post.content;
+                document.getElementById('imageUrl').value = post.image_url || '';
+                document.getElementById('audioUrl').value = post.audio_url || '';
+                
+                if (post.image_url) {
+                    document.getElementById('imagePreview').src = post.image_url;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                }
+                if (post.audio_url) {
+                    document.getElementById('audioUrl').value = post.audio_url;
+                    document.getElementById('audioPreviewContainer').innerHTML = post.audio_url;
+                    document.getElementById('audioPreviewContainer').classList.remove('hidden');
+                }
+            }
+        }
+
+        // Preview image
+        function previewImage() {
+            ImageUtils.preview(document.getElementById('imageUrl').value, 'imagePreview');
+        }
+
+        // Preview audio iframe
+        function previewAudio() {
+            const audioCode = document.getElementById('audioUrl').value;
+            const audioPreviewContainer = document.getElementById('audioPreviewContainer');
+            if (audioCode && audioCode.includes('<iframe')) {
+                audioPreviewContainer.innerHTML = audioCode;
+                audioPreviewContainer.classList.remove('hidden');
+            } else {
+                audioPreviewContainer.innerHTML = '';
+                audioPreviewContainer.classList.add('hidden');
+            }
+        }
+
+        // Form submit
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('title').value.trim();
+            const categoryId = document.getElementById('category').value;
+            const content = document.getElementById('content').value.trim();
+
+            if (!title || !content) {
+                UI.toast('براہ کرم عنوان اور مواد درج کریں', 'error');
+                return;
+            }
+            
+            const postData = {
+                title: title,
+                category_id: categoryId,
+                status: document.getElementById('status').value,
+                excerpt: document.getElementById('excerpt').value.trim(),
+                content: content,
+                image_url: document.getElementById('imageUrl').value.trim(),
+                audio_url: document.getElementById('audioUrl').value.trim()
+            };
+
+            const saveButton = document.getElementById('saveButton');
+            UI.setButtonLoading(saveButton, 'محفوظ ہو رہا ہے...');
+
+            try {
+                let result;
+                
+                if (editingId) {
+                    result = await Posts.update(editingId, postData);
+                } else {
+                    result = await Posts.create(postData);
+                }
+
+                if (result.error) {
+                    UI.toast('خرابی: ' + result.error.message, 'error');
+                } else {
+                    UI.toast('پوسٹ محفوظ کر دی گئی', 'success');
+                    window.location.href = 'post_dashboard.html';
+                }
+            } finally {
+                UI.resetButton(saveButton);
+                saveButton.innerHTML = '<span class="material-symbols-outlined">save</span><span>' + (editingId ? 'تازہ کریں' : 'محفوظ کریں') + '</span>';
+            }
+        });
+
+        // Initialize
+        Auth.requireAuth(); 
+        loadCategories();
+        checkEditMode();
+    </script>
+</body>
+</html>

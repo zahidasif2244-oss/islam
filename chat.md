@@ -67,6 +67,16 @@
   5. `git push origin <current-branch>` — prints success/failure, `pause` at end
 - **Usage**: double-click or run `.\fix-push.bat` whenever the warning appears.
 
+### 9. Urdu Font Not Loading on Live Site — Binary Files Corrupted by Line-Ending Normalization
+- **Symptom**: Urdu text renders fine locally (dev server) but falls back to system font on the live Vercel site (`islam-pearl-zeta.vercel.app`).
+- **Root cause (diagnosed)**: `.gitattributes` was `* text eol=lf` — this marked **binary files as text**. The renormalize commit (`b4fdcc7`, from `fix-push.bat`) stripped every `0x0D` byte from the binaries before storing: `alvi_nastaleeq.ttf` 9,559,112 → 9,556,443 bytes, `jameel_noori_nastaleeq.ttf` 10,784,980 → 10,782,103, all fonts + `logo.png`/`favicon.ico` (119,023 → 119,022). Vercel deployed the corrupted blobs → browsers rejected the broken fonts → fallback font.
+- **Verification**: `git check-attr text eol` → `text: set` on `.ttf`; `fc /b` byte-compare of blob vs working file showed differences were exactly missing `0x0D` bytes; staged-vs-working `git hash-object` equality confirmed.
+- **Fix** (commit `35cad05`, pushed):
+  1. `.gitattributes` — added `*.ttf *.otf *.woff *.woff2 *.eot *.png *.jpg *.jpeg *.gif *.webp *.ico *.pdf *.zip *.wasm binary` (overrides the `* text eol=lf` rule so git never converts binary bytes)
+  2. `git add --renormalize .` — re-stored pristine bytes for all 7 fonts + `logo.png` + `favicon.ico`
+  3. `fix-push.bat` — updated so its `.gitattributes` rewrite also emits the binary overrides (it previously reintroduced the corruption)
+- **Verified live**: deployed sizes now match originals — alvi 9,559,112 ✓, jameel 10,784,980 ✓, noorehuda 192,112 ✓, logo.png 119,023 ✓. Hard-refresh (Ctrl+F5) needed once to bypass cached old font.
+
 ## Key Files Changed
 | File | Change |
 |------|--------|
@@ -78,15 +88,16 @@
 | `src/app/api/quran/search_text/route.ts` | NEW — urdu/arabic text search |
 | `src/lib/quran-search.ts` | NEW — shared quran search engine (encoding, index, union) |
 | `src/lib/arabic.tsx` | NEW — Arabic mushaf normalization + highlight/snippet |
-| `.gitattributes` | `* text=auto` → `* text eol=lf` (bat-updated) |
+| `.gitattributes` | `* text=auto` → `* text eol=lf` (bat-updated) → + binary overrides for fonts/images (35cad05) |
 | `git config` | `core.autocrlf false` (repo-local) |
-| `fix-push.bat` | NEW — auto-fixes line endings + commits + pushes (GitHub Desktop warning fix) |
+| `fix-push.bat` | NEW — auto-fixes line endings + commits + pushes (GitHub Desktop warning fix); updated to keep `*.ttf/*.png/... binary` so it never corrupts binaries |
 
 ## Verified Against Live DB
 - Tafseer: `مسلمان` encoded→448 (raw→0) on `tafseer_moudoodi`; 2-word OR/AND counts on tibyan.
 - Quran Arabic: `الرحمن`→160, `الله`→1858, `الصلاة`→61, `القرآن`→50, `رب العالمين`→1089 (1:1 first), `العالمين`→61.
 - Quran Urdu: `رحمن رحیم` multi-word union works; English words → 0.
 - Hadith: number search exact-first (#12 → #12, #120...); urdu ravi plain vs hadees encoded confirmed.
+- Live fonts (Vercel): deployed sizes match pristine originals after `35cad05` — alvi 9,559,112 / jameel 10,784,980 / noorehuda 192,112 / logo.png 119,023.
 
 ## Project Context
 - Title: **Quran Web** (shortcut: QW)

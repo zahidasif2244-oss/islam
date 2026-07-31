@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>رابطہ کریں - دعا اور شفا</title>
+    <meta name="description" content="دعا اور شفا سے رابطہ کریں — اپنی تجاویز، سوالات اور پیغامات ہمیں بھیجیں۔"/>
+    <link rel="icon" href="icon.png"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#13b6ec',
+                    'primary-dark': '#0ea5d6',
+                    'background-light': '#f6f8f8',
+                    'background-dark': '#101d22',
+                    'surface-light': '#ffffff',
+                    'surface-dark': '#1a2c33',
+                    'text-main-light': '#111618',
+                    'text-main-dark': '#e2e8f0',
+                    'text-sub-light': '#617f89',
+                    'text-sub-dark': '#94a3b8',
+                    'border-light': '#f0f3f4',
+                    'border-dark': '#2d3f47',
+                }
+            }
+        }
+    }
+    </script>
+    <link href="styles.css" rel="stylesheet"/>
+    <style>
+        @font-face {
+            font-family: 'UrduFont';
+            src: url('fonts/urdu.ttf') format('truetype');
+            font-weight: normal; font-style: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'ArabicFont';
+            src: url('fonts/arabic.ttf') format('truetype');
+            font-weight: normal; font-style: normal; font-display: swap;
+        }
+        body { font-family: 'UrduFont', serif; }
+
+        .hero-bg {
+            background: linear-gradient(135deg, #0891b2 0%, #13b6ec 50%, #06b6d4 100%);
+        }
+
+        .contact-input {
+            font-family: 'UrduFont', serif;
+            font-size: 1.1rem;
+            width: 100%;
+            padding: 0.85rem 1.1rem;
+            border-radius: 0.75rem;
+            border: 1.5px solid var(--border);
+            background: transparent;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            line-height: 2;
+        }
+        .contact-input:focus {
+            border-color: #13b6ec;
+            box-shadow: 0 0 0 3px rgba(19,182,236,0.15);
+        }
+        .dark .contact-input {
+            color: #e2e8f0;
+            border-color: #2d3f47;
+        }
+        .dark .contact-input:focus { border-color: #13b6ec; }
+
+        .info-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .info-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px -4px rgba(0,0,0,0.1);
+        }
+        .send-btn {
+            transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+        }
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px -2px rgba(19,182,236,0.4);
+        }
+        .send-btn:active { transform: scale(0.98); }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark antialiased min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur border-b border-border-light dark:border-border-dark px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <a href="home.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img src="icon.png" alt="دعا اور شفا" class="w-10 h-10 rounded-lg shrink-0" onerror="this.style.display='none'"/>
+                <h2 class="text-xl font-bold text-text-main-light dark:text-text-main-dark whitespace-nowrap">دعا اور شفا</h2>
+            </a>
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-text-sub-light dark:text-text-sub-dark">
+                <a class="hover:text-primary transition-colors" href="home.html">ہوم</a>
+                <a class="hover:text-primary transition-colors" href="home.html#categories">زمرہ جات</a>
+                <a class="hover:text-primary transition-colors" href="about.html">ہمارے بارے میں</a>
+                <a class="text-primary font-semibold" href="contact.html">رابطہ کریں</a>
+            </nav>
+            <div class="flex items-center gap-2">
+                <button aria-label="Toggle Dark Mode" id="darkModeToggle" class="flex items-center justify-center w-10 h-10 rounded-full bg-background-light dark:bg-background-dark hover:bg-border-light dark:hover:bg-border-dark transition-colors text-text-main-light dark:text-text-main-dark shrink-0">
+                    <span class="material-symbols-outlined">light_mode</span>
+                </button>
+                <a href="login.html" class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white hover:bg-primary-dark transition-colors shrink-0" title="ایڈمن">
+                    <span class="material-symbols-outlined">admin_panel_settings</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+
+        <!-- Hero -->
+        <section class="hero-bg text-white py-20 px-6 text-center">
+            <div class="max-w-2xl mx-auto">
+                <div class="flex items-center justify-center w-20 h-20 rounded-2xl bg-white/15 backdrop-blur mx-auto mb-6">
+                    <span class="material-symbols-outlined text-5xl">mail</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4" style="line-height:2.2;">رابطہ کریں</h1>
+                <p class="text-white/80" style="font-size:1.25rem; line-height:2.4;">
+                    آپ کے سوالات، تجاویز اور پیغامات کا ہمیں انتظار ہے
+                </p>
+            </div>
+        </section>
+
+        <!-- Content -->
+        <section class="max-w-5xl mx-auto px-6 py-16">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Contact Info Sidebar -->
+                <div class="space-y-5">
+                    <h2 class="text-xl font-bold text-text-main-light dark:text-text-main-dark mb-4" style="font-size:1.6rem; line-height:2.2;">ہم سے ملیں</h2>
+
+                    <div class="info-card bg-surface-light dark:bg-surface-dark rounded-2xl p-5 border border-border-light dark:border-border-dark shadow-sm flex gap-4 items-start">
+                        <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                            <span class="material-symbols-outlined">email</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-1" style="font-size:1.1rem;">ای میل</h3>
+                            <a href="mailto:info@duaaorshifa.com" class="text-primary hover:underline" style="font-size:1rem; direction:ltr; display:block;">info@duaaorshifa.com</a>
+                        </div>
+                    </div>
+
+                    <div class="info-card bg-surface-light dark:bg-surface-dark rounded-2xl p-5 border border-border-light dark:border-border-dark shadow-sm flex gap-4 items-start">
+                        <div class="w-11 h-11 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500 shrink-0">
+                            <span class="material-symbols-outlined">chat</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-1" style="font-size:1.1rem;">واٹس ایپ</h3>
+                            <a href="https://wa.me/923001234567" target="_blank" class="text-green-500 hover:underline" style="font-size:1rem; direction:ltr; display:block;">+92 300 1234567</a>
+                        </div>
+                    </div>
+
+                    <div class="info-card bg-surface-light dark:bg-surface-dark rounded-2xl p-5 border border-border-light dark:border-border-dark shadow-sm flex gap-4 items-start">
+                        <div class="w-11 h-11 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
+                            <span class="material-symbols-outlined">schedule</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-1" style="font-size:1.1rem;">جوابی وقت</h3>
+                            <p class="text-text-sub-light dark:text-text-sub-dark" style="font-size:1rem; line-height:2.2;">عام طور پر ۲۴ گھنٹوں میں جواب ملتا ہے</p>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-5 border border-border-light dark:border-border-dark shadow-sm">
+                        <h3 class="font-bold text-text-main-light dark:text-text-main-dark mb-4" style="font-size:1.1rem;">سوشل میڈیا</h3>
+                        <div class="flex items-center gap-3">
+                            <a href="#" aria-label="Facebook" class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 hover:bg-blue-500 hover:text-white transition-colors">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path clip-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" fill-rule="evenodd"/></svg>
+                            </a>
+                            <a href="#" aria-label="Twitter" class="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 hover:bg-sky-500 hover:text-white transition-colors">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/></svg>
+                            </a>
+                            <a href="#" aria-label="Instagram" class="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-500 hover:bg-pink-500 hover:text-white transition-colors">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path clip-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" fill-rule="evenodd"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="lg:col-span-2">
+                    <div class="bg-surface-light dark:bg-surface-dark rounded-2xl border border-border-light dark:border-border-dark shadow-sm p-7 sm:p-10">
+                        <h2 class="text-xl font-bold text-text-main-light dark:text-text-main-dark mb-6" style="font-size:1.7rem; line-height:2.2;">پیغام بھیجیں</h2>
+                        <form id="contactForm" class="space-y-5" novalidate>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-text-main-light dark:text-text-main-dark font-medium mb-2" for="fullName" style="font-size:1.05rem;">آپ کا نام <span class="text-red-500">*</span></label>
+                                    <input type="text" id="fullName" name="fullName" required placeholder="مثلاً: محمد احمد"
+                                        class="contact-input bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark"/>
+                                    <p id="nameError" class="text-red-500 text-sm mt-1 hidden" style="font-size:0.95rem;">براہ کرم اپنا نام درج کریں۔</p>
+                                </div>
+                                <div>
+                                    <label class="block text-text-main-light dark:text-text-main-dark font-medium mb-2" for="emailAddr" style="font-size:1.05rem;">ای میل <span class="text-red-500">*</span></label>
+                                    <input type="email" id="emailAddr" name="emailAddr" required placeholder="example@gmail.com"
+                                        class="contact-input bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark" style="direction:ltr; text-align:right;"/>
+                                    <p id="emailError" class="text-red-500 text-sm mt-1 hidden" style="font-size:0.95rem;">درست ای میل درج کریں۔</p>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-text-main-light dark:text-text-main-dark font-medium mb-2" for="subject" style="font-size:1.05rem;">موضوع <span class="text-red-500">*</span></label>
+                                <select id="subject" name="subject" required
+                                    class="contact-input bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark">
+                                    <option value="">موضوع منتخب کریں</option>
+                                    <option value="suggestion">تجویز</option>
+                                    <option value="question">سوال</option>
+                                    <option value="correction">اصلاح</option>
+                                    <option value="collaboration">تعاون</option>
+                                    <option value="other">دیگر</option>
+                                </select>
+                                <p id="subjectError" class="text-red-500 text-sm mt-1 hidden" style="font-size:0.95rem;">براہ کرم موضوع منتخب کریں۔</p>
+                            </div>
+                            <div>
+                                <label class="block text-text-main-light dark:text-text-main-dark font-medium mb-2" for="message" style="font-size:1.05rem;">پیغام <span class="text-red-500">*</span></label>
+                                <textarea id="message" name="message" rows="5" required placeholder="اپنا پیغام یہاں لکھیں..."
+                                    class="contact-input bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark resize-none"
+                                    style="height:auto;"></textarea>
+                                <p id="msgError" class="text-red-500 text-sm mt-1 hidden" style="font-size:0.95rem;">براہ کرم اپنا پیغام درج کریں۔</p>
+                            </div>
+                            <button type="submit" id="sendBtn" class="send-btn w-full py-4 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-colors shadow-sm" style="font-size:1.15rem; font-family:'UrduFont',serif;">
+                                <span class="flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined">send</span>
+                                    پیغام بھیجیں
+                                </span>
+                            </button>
+                        </form>
+
+                        <!-- Success message -->
+                        <div id="successMsg" class="hidden mt-6 p-5 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-center">
+                            <span class="material-symbols-outlined text-green-500 text-4xl block mb-2">check_circle</span>
+                            <h3 class="font-bold text-green-700 dark:text-green-400" style="font-size:1.3rem; line-height:2.2;">شکریہ!</h3>
+                            <p class="text-green-600 dark:text-green-500 mt-1" style="font-size:1.1rem; line-height:2.4;">آپ کا پیغام موصول ہو گیا۔ ہم جلد آپ سے رابطہ کریں گے۔</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark mt-auto">
+        <div class="max-w-7xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">mosque</span>
+                <span class="text-sm font-bold text-text-main-light dark:text-text-main-dark">دعا اور شفا</span>
+            </div>
+            <p class="text-sm text-text-sub-light dark:text-text-sub-dark">© 2024 دعا اور شفا۔ جملہ حقوق محفوظ ہیں</p>
+            <nav class="flex gap-4 text-sm text-text-sub-light dark:text-text-sub-dark">
+                <a href="about.html" class="hover:text-primary transition-colors">ہمارے بارے میں</a>
+                <a href="contact.html" class="hover:text-primary transition-colors">رابطہ کریں</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Theme.init() is automatically called by app.js on DOMContentLoaded
+            
+            const form = document.getElementById('contactForm');
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                let valid = true;
+
+                const name = document.getElementById('fullName').value.trim();
+                const email = document.getElementById('emailAddr').value.trim();
+                const subject = document.getElementById('subject').value;
+                const msg = document.getElementById('message').value.trim();
+
+                // Validate
+                const nameErr = document.getElementById('nameError');
+                const emailErr = document.getElementById('emailError');
+                const subjectErr = document.getElementById('subjectError');
+                const msgErr = document.getElementById('msgError');
+
+                nameErr.classList.toggle('hidden', !!name);
+                emailErr.classList.toggle('hidden', !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+                subjectErr.classList.toggle('hidden', !!subject);
+                msgErr.classList.toggle('hidden', !!msg);
+
+                if (!name) valid = false;
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) valid = false;
+                if (!subject) valid = false;
+                if (!msg) valid = false;
+
+                if (!valid) return;
+
+                // Simulate submission
+                const btn = document.getElementById('sendBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="flex items-center justify-center gap-2"><span class="material-symbols-outlined animate-spin">progress_activity</span> بھیج رہے ہیں...</span>';
+
+                setTimeout(() => {
+                    form.classList.add('hidden');
+                    document.getElementById('successMsg').classList.remove('hidden');
+                }, 1200);
+            });
+        });
+    </script>
+</body>
+</html>
