@@ -1288,7 +1288,7 @@ function OtherLinksView({ type }: { type?: 'child' | 'external' }) {
           <h3 className="text-[#1a5c3a] mb-2.5">📂 Other Websites</h3>
           <div style={{ display: 'grid', gap: 6, marginBottom: 16 }}>
             {childSites.map((site, i) => (
-              <div key={i} className="list-card" onClick={() => window.location.href = site.url}>
+              <div key={i} className="list-card" onClick={() => window.open(site.url, '_blank', 'noopener')}>
                 <div className="list-name">{site.name}</div>
               </div>
             ))}
