@@ -300,7 +300,7 @@ function Modal() {
 }
 
 // ============== QURAN ==============
-type QuranView = 'surahs' | 'parahs' | 'browse' | 'search' | 'bookmarks'
+type QuranView = 'surahs' | 'parahs' | 'browse' | 'search' | 'surah-bms' | 'ayat-bms'
 
 function QuranTab() {
   const [view, setView] = useState<QuranView>('surahs')
@@ -318,14 +318,37 @@ function QuranTab() {
     api('/quran/parah_names').then(setParahNames).catch(() => {})
   }, [])
 
-  const bookmarks: number[] = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('islam360_bookmarks') || '[]') : []
+  const [surahBms, setSurahBms] = useState<number[]>([])
+  const [ayahBms, setAyahBms] = useState<any[]>([])
+
+  useEffect(() => {
+    try { setSurahBms(JSON.parse(localStorage.getItem('islam360_bookmarks') || '[]')) } catch { }
+    try { setAyahBms(JSON.parse(localStorage.getItem('islam360_ayat_bookmarks') || '[]')) } catch { }
+  }, [])
 
   function toggleBm(id: number) {
-    const b = JSON.parse(localStorage.getItem('islam360_bookmarks') || '[]')
-    const idx = b.indexOf(id)
-    if (idx > -1) b.splice(idx, 1); else b.push(id)
-    localStorage.setItem('islam360_bookmarks', JSON.stringify(b))
-    setView((v: QuranView) => v === 'bookmarks' ? 'bookmarks' : v)
+    setSurahBms(prev => {
+      const idx = prev.indexOf(id)
+      const next = idx > -1 ? prev.filter(x => x !== id) : [...prev, id]
+      localStorage.setItem('islam360_bookmarks', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const bmKey = (surah: number, ayah: number) => `${surah}:${ayah}`
+  const isAyahBm = (surah: number, ayah: number) => ayahBms.some((b: any) => bmKey(b.surah, b.ayah) === bmKey(surah, ayah))
+
+  function toggleAyahBm(v: any) {
+    setAyahBms(prev => {
+      const key = bmKey(v.surah, v.ayah)
+      const exists = prev.some((b: any) => bmKey(b.surah, b.ayah) === key)
+      const next = exists ? prev.filter((b: any) => bmKey(b.surah, b.ayah) !== key) : [...prev, {
+        id: v.id, surah: v.surah, ayah: v.ayah, para: v.para,
+        arabic: v.arabic || '', urdu: v.tarjma_text || v.urdu || v.english || '',
+      }]
+      localStorage.setItem('islam360_ayat_bookmarks', JSON.stringify(next))
+      return next
+    })
   }
 
   function loadVerses(id: number, scrollAyah?: number) {
@@ -369,7 +392,12 @@ function QuranTab() {
         </div>
         <div className="surah-header">
           <h2>{(surahNames.find((s: any) => s.id === browseId) as any)?.arabic} — {(surahNames.find((s: any) => s.id === browseId) as any)?.english || `Surah ${browseId}`}</h2>
-          <div className="text-xs opacity-90">{verses.length} verses</div>
+          <div className="text-xs opacity-90 flex items-center gap-2">
+            <span>{verses.length} verses</span>
+            <span className="text-base cursor-pointer" onClick={() => toggleBm(browseId)} title={surahBms.includes(browseId) ? 'Remove surah bookmark' : 'Bookmark this surah'}>
+              {surahBms.includes(browseId) ? '⭐' : '☆'}
+            </span>
+          </div>
         </div>
         <div id="quranVerses">
           {verses.map(v => (
@@ -379,6 +407,12 @@ function QuranTab() {
                 <button className="bg-[#e8f5e9] border border-[#a5d6a7] rounded px-2 py-0.5 text-xs cursor-pointer hover:bg-[#c8e6c9]" onClick={() => wordModal(v.surah, v.ayah)} title="Word by Word">Words</button>
                 <button className="bg-[#fff3e0] border border-[#e8b840] rounded px-2 py-0.5 text-xs cursor-pointer hover:bg-[#ffe0b2]" onClick={() => showAyahTafseer(v.surah, v.ayah)} title="Tafseer">Tafseer</button>
                 {(v.surah === 1 || v.surah === 9 || v.ayah > 0) && <button className="bg-[#e3f2fd] border border-[#90caf9] rounded px-2 py-0.5 text-xs cursor-pointer hover:bg-[#bbdefb]" onClick={() => playAyah(v.surah, v.ayah)} title="Play Audio">&#9654;</button>}
+                <button
+                  onClick={() => toggleAyahBm(v)}
+                  title={isAyahBm(v.surah, v.ayah) ? 'Remove ayah bookmark' : 'Bookmark this ayah'}
+                  className={`rounded px-2 py-0.5 text-xs cursor-pointer border ${isAyahBm(v.surah, v.ayah) ? 'bg-[#fff8e1] border-[#e8b840] text-[#b8860b]' : 'bg-[#f5f5f5] border-[#e0e0e0] text-[#888] hover:bg-[#fff8e1] hover:text-[#b8860b]'}`}>
+                  <BookmarkIcon saved={isAyahBm(v.surah, v.ayah)} size={13} />
+                </button>
               </div>
               {showArabic && <div className="arabic">{v.arabic}</div>}
               {showTarjma && <div className="translation urdu">{v.tarjma_text || v.urdu || v.english}</div>}
@@ -393,11 +427,11 @@ function QuranTab() {
   return (
     <div>
       <div className="flex gap-1.5 mb-3 flex-wrap">
-        {(['surahs', 'parahs', 'search', 'bookmarks'] as QuranView[]).map(v => (
+        {(['surahs', 'parahs', 'search', 'surah-bms', 'ayat-bms'] as QuranView[]).map(v => (
           <button key={v} onClick={() => setView(v)}
             className={`px-4 py-1.5 text-sm border-none rounded cursor-pointer capitalize
               ${view === v ? 'bg-[#f5f5f5] text-[#1a5c3a]' : 'bg-[#2a7a4e] text-[#ddd]'}`}
-          >{v === 'bookmarks' ? '⭐ Bookmarks' : v === 'search' ? '🔍 Search' : v}</button>
+          >{v === 'surah-bms' ? '⭐ Surah Bookmark' : v === 'ayat-bms' ? '🔖 Ayah Bookmark' : v === 'search' ? '🔍 Search' : v}</button>
         ))}
       </div>
       {view === 'surahs' && (
@@ -412,7 +446,7 @@ function QuranTab() {
                 </div>
               </div>
               <span className="text-lg sm:text-[22px] cursor-pointer px-2 sm:px-2.5 shrink-0" onClick={e => { e.stopPropagation(); toggleBm(s.id) }}>
-                {bookmarks.includes(s.id) ? '⭐' : '☆'}
+                {surahBms.includes(s.id) ? '⭐' : '☆'}
               </span>
             </div>
           ))}
@@ -431,10 +465,11 @@ function QuranTab() {
           ))}
         </div>
       )}
-      {view === 'bookmarks' && (
+      {view === 'surah-bms' && (
         <div className="grid gap-1">
-          {bookmarks.length === 0 && <div className="loading">No bookmarked surahs yet. ⭐ a surah to add it here.</div>}
-          {bookmarks.map(id => {
+          <h3 className="text-[#1a5c3a] text-sm font-bold mb-1">Surah Bookmarks</h3>
+          {surahBms.length === 0 && <div className="loading">No saved surah bookmarks yet. ⭐ a surah to add it here.</div>}
+          {surahBms.map(id => {
             const s = surahNames.find((n: any) => n.id === id)
             if (!s) return null
             return (
@@ -450,6 +485,24 @@ function QuranTab() {
               </div>
             )
           })}
+        </div>
+      )}
+      {view === 'ayat-bms' && (
+        <div className="grid gap-1">
+          <h3 className="text-[#1a5c3a] text-sm font-bold mb-1">Ayah Bookmarks</h3>
+          {ayahBms.length === 0 && <div className="loading">No saved ayah bookmarks yet. Open a surah and tap the bookmark icon on any ayah to save it here.</div>}
+          {ayahBms.map((b: any, i: number) => (
+            <div key={i} className="list-card flex items-center" style={{ cursor: 'pointer' }} onClick={() => loadVerses(b.surah, b.ayah)}>
+              <div className="flex-1">
+                <div className="r-meta">Surah {b.surah}:{(b.surah === 1 || b.surah === 9) ? b.ayah + 1 : (b.ayah > 0 ? b.ayah : 'Basmalah')}</div>
+                <div className="font-arabic text-lg sm:text-[22px] text-[#1a3a1a] leading-[1.8]" style={{ direction: 'rtl' }}>{b.arabic}</div>
+                {b.urdu && <div className="font-urdu text-base sm:text-lg text-[#2d2d2d] leading-[1.8]" style={{ direction: 'rtl' }}>{b.urdu}</div>}
+              </div>
+              <span className="cursor-pointer px-2 sm:px-2.5 shrink-0" style={{ color: '#b8860b' }} onClick={e => { e.stopPropagation(); toggleAyahBm(b) }} title="Remove ayah bookmark">
+                <BookmarkIcon saved size={18} />
+              </span>
+            </div>
+          ))}
         </div>
       )}
       {view === 'search' && <QuranSearch />}
