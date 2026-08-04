@@ -77,9 +77,21 @@
   3. `fix-push.bat` — updated so its `.gitattributes` rewrite also emits the binary overrides (it previously reintroduced the corruption)
 - **Verified live**: deployed sizes now match originals — alvi 9,559,112 ✓, jameel 10,784,980 ✓, noorehuda 192,112 ✓, logo.png 119,023 ✓. Hard-refresh (Ctrl+F5) needed once to bypass cached old font.
 
+### 10. Child Website "Dua & Shifa" 404 — Root Cause: Relative Redirect + Trailing-Slash 308
+- **Symptom**: Clicking **More → Other Websites → Dua & Shifa** on the live site (`islam-pearl-zeta.vercel.app`) ended at `…/home.html` → 404 "page could not load".
+- **Root cause (diagnosed)**: Vercel answers `/dua-shifa/` (and formerly `/Dua%20%26%20Shifa/`) with a **308 redirect** to the same path **without the trailing slash** (`/dua-shifa`). The child site's `index.html` used a *relative* meta-refresh `url=home.html` — against a no-slash base URL the browser treats the last segment as a file name, so `home.html` resolved to the **site root** (`/home.html`) → 404. The rename (below) changed the URL but not the bug.
+- **Fixes**:
+  1. `git mv public/Dua & Shifa → public/dua-shifa` — clean URL, no `&`/space encoding issues (commit `1ef210d`, pushed).
+  2. `public/dua-shifa/index.html` — replaced the broken meta-refresh with a JS redirect: `location.pathname.replace(/\/index\.html$/i,'').replace(/\/+$/,'') + '/home.html'` → lands on `/dua-shifa/home.html` regardless of trailing slash. From there all relative links (styles.css, app.js, post.html…) resolve inside the folder → whole child site works.
+  3. `src/app/page.tsx` (OtherLinksView) — child-site cards now `window.open(site.url, '_blank', 'noopener')` so the child site opens in a **new tab** and the main site stays on the same page (was `window.location.href` full-page navigation).
+- **Verified live**: `/dua-shifa/` → 308 → `/dua-shifa` → 200 (index); `/dua-shifa/home.html`, styles.css, app.js, fonts → all 200; old `/Dua%20%26%20Shifa/` → 404 (correctly gone).
+- **Lesson**: with Vercel's slash-stripping 308, never rely on *relative* URLs inside child sites served at directory URLs — compute paths from `location.pathname`.
+
 ## Key Files Changed
 | File | Change |
 |------|--------|
+| `public/dua-shifa/*` | Renamed from `public/Dua & Shifa/`; `index.html` meta-refresh → JS directory-aware redirect |
+| `src/app/page.tsx` | Child-site cards open in new tab (`window.open` + `noopener`) instead of same-page navigation |
 | `src/app/page.tsx` | About branding; real-time tafseer/hadith/quran search UI; `makeSnippet`; result badges; narrator display |
 | `src/app/api/quran/tafseer/search/route.ts` | OR semantics + `encodeUrdu` + ranking + empty-column skip |
 | `src/app/api/hadith/search/[book]/route.ts` | OR across all hadith fields (urdu encoded, ravi plain, english, arabic) |

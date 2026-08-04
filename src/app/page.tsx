@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react'
 import { arabicSnippet } from '@/lib/arabic'
 
-type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about'
+type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about' | 'books'
 
 const API = ''
 
@@ -144,7 +144,7 @@ export default function Home() {
 
         {/* Tabs */}
         <div className="bg-[#2a7a4e] flex px-3 sm:px-5 gap-0.5 overflow-x-auto scrollbar-none">
-          {(['quran', 'hadith', 'wordbyword', 'tafseer', 'duas', 'topics', 'fahmul', 'mutradif', 'more', 'search', 'about'] as Tab[]).map(t => (
+          {(['quran', 'hadith', 'wordbyword', 'tafseer', 'duas', 'topics', 'fahmul', 'mutradif', 'more', 'search', 'about', 'books'] as Tab[]).map(t => (
             <button key={t} onClick={() => showTab(t)}
               className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm border-none cursor-pointer capitalize whitespace-nowrap shrink-0
                 ${tab === t ? 'bg-[#f5f5f5] text-[#1a5c3a] font-bold rounded-t-lg' : 'text-[#ddd] hover:bg-[#3a8a5e] hover:text-white'}`}
@@ -165,6 +165,7 @@ export default function Home() {
           {tab === 'more' && <MoreTab />}
           {tab === 'search' && <SearchTab />}
           {tab === 'about' && <AboutTab />}
+          {tab === 'books' && <BooksTab />}
         </div>
 
         {/* Settings Modal */}
@@ -1872,6 +1873,16 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
           <p className="text-xs text-[#666]">After DB import, add the new column to <code className="bg-[#e8f5e9] px-1 rounded">TRANSLATION_COLUMNS</code> or <code className="bg-[#e8f5e9] px-1 rounded">TAFSEER_COLUMNS</code> in <code className="bg-[#e8f5e9] px-1 rounded">src/lib/constants.ts</code> and restart the server.</p>
         </div>
       </div>
+    </div>
+  )
+}
+
+// ============== BOOKS ==============
+function BooksTab() {
+  return (
+    <div className="animate-fadeIn">
+      <iframe src="/books.html" title="کتب خانہ — Books Library" className="w-full bg-white rounded-xl border border-[#e0e0e0]"
+        style={{ height: 'calc(100vh - 180px)', minHeight: '600px' }} />
     </div>
   )
 }
