@@ -9,6 +9,9 @@ out/
 .env.local
 .env*.local
 
+# secrets
+t.txt
+
 # IDE
 .vscode/
 .idea/

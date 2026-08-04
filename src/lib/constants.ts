@@ -96,6 +96,10 @@ export const TAFSEER_COLUMNS = [
   ['tafseer_zia_ul_quran', 'Zia ul Quran', false],
   ['tafseer_irfan_ul_quran', 'Irfan ul Quran', false],
   ['tafseer_ul_hasanaat', 'Tafseer ul Hasanaat', false],
+  ['tafseer_khazain', 'Khazain ul Irfan', false],
+  ['tafseer_noor', 'Noor ul Irfan', false],
+  ['tafseer_sirat', 'Sirat ul Jinan', false],
+  ['tafseer_jalalain', 'Tafseer-e-Jalalain', false],
 ] as const
 
 export const BOOK_NAMES: Record<string, string> = {
