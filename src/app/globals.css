@@ -10,19 +10,27 @@
 
 @font-face {
   font-family: 'NooreHuda';
-  src: url('/fonts/noorehuda.ttf') format('truetype');
+  src: url('/fonts/noorehuda.woff2') format('woff2'),
+       url('/fonts/noorehuda.ttf') format('truetype');
+  font-display: swap;
 }
 @font-face {
   font-family: 'JameelNastaleeq';
-  src: url('/fonts/jameel_noori_nastaleeq.ttf') format('truetype');
+  src: url('/fonts/jameel_noori_nastaleeq.woff2') format('woff2'),
+       url('/fonts/jameel_noori_nastaleeq.ttf') format('truetype');
+  font-display: swap;
 }
 @font-face {
   font-family: 'RobotoNumbers';
-  src: url('/fonts/roboto_medium_numbers.ttf') format('truetype');
+  src: url('/fonts/roboto_medium_numbers.woff2') format('woff2'),
+       url('/fonts/roboto_medium_numbers.ttf') format('truetype');
+  font-display: swap;
 }
 @font-face {
   font-family: 'AlviNastaleeq';
-  src: url('/fonts/alvi_nastaleeq.ttf') format('truetype');
+  src: url('/fonts/alvi_nastaleeq.woff2') format('woff2'),
+       url('/fonts/alvi_nastaleeq.ttf') format('truetype');
+  font-display: swap;
 }
 
 body {
