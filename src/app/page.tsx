@@ -29,6 +29,46 @@ async function api(path: string) {
 const SettingsCtx = createContext<any>(null)
 function useSettings() { return useContext(SettingsCtx) }
 
+const BookmarkCtx = createContext<any>(null)
+function useBookmarks() { return useContext(BookmarkCtx) }
+
+function BookmarkIcon({ saved = false, size = 15 }: { saved?: boolean; size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function bmItem(h: any, bookId: string, bookName: string) {
+  return {
+    bookId,
+    bookName,
+    number: h.number,
+    international_number: h.international_number || '',
+    arabic: h.arabic || '',
+    urdu: h.urdu || '',
+    urdu_ravi: h.urdu_ravi || '',
+    english: h.english || '',
+    english_ravi: h.english_ravi || '',
+  }
+}
+
+function BookmarkBtn({ item, showText = false, className = '' }: { item: any; showText?: boolean; className?: string }) {
+  const { keyFor, isBookmarked, toggleBookmark } = useBookmarks()
+  const saved = isBookmarked(item.bookId, item.number)
+  return (
+    <button
+      onClick={e => { e.stopPropagation(); toggleBookmark(item) }}
+      title={saved ? 'Remove bookmark' : 'Save bookmark'}
+      className={`inline-flex items-center gap-1 rounded border-none cursor-pointer shrink-0 ${saved ? 'text-[#b8860b] bg-[#fff8e1]' : 'text-[#999] bg-[#f0f0f0] hover:text-[#1a5c3a] hover:bg-[#e8f5e9]'} ${showText ? 'px-2.5 py-1 text-xs font-bold' : 'w-7 h-7 justify-center'} ${className}`}
+    >
+      <BookmarkIcon saved={saved} />
+      {showText && (saved ? 'Bookmarked' : 'Save bookmark')}
+    </button>
+  )
+}
+
 function arabicEl(text: string, cls = '') {
   return <span className={`font-arabic text-right text-[28px] leading-[2] text-[#1a3a1a] ${cls}`} style={{ direction: 'rtl', display: 'block' }}>{text}</span>
 }
@@ -46,6 +86,11 @@ export default function Home() {
   const [tarjmaList, setTarjmaList] = useState<any[]>([])
   const [tafseerList, setTafseerList] = useState<any[]>([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [bookmarks, setBookmarks] = useState<any[]>([])
+
+  useEffect(() => {
+    try { setBookmarks(JSON.parse(localStorage.getItem('islam360_hadith_bookmarks') || '[]')) } catch { }
+  }, [])
 
   useEffect(() => {
     api('/quran/translations').then(setTarjmaList).catch(() => {})
@@ -73,7 +118,21 @@ export default function Home() {
 
   const ctxVal = { tarjma, tafseer, tarjmaList, tafseerList, showTab }
 
+  const keyFor = useCallback((bookId: string, number: any) => `${bookId}:${number}`, [])
+  const isBookmarked = useCallback((bookId: string, number: any) => bookmarks.some((b: any) => keyFor(b.bookId, b.number) === keyFor(bookId, number)), [bookmarks, keyFor])
+  const toggleBookmark = useCallback((item: any) => {
+    setBookmarks(prev => {
+      const key = keyFor(item.bookId, item.number)
+      const exists = prev.some((b: any) => keyFor(b.bookId, b.number) === key)
+      const next = exists ? prev.filter((b: any) => keyFor(b.bookId, b.number) !== key) : [item, ...prev]
+      localStorage.setItem('islam360_hadith_bookmarks', JSON.stringify(next))
+      return next
+    })
+  }, [keyFor])
+  const bookmarkCtxVal = { bookmarks, keyFor, isBookmarked, toggleBookmark }
+
   return (
+    <BookmarkCtx.Provider value={bookmarkCtxVal}>
     <SettingsCtx.Provider value={ctxVal}>
       <div>
         {/* Navbar */}
@@ -203,6 +262,7 @@ export default function Home() {
         <Modal />
       </div>
     </SettingsCtx.Provider>
+    </BookmarkCtx.Provider>
   )
 }
 
@@ -624,6 +684,8 @@ function HadithTab() {
   const [wordQuery, setWordQuery] = useState('')
   const [wordResults, setWordResults] = useState<any[]>([])
   const [wordSearching, setWordSearching] = useState(false)
+  const [showBookmarks, setShowBookmarks] = useState(false)
+  const { bookmarks } = useBookmarks()
 
   useEffect(() => {
     api('/hadith/books').then(b => { setBooks(b); if (b.length) { setBookId(b[0].id); loadBook(b[0].id, 1) } })
@@ -672,7 +734,31 @@ function HadithTab() {
             {b.name} ({b.count})
           </button>
         ))}
+        <button onClick={() => setShowBookmarks(s => !s)}
+          className={`px-3 py-1.5 rounded text-sm cursor-pointer font-bold inline-flex items-center gap-1.5 shrink-0 ${showBookmarks ? 'bg-[#e8b840] text-[#1a5c3a]' : 'bg-white border border-[#e8b840] text-[#b8860b] hover:bg-[#fff8e1]'}`}>
+          <BookmarkIcon saved={bookmarks.length > 0} size={14} />
+          Bookmarked ({bookmarks.length})
+        </button>
       </div>
+
+      {showBookmarks && (
+        <div className="bg-[#fffdf0] border border-[#e8d84a] rounded-lg p-3 mb-4">
+          <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Saved Bookmarked Hadiths</h3>
+          {bookmarks.length === 0 && <div className="loading">No bookmarks yet. Click the bookmark icon on any hadith to save it here.</div>}
+          {bookmarks.map((b: any, i: number) => (
+            <div key={i} className="result-item" style={{ cursor: 'pointer' }} onClick={() => openHadithDetail(b, b.bookId)}>
+              <div className="r-meta flex items-center justify-between gap-2">
+                <span>{b.bookName} &middot; Hadith #{b.number}{b.international_number ? ` | International: ${b.international_number}` : ''}</span>
+                <BookmarkBtn item={b} />
+              </div>
+              {b.arabic && <div className="r-arabic">{b.arabic}</div>}
+              {b.urdu && <div className="r-text">{b.urdu}</div>}
+              {b.urdu_ravi && <div className="narrator">{b.urdu_ravi}</div>}
+              {b.english && !b.urdu && <div className="r-text">{b.english}</div>}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="bg-[#e8f5e9] p-3 rounded-lg mb-4">
         <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Hadith Number</h3>
@@ -685,13 +771,16 @@ function HadithTab() {
             {numResults.length > 0 ? (
               <>
                 <p className="text-sm text-[#1a5c3a] font-bold mb-2">Found {numResults.length} hadiths matching &quot;{numQuery.trim()}&quot;</p>
-                {numResults.map((r, i) => (
-                  <div key={i} className="result-item" onClick={() => openHadithDetail(r, bookId)}>
-                    <div className="r-meta">Hadith #{r.number}{r.international_number ? ` | International: ${r.international_number}` : ''}</div>
-                    <div className="r-arabic">{r.arabic}</div>
-                    {r.urdu && <div className="r-text">{makeSnippet(r.urdu, [''])}</div>}
-                  </div>
-                ))}
+{numResults.map((r, i) => (
+  <div key={i} className="result-item" onClick={() => openHadithDetail(r, bookId, bookName)}>
+    <div className="r-meta flex items-center justify-between gap-2">
+      <span>Hadith #{r.number}{r.international_number ? ` | International: ${r.international_number}` : ''}</span>
+      <BookmarkBtn item={bmItem(r, bookId, bookName)} />
+    </div>
+    <div className="r-arabic">{r.arabic}</div>
+    {r.urdu && <div className="r-text">{makeSnippet(r.urdu, [''])}</div>}
+  </div>
+))}
               </>
             ) : (
               <div className="loading">No hadith found for &quot;{numQuery.trim()}&quot;</div>
@@ -712,14 +801,17 @@ function HadithTab() {
               <>
                 <p className="text-sm text-[#1a5c3a] font-bold mb-2">Found {wordResults.length} results for &quot;{wordQuery.trim()}&quot;</p>
                 {wordResults.map((r, i) => (
-                  <div key={i} className="result-item" onClick={() => openHadithDetail(r, bookId)}>
-                    <div className="r-meta">
-                      Hadith #{r.number}{r.international_number ? ` | International: ${r.international_number}` : ''}
-                      {r.match_count && r.total_words > 1 && (
-                        <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${r.match_count >= r.total_words ? 'bg-[#c8e6c9] text-[#1a5c3a]' : r.phrase_match ? 'bg-[#ffe0b2] text-[#e65100]' : 'bg-[#eceff1] text-[#546e7a]'}`}>
-                          {r.match_count}/{r.total_words} words{r.phrase_match ? ' · phrase' : ''}
-                        </span>
-                      )}
+                  <div key={i} className="result-item" onClick={() => openHadithDetail(r, bookId, bookName)}>
+                    <div className="r-meta flex items-center justify-between gap-2">
+                      <span>
+                        Hadith #{r.number}{r.international_number ? ` | International: ${r.international_number}` : ''}
+                        {r.match_count && r.total_words > 1 && (
+                          <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${r.match_count >= r.total_words ? 'bg-[#c8e6c9] text-[#1a5c3a]' : r.phrase_match ? 'bg-[#ffe0b2] text-[#e65100]' : 'bg-[#eceff1] text-[#546e7a]'}`}>
+                            {r.match_count}/{r.total_words} words{r.phrase_match ? ' · phrase' : ''}
+                          </span>
+                        )}
+                      </span>
+                      <BookmarkBtn item={bmItem(r, bookId, bookName)} />
                     </div>
                     <div className="r-arabic">{r.arabic}</div>
                     <div className="r-text">{makeSnippet(r.urdu || r.english || '', r.searchWords || wordQuery.trim().split(/\s+/))}</div>
@@ -734,13 +826,16 @@ function HadithTab() {
         )}
       </div>
 
-      {!searchActive && (
+      {!searchActive && !showBookmarks && (
         <>
           {loading && <div className="loading">Loading hadiths...</div>}
           {!loading && list.length === 0 && <div className="loading">Select a book to view hadiths.</div>}
           {list.map(h => (
-            <div key={h.number} className="hadith-card" style={{ cursor: 'pointer' }} onClick={() => openHadithDetail(h, bookId)}>
-              <div className="hadith-number">Hadith #{h.number}</div>
+            <div key={h.number} className="hadith-card relative" style={{ cursor: 'pointer' }} onClick={() => openHadithDetail(h, bookId, bookName)}>
+              <div className="flex items-center justify-between gap-2">
+                <div className="hadith-number">Hadith #{h.number}</div>
+                <BookmarkBtn item={bmItem(h, bookId, bookName)} />
+              </div>
               <div className="arabic">{h.arabic}</div>
               {h.urdu && <div className="text urdu">{h.urdu}</div>}
               {h.urdu_ravi && <div className="narrator">{h.urdu_ravi}</div>}
@@ -762,11 +857,11 @@ function HadithTab() {
   )
 }
 
-function openHadithDetail(h: any, bookId: string) {
-  openModal(`Hadith #${h.number}`, <HadithDetailBody h={h} bookId={bookId} />)
+function openHadithDetail(h: any, bookId: string, bookName?: string) {
+  openModal(`Hadith #${h.number}`, <HadithDetailBody h={h} bookId={bookId} bookName={bookName || h.bookName || ''} />)
 }
 
-function HadithDetailBody({ h, bookId }: { h: any; bookId: string }) {
+function HadithDetailBody({ h, bookId, bookName }: { h: any; bookId: string; bookName?: string }) {
   const [detail, setDetail] = useState<any>(h)
   const [num, setNum] = useState(h.number)
 
@@ -780,7 +875,10 @@ function HadithDetailBody({ h, bookId }: { h: any; bookId: string }) {
 
   return (
     <div className="hadith-card">
-      <div style={{ fontSize: 14, marginBottom: 10, color: '#999' }}>Hadith #{detail.number}</div>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div style={{ fontSize: 14, color: '#999' }}>Hadith #{detail.number}{bookName ? ` — ${bookName}` : ''}</div>
+        <BookmarkBtn item={bmItem(detail, bookId, bookName || detail.bookName || '')} showText />
+      </div>
       <div style={{ fontFamily: "'NooreHuda','AlviNastaleeq','Traditional Arabic',serif", fontSize: 22, lineHeight: 2, textAlign: 'right', direction: 'rtl', color: '#1a3a1a', marginBottom: 10 }}>{detail.arabic}</div>
       {detail.urdu && <div style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq',serif", fontSize: 20, textAlign: 'right', direction: 'rtl', color: '#2d2d2d', marginBottom: 5, fontWeight: 500, lineHeight: 1.8 }}>{detail.urdu}</div>}
       {detail.urdu_ravi && <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 5 }}>{detail.urdu_ravi}</div>}
