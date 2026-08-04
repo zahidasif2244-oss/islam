@@ -144,7 +144,7 @@ export default function Home() {
 
         {/* Tabs */}
         <div className="bg-[#2a7a4e] flex px-3 sm:px-5 gap-0.5 overflow-x-auto scrollbar-none">
-          {(['quran', 'hadith', 'wordbyword', 'tafseer', 'duas', 'topics', 'fahmul', 'mutradif', 'more', 'search', 'about', 'books'] as Tab[]).map(t => (
+          {(['quran', 'hadith', 'wordbyword', 'tafseer', 'duas', 'topics', 'fahmul', 'mutradif', 'more', 'about', 'books'] as Tab[]).map(t => (
             <button key={t} onClick={() => showTab(t)}
               className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm border-none cursor-pointer capitalize whitespace-nowrap shrink-0
                 ${tab === t ? 'bg-[#f5f5f5] text-[#1a5c3a] font-bold rounded-t-lg' : 'text-[#ddd] hover:bg-[#3a8a5e] hover:text-white'}`}
