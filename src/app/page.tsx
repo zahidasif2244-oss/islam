@@ -1879,10 +1879,30 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
 
 // ============== BOOKS ==============
 function BooksTab() {
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [height, setHeight] = useState(800)
+
+  useEffect(() => {
+    const frame = iframeRef.current
+    if (!frame) return
+    const resize = () => {
+      const doc = frame.contentDocument
+      if (doc && doc.body) {
+        doc.documentElement.style.overflow = 'hidden'
+        doc.body.style.overflow = 'hidden'
+        setHeight(doc.body.scrollHeight)
+      }
+    }
+    frame.addEventListener('load', resize)
+    const timer = setInterval(resize, 800)
+    return () => { frame.removeEventListener('load', resize); clearInterval(timer) }
+  }, [])
+
   return (
     <div className="animate-fadeIn">
-      <iframe src="/books.html" title="کتب خانہ — Books Library" className="w-full bg-white rounded-xl border border-[#e0e0e0]"
-        style={{ height: 'calc(100vh - 180px)', minHeight: '600px' }} />
+      <iframe ref={iframeRef} src="/books.html" title="کتب خانہ — Books Library" scrolling="no"
+        className="w-full bg-white rounded-xl border border-[#e0e0e0] block"
+        style={{ height, overflow: 'hidden' }} />
     </div>
   )
 }
