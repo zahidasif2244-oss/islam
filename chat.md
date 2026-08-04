@@ -87,9 +87,19 @@
 - **Verified live**: `/dua-shifa/` → 308 → `/dua-shifa` → 200 (index); `/dua-shifa/home.html`, styles.css, app.js, fonts → all 200; old `/Dua%20%26%20Shifa/` → 404 (correctly gone).
 - **Lesson**: with Vercel's slash-stripping 308, never rely on *relative* URLs inside child sites served at directory URLs — compute paths from `location.pathname`.
 
+### 11. Books Tab — Embed `public/books.html` + Hide Search Tab from Nav
+**Books tab** (`src/app/page.tsx`):
+- Added `'books'` to `Tab` type (after `'about'`), tab button in nav after About, and `{tab === 'books' && <BooksTab />}` render switch.
+- `BooksTab` (page.tsx:1880) embeds the static `public/books.html` (کتب خانہ — dawateislami book cards with search/pagination) in an **iframe**.
+- **No inner scrollbar**: iframe auto-resizes to its content height — on `load` + every 800ms it reads `contentDocument.body.scrollHeight`, sets inner `overflow: hidden` on `documentElement`/`body`, and applies that height to the iframe (`scrolling="no"` fallback). Main page scrollbar does all scrolling; polling keeps height correct when the search box filters cards. Note: books.html's `window.scrollTo(0,0)` on pagination now scrolls the main page.
+
+**Search tab hidden from nav**:
+- Removed `'search'` from the nav buttons array only — `SearchTab` render switch and functionality untouched (tab can still be activated programmatically; content at `src/app/page.tsx`).
+
 ## Key Files Changed
 | File | Change |
 |------|--------|
+| `src/app/page.tsx` | NEW Books tab (nav after About) + `BooksTab` auto-resizing iframe embed of `/books.html`; `'search'` removed from nav buttons only (search functionality intact) |
 | `public/dua-shifa/*` | Renamed from `public/Dua & Shifa/`; `index.html` meta-refresh → JS directory-aware redirect |
 | `src/app/page.tsx` | Child-site cards open in new tab (`window.open` + `noopener`) instead of same-page navigation |
 | `src/app/page.tsx` | About branding; real-time tafseer/hadith/quran search UI; `makeSnippet`; result badges; narrator display |
