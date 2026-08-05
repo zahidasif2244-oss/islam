@@ -128,3 +128,26 @@
 - Database: turso.tech (remote)
 - Fully responsive (mobile/tablet/desktop)
 - Self-hosted (no Vercel/Netlify)
+
+### 12. Hadith Bookmarks (uncommitted — commit via GitHub Desktop)
+All changes in `src/app/page.tsx`. Verified with `npx tsc --noEmit` (clean). Dev server unusable (known Turbopack crash), so UI verified live after Vercel deploys.
+
+- **Bookmark button under the Hadith tab**: gold `Bookmarked (n)` button next to the book buttons. Toggles a "Saved Bookmarked Hadiths" view listing every saved hadith (book name, number, Arabic, Urdu, narrator); each opens full detail on click; the icon on each row removes it.
+- **Bookmark sign on every hadith**: an SVG bookmark (outline = unsaved, filled gold = saved) on the main book list cards, hadith-number search results, Urdu word-search results, and the detail modal (labels "Save bookmark"/"Bookmarked"). Button clicks `stopPropagation()` so they don't open the hadith.
+- **Storage**: `localStorage` key `islam360_hadith_bookmarks` (mirrors `islam360_tarjma`/`islam360_bookmarks` pattern). Shared via a new `BookmarkCtx` provider in `Home` (wraps `SettingsCtx`, `<Modal/>` is inside it so the modal's bookmark button stays in sync).
+  - Each entry: `{ bookId, bookName, number, international_number, arabic, urdu, urdu_ravi, english, english_ravi }`, keyed by `"{bookId}:{number}"`.
+  - Helpers/components added: `BookmarkCtx`/`useBookmarks()`, `BookmarkIcon` (SVG), `bmItem(h, bookId, bookName)` (builds a saveable item), `BookmarkBtn` (toggle button, `showText` prop).
+  - `openHadithDetail(h, bookId, bookName?)` now threads the book name into `HadithDetailBody` (also shows `Hadith #n — <book>` in the modal header).
+
+### 13. Quran Tab — Two Bookmark Types: Surah + Ayah (uncommitted — commit via GitHub Desktop)
+All changes in `src/app/page.tsx` (`QuranTab`). Verified with `npx tsc --noEmit` (clean).
+
+- **⭐ Surah Bookmark**: existing star feature retained but made reactive state (`surahBms`), same `localStorage` key `islam360_bookmarks` (existing saved surahs preserved). Added a ⭐/☆ toggle in the reading (`browse`) header so the current surah can be bookmarked while reading. View button "⭐ Surah Bookmark" lists saved surahs (click to open, star removes).
+- **🔖 Ayah Bookmark**: new. Every ayah in the reading view now has a bookmark icon in its action row (next to Words/Tafseer/Audio) — gold filled when saved. Saved under `localStorage` key `islam360_ayat_bookmarks` with `{ id, surah, ayah, para, arabic, urdu }` (urdu = `tarjma_text || urdu || english`). View button "🔖 Ayah Bookmark" lists every saved ayah (Arabic + Urdu); clicking one opens that surah and auto-scrolls to the ayah (`loadVerses(surah, ayah)`); the icon on the row removes it.
+- **View selector** in `QuranTab`: `['surahs', 'parahs', 'search', 'surah-bms', 'ayat-bms']`; `QuranView` type updated to `'surah-bms' | 'ayat-bms'` (replacing `'bookmarks'`).
+- **Persistence** confirmed: `/quran/surah/[id]` returns `{ id, surah, para, ayah, arabic, arabic_tajweed, urdu, english, roman_urdu, tarjma_text?, tafseer_text? }` — bookmark items built from these fields.
+
+## Key Files Changed (cont.)
+| File | Change |
+|------|--------|
+| `src/app/page.tsx` | Hadith bookmarks: `BookmarkCtx` provider + `BookmarkIcon`/`BookmarkBtn`/`bmItem`, `Bookmarked (n)` button + saved-hadiths view in `HadithTab`, bookmark icon on list cards + number/word search results + detail modal (`openHadithDetail`/`HadithDetailBody` now carry `bookName`). Quran: surah bookmarks made reactive + added to browse header; ayah bookmark icon on every ayah in `browse`; "⭐ Surah Bookmark" and "🔖 Ayah Bookmark" views; `QuranView` → `'surah-bms'\|'ayat-bms'` |
