@@ -1,5 +1,6 @@
 import { createQuranClient, run, query, getText } from '@/lib/db'
 import { json, error } from '@/lib/api-utils'
+import { verifyAdminRequest } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,8 @@ function clean(v: unknown, max = 20000): string {
   return String(v).trim().slice(0, max)
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  if (!verifyAdminRequest(req)) return error('Unauthorized', 401)
   try {
     const db = createQuranClient()
     const categories: any[] = []
@@ -63,6 +65,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!verifyAdminRequest(req)) return error('Unauthorized', 401)
   try {
     const body = await req.json()
     const table = clean(body.table)
@@ -111,6 +114,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!verifyAdminRequest(req)) return error('Unauthorized', 401)
   try {
     const body = await req.json()
     const table = clean(body.table)

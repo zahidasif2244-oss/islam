@@ -2,10 +2,6 @@
 
 import { createContext, useContext, useState, useEffect } from 'react'
 
-const AUTH_KEY = 'islam360_admin_auth'
-const ADMIN_EMAIL = 'REDACTED_EMAIL'
-const ADMIN_PASS = 'REDACTED_CREDENTIAL'
-
 const AuthCtx = createContext<any>(null)
 export function useAdminAuth() { return useContext(AuthCtx) }
 
@@ -17,22 +13,34 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
   const [loginError, setLoginError] = useState('')
 
   useEffect(() => {
-    try { setAuthed(sessionStorage.getItem(AUTH_KEY) === '1') } catch {}
-    setChecking(false)
+    fetch('/api/admin/session')
+      .then(r => (r.ok ? r.json() : { authed: false }))
+      .then(d => setAuthed(!!d.authed))
+      .catch(() => setAuthed(false))
+      .finally(() => setChecking(false))
   }, [])
 
-  function handleLogin() {
-    if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-      try { sessionStorage.setItem(AUTH_KEY, '1') } catch {}
-      setLoginError('')
-      setAuthed(true)
-    } else {
-      setLoginError('Invalid email or password')
+  async function handleLogin() {
+    setLoginError('')
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      if (res.ok) {
+        setAuthed(true)
+      } else {
+        const d = await res.json().catch(() => ({ error: 'Login failed' }))
+        setLoginError(d.error || 'Invalid email or password')
+      }
+    } catch {
+      setLoginError('Network error, please try again')
     }
   }
 
-  function logout() {
-    try { sessionStorage.removeItem(AUTH_KEY) } catch {}
+  async function logout() {
+    try { await fetch('/api/admin/logout', { method: 'POST' }) } catch {}
     setAuthed(false)
   }
 

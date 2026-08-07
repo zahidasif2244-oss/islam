@@ -9,6 +9,7 @@ import {
   removeHidden,
 } from '@/lib/custom-books'
 import { createQuranClient, run } from '@/lib/db'
+import { verifyAdminRequest } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,7 +47,8 @@ export interface AdminBook {
   deleted: boolean
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  if (!verifyAdminRequest(req)) return error('Unauthorized', 401)
   try {
     const baked: any[] = (booksData as any[]).map(b => ({
       ...b,
@@ -137,6 +139,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!verifyAdminRequest(req)) return error('Unauthorized', 401)
   try {
     const body = await req.json()
     const books: any[] = Array.isArray(body) ? body : body.books
@@ -209,6 +212,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!verifyAdminRequest(req)) return error('Unauthorized', 401)
   try {
     const body = await req.json()
 
