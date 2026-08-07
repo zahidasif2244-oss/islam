@@ -1885,9 +1885,13 @@ function LoginModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
 }
 
 function AdminPanel({ onClose }: { onClose: () => void }) {
-  const [customBooks, setCustomBooks] = useState<any[]>([])
+  const [allBooks, setAllBooks] = useState<any[]>([])
+  const [deletedBooks, setDeletedBooks] = useState<any[]>([])
+  const [search, setSearch] = useState('')
   const [csvMsg, setCsvMsg] = useState<string | null>(null)
   const [csvError, setCsvError] = useState<string | null>(null)
+  const [listMsg, setListMsg] = useState<string | null>(null)
+  const [listError, setListError] = useState<string | null>(null)
 
   const [bTitle, setBTitle] = useState('')
   const [bAuthor, setBAuthor] = useState('')
@@ -1899,11 +1903,16 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
   const [bAudioDownload, setBAudioDownload] = useState('')
   const [addedMsg, setAddedMsg] = useState<string | null>(null)
 
+  const [editing, setEditing] = useState<any | null>(null)
+  const [editFields, setEditFields] = useState<any>({})
+  const [saving, setSaving] = useState(false)
+
   async function loadBooks() {
     try {
       const res = await api('/admin/books')
-      setCustomBooks(Array.isArray(res) ? res : res.books || [])
-    } catch { setCustomBooks([]) }
+      setAllBooks(res.books || [])
+      setDeletedBooks(res.deletedBooks || [])
+    } catch { setAllBooks([]); setDeletedBooks([]) }
   }
 
   useEffect(() => { loadBooks() }, [])
@@ -1947,7 +1956,6 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
           audioUrl: audioUrl || '',
           audioPlay: aPlay || '',
           audioDownload: aDl || '',
-          source: 'Custom',
         }
         if (item.title || item.url || item.cover) parsed.push(item)
       }
@@ -1959,10 +1967,10 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
         const res = await api('/admin/books', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ books: parsed.map(({ source, ...b }) => b) }),
+          body: JSON.stringify({ books: parsed }),
         })
         await loadBooks()
-        setCsvMsg(`Imported ${res.inserted} books from "${file.name}" (${res.skipped} duplicates skipped).`)
+        setCsvMsg(`Imported ${res.inserted} books from "${file.name}" (${res.updated} updated, ${res.skipped} skipped).`)
       } catch {
         setCsvError('Failed to import — server error. Check server logs.')
       }
@@ -1999,16 +2007,89 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
     } catch { setAddedMsg('Failed to add book on server') }
   }
 
-  async function removeBook(id: number | undefined, i: number) {
+  function startEdit(b: any) {
+    setEditing(b)
+    setEditFields({
+      bakedKey: b.key || '',
+      title: b.title || '',
+      author: b.author || '',
+      pages: b.pages || '',
+      cover: b.cover || '',
+      thumbnail: b.thumbnail || '',
+      url: b.url || '',
+      pdf: b.pdf || '',
+      audioUrl: b.audioUrl || '',
+      audioPlay: b.audioPlay || '',
+      audioDownload: b.audioDownload || '',
+    })
+  }
+
+  async function saveEdit() {
+    if (!editing) return
+    if (!editFields.title?.trim()) { setListError('Title required'); return }
+    setSaving(true); setListMsg(null); setListError(null)
     try {
-      if (id) {
-        await api('/admin/books', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) })
+      const payload: any = {
+        title: editFields.title.trim(),
+        author: editFields.author.trim() || 'N/A',
+        pages: editFields.pages.trim() || 'N/A',
+        cover: editFields.cover.trim(),
+        thumbnail: editFields.thumbnail.trim(),
+        url: editFields.url.trim(),
+        pdf: editFields.pdf.trim(),
+        audioUrl: editFields.audioUrl.trim(),
+        audioPlay: editFields.audioPlay.trim(),
+        audioDownload: editFields.audioDownload.trim(),
       }
+      if (editing.custom && editing.id) payload.id = editing.id
+      else if (editFields.bakedKey) payload.bakedKey = editFields.bakedKey
+      await api('/admin/books', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ books: [payload] }),
+      })
+      await loadBooks()
+      setListMsg(`Saved "${payload.title}"`)
+      setEditing(null)
+    } catch {
+      setListError('Save failed — server error')
+    } finally { setSaving(false) }
+  }
+
+  async function deleteBook(b: any) {
+    setListMsg(null); setListError(null)
+    try {
+      const headers = { 'content-type': 'application/json' }
+      if (b.custom && b.id) {
+        await api('/admin/books', { method: 'DELETE', headers, body: JSON.stringify({ id: b.id }) })
+        setListMsg(`Deleted "${b.title}"`)
+      }
+      if (b.key) {
+        await api('/admin/books', { method: 'DELETE', headers, body: JSON.stringify({ key: b.key, title: b.title }) })
+        setListMsg(`Removed "${b.title}" from the site`)
+      }
+      if (editing && editing.key === b.key) setEditing(null)
       await loadBooks()
     } catch {
-      setCustomBooks(customBooks.filter((_, idx) => idx !== i))
+      setListError('Failed to delete — server error')
     }
   }
+
+  async function restoreBook(d: any) {
+    try {
+      await api('/admin/books', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ restoreKey: d.key }) })
+      setListMsg(`Restored "${d.title}"`)
+      await loadBooks()
+    } catch { setListError('Failed to restore — server error') }
+  }
+
+  const q = search.trim().toLowerCase()
+  const filtered = allBooks.filter(b =>
+    !q ||
+    (b.title || '').toLowerCase().includes(q) ||
+    (b.author || '').toLowerCase().includes(q) ||
+    (b.key || '').toLowerCase().includes(q)
+  )
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-[5%]">
@@ -2017,7 +2098,7 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
           <h3 className="text-lg font-bold text-[#1a5c3a]">🔒 Admin Panel — Books Manager</h3>
           <button onClick={onClose} className="text-2xl cursor-pointer text-[#999] hover:text-[#333]">&times;</button>
         </div>
-        <p className="text-sm text-[#666] mb-4">Welcome, Ali Raza. Add books manually or upload a CSV — they appear in the Books tab.</p>
+        <p className="text-sm text-[#666] mb-4">Welcome, Ali Raza. Add, edit or delete books below — changes appear in the Books tab for all visitors.</p>
 
         {/* CSV Upload */}
         <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0] mb-4">
@@ -2060,27 +2141,96 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
           {addedMsg && <div className="text-xs text-[#1a5c3a] mt-2">{addedMsg}</div>}
         </div>
 
-        {/* Saved Books */}
+        {/* All Books */}
         <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0] mb-4">
-          <h4 className="font-bold text-[#1a5c3a] mb-2">📚 Custom Books ({customBooks.length})</h4>
-          {customBooks.length === 0 ? (
-            <p className="text-xs text-[#999]">No custom books yet. Upload a CSV or add manually — they show in the Books tab.</p>
-          ) : (
-            <div>
-              {customBooks.map((b, i) => (
-                <div key={`${b.id || b.url || b.cover || i}`} className="flex items-center gap-2 mb-1 p-1.5 bg-white rounded border border-[#e0e0e0]">
-                  <span className="text-xs font-medium flex-1 truncate" style={{ direction: 'rtl' }}>{b.title}</span>
-                  <span className="text-[10px] text-[#999] truncate max-w-[160px]">{b.author} · {b.pages}pp</span>
-                  <button onClick={() => removeBook(b.id, i)} className="text-xs text-red-500 bg-transparent border-none cursor-pointer hover:text-red-700">&times;</button>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <h4 className="font-bold text-[#1a5c3a]">📚 All Books ({allBooks.length})</h4>
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Search title / author / url..."
+              className="flex-1 min-w-[140px] p-2 border border-[#ccc] rounded text-sm" />
+          </div>
+          {listMsg && <div className="text-xs mb-2 p-2 rounded bg-[#e8f5e9] text-[#1a5c3a]">{listMsg}</div>}
+          {listError && <div className="text-xs mb-2 p-2 rounded bg-[#ffebee] text-red-700">{listError}</div>}
+          <div className="max-h-[40vh] overflow-y-auto border border-[#e0e0e0] rounded">
+            {filtered.length === 0 ? (
+              <p className="text-xs text-[#999] p-3">No books found.</p>
+            ) : (
+              filtered.map((b) => (
+                <div key={b.key || b.id || b.title} className="flex items-center gap-2 p-1.5 border-b border-[#f0f0f0] last:border-b-0 hover:bg-[#f4faf4]">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#e8f5e9] text-[#1a5c3a] whitespace-nowrap">{b.source}</span>
+                  {b.deleted && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 whitespace-nowrap">HIDDEN</span>}
+                  <span className="text-xs font-medium flex-1 min-w-0 truncate" style={{ direction: 'rtl' }}>{b.title}</span>
+                  <span className="text-[10px] text-[#999] truncate max-w-[120px] hidden sm:block">{b.author} · {b.pages}pp</span>
+                  <button onClick={() => startEdit(b)} className="text-[11px] text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-2 py-0.5 cursor-pointer hover:bg-[#d0ead8] whitespace-nowrap">✏️ Edit</button>
+                  <button onClick={() => deleteBook(b)} className="text-[11px] text-red-600 bg-red-50 border border-red-200 rounded px-2 py-0.5 cursor-pointer hover:bg-red-100 whitespace-nowrap">🗑 Delete</button>
                 </div>
-              ))}
-            </div>
+              ))
+            )}
+          </div>
+          {filtered.length !== allBooks.length && (
+            <p className="text-[10px] text-[#999] mt-1.5">Showing {filtered.length} of {allBooks.length} — refine the search or clear it to see everything.</p>
           )}
         </div>
 
+        {/* Deleted / hidden — restorable */}
+        {deletedBooks.length > 0 && (
+          <div className="p-4 bg-[#fff5f5] rounded-lg border border-[#e8c4c4] mb-4">
+            <h4 className="font-bold text-red-700 mb-2">🗑 Hidden Books ({deletedBooks.length})</h4>
+            {deletedBooks.map(d => (
+              <div key={d.key} className="flex items-center gap-2 mb-1 p-1.5 bg-white rounded border border-[#f0c8c8]">
+                <span className="text-xs flex-1 truncate" style={{ direction: 'rtl' }}>{d.title}</span>
+                <button onClick={() => restoreBook(d)} className="text-[11px] text-[#1a5c3a] bg-[#e8f5e9] border border-[#b8d6c4] rounded px-2 py-0.5 cursor-pointer hover:bg-[#d0ead8]">↩ Restore</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Edit form */}
+        {editing && (
+          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white p-5 rounded-xl w-[90%] max-w-[560px] max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold text-[#1a5c3a]">✏️ Edit Book</h4>
+                <button onClick={() => setEditing(null)} className="text-2xl cursor-pointer text-[#999] hover:text-[#333]">&times;</button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                <input type="text" value={editFields.title || ''} onChange={e => setEditFields((f: any) => ({ ...f, title: e.target.value }))} placeholder="Title *"
+                  className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                <input type="text" value={editFields.author || ''} onChange={e => setEditFields((f: any) => ({ ...f, author: e.target.value }))} placeholder="Author"
+                  className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                <input type="text" value={editFields.pages || ''} onChange={e => setEditFields((f: any) => ({ ...f, pages: e.target.value }))} placeholder="Pages"
+                  className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                <input type="text" value={editFields.cover || ''} onChange={e => setEditFields((f: any) => ({ ...f, cover: e.target.value }))} placeholder="Cover image URL"
+                  className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                <input type="text" value={editFields.url || ''} onChange={e => setEditFields((f: any) => ({ ...f, url: e.target.value }))} placeholder="Book page URL"
+                  className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                <input type="text" value={editFields.pdf || ''} onChange={e => setEditFields((f: any) => ({ ...f, pdf: e.target.value }))} placeholder="PDF download URL"
+                  className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                <input type="text" value={editFields.audioPlay || ''} onChange={e => setEditFields((f: any) => ({ ...f, audioPlay: e.target.value }))} placeholder="Audio play URL"
+                  className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                <input type="text" value={editFields.audioDownload || ''} onChange={e => setEditFields((f: any) => ({ ...f, audioDownload: e.target.value }))} placeholder="Audio download URL"
+                  className="w-full p-2 border border-[#ccc] rounded text-sm" />
+              </div>
+              {editing.custom && editing.id ? (
+                <p className="text-[10px] text-[#999] mb-2">Editing a custom book (id #{editing.id}) — will update in place.</p>
+              ) : (
+                <p className="text-[10px] text-[#999] mb-2">Editing a built-in book — the change is stored as an override so it stays after redeploys. Use Delete to hide it instead.</p>
+              )}
+              <div className="flex gap-2">
+                <button onClick={saveEdit} disabled={saving}
+                  className="flex-1 px-4 py-2 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer hover:bg-[#2a7a4e] disabled:opacity-40">
+                  {saving ? 'Saving…' : '💾 Save Changes'}
+                </button>
+                <button onClick={() => setEditing(null)}
+                  className="px-4 py-2 bg-[#f0f0f0] text-[#555] border-none rounded text-sm cursor-pointer hover:bg-[#e2e2e2]">Cancel</button>
+              </div>
+              {listError && <div className="text-xs mt-2 p-2 rounded bg-[#ffebee] text-red-700">{listError}</div>}
+            </div>
+          </div>
+        )}
+
         <div className="p-4 bg-[#fffde7] rounded-lg border border-[#e8d84a]">
           <h4 className="font-bold text-[#1a5c3a] mb-1">💡 Note</h4>
-          <p className="text-xs text-[#666]">Custom books are saved to the website database (Turso, table <code className="bg-[#e8f5e9] px-1 rounded">tbl_CustomBooks</code>) and appear in the Books tab for <b>all visitors</b> immediately. To remove, click × on any custom book.</p>
+          <p className="text-xs text-[#666]">All books are stored in the website database (<code className="bg-[#e8f5e9] px-1 rounded">tbl_CustomBooks</code> + <code className="bg-[#e8f5e9] px-1 rounded">tbl_HiddenBooks</code>) and appear to <b>all visitors</b> immediately. Editing a built-in book creates an override; Delete hides it (restorable in the Hidden section). To permanently restore the original CSV book list, empty both tables and redeploy.</p>
         </div>
       </div>
     </div>

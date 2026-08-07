@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import booksData from '@/data/books.json'
-import { createQuranClient, run, query } from '@/lib/db'
+import { listCustomBooks, bookKey, listHiddenKeys } from '@/lib/custom-books'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,48 +18,42 @@ export interface BookItem {
   source: string
 }
 
-const CREATE_SQL = `
-CREATE TABLE IF NOT EXISTS tbl_CustomBooks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT,
-  author TEXT,
-  pages TEXT,
-  cover TEXT,
-  thumbnail TEXT,
-  url TEXT,
-  pdf TEXT,
-  audioUrl TEXT,
-  audioPlay TEXT,
-  audioDownload TEXT,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP
-)`
-
 export async function GET() {
-  let custom: BookItem[] = []
-  try {
-    const db = createQuranClient()
-    await run(db, CREATE_SQL)
-    const rows = await query(
-      db,
-      `SELECT title, author, pages, cover, thumbnail, url, pdf, audioUrl, audioPlay, audioDownload FROM tbl_CustomBooks ORDER BY id DESC`
-    )
-    custom = rows.map((r: any) => ({
-      title: String(r.title || ''),
-      author: String(r.author || ''),
-      pages: String(r.pages || ''),
-      cover: String(r.cover || ''),
-      thumbnail: String(r.thumbnail || ''),
-      url: String(r.url || ''),
-      pdf: String(r.pdf || ''),
-      audioUrl: String(r.audioUrl || ''),
-      audioPlay: String(r.audioPlay || ''),
-      audioDownload: String(r.audioDownload || ''),
-      source: 'Custom',
-    }))
-  } catch (e) {
-    custom = []
+  const baked: any[] = (booksData as any[]).map(b => ({ ...b, source: b.source || 'Dawaateislami' }))
+  const custom = await listCustomBooks()
+  const hidden = await listHiddenKeys()
+
+  const bakedByKey = new Map<string, any>()
+  for (const b of baked) {
+    const k = bookKey(b)
+    if (k && !bakedByKey.has(k)) bakedByKey.set(k, b)
   }
-  return NextResponse.json([...custom, ...(booksData as any[])], {
+
+  for (const b of custom) {
+    const k = bookKey(b)
+    if (k && bakedByKey.has(k)) {
+      bakedByKey.set(k, { ...b, source: 'Custom' })
+    }
+  }
+
+  const merged: any[] = []
+  const seen = new Set<string>()
+  for (const b of baked) {
+    const k = bookKey(b)
+    if (k && hidden.has(k)) continue
+    if (k && seen.has(k)) continue
+    if (k) seen.add(k)
+    const override = k && bakedByKey.get(k)
+    merged.push(override || b)
+  }
+  for (const c of custom) {
+    const k = bookKey(c)
+    if (k && seen.has(k)) continue
+    if (k) seen.add(k)
+    merged.push({ ...c, source: 'Custom' })
+  }
+
+  return NextResponse.json(merged, {
     headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
   })
 }
