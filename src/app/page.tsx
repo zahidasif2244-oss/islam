@@ -2100,6 +2100,14 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
         </div>
         <p className="text-sm text-[#666] mb-4">Welcome, Ali Raza. Add, edit or delete books below — changes appear in the Books tab for all visitors.</p>
 
+        <div className="p-4 bg-[#eef7ff] rounded-lg border border-[#bcd9f0] mb-4 flex items-center justify-between">
+          <div>
+            <h4 className="font-bold text-[#1a5c3a] mb-0.5">🕌 Duas Manager</h4>
+            <p className="text-xs text-[#666]">Add, edit or delete duas (Duas / More Duas / Prayers / Janaza / Roza).</p>
+          </div>
+          <a href="/admin/duas" className="text-sm text-[#1a5c3a] bg-white border border-[#b5d6c0] rounded px-3 py-1.5 no-underline hover:bg-[#e8f5e9] whitespace-nowrap">Open →</a>
+        </div>
+
         {/* CSV Upload */}
         <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0] mb-4">
           <h4 className="font-bold text-[#1a5c3a] mb-2">📄 Import Books from CSV</h4>

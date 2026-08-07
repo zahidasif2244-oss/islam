@@ -194,3 +194,39 @@ All UI changes in `src/app/page.tsx`; build tooling in `scripts/build-books-data
 | `scripts/build-books-data.mjs` | New, 10-col CSV parser; Map dedupe/merge; graceful fallback when CSVs missing |
 | `package.json` | `books:sync`; `build` now syncs books then `next build` |
 | `src/app/globals.css` | `.book-flip` / `.book-flip-*` 3-D flip card CSS |
+
+### 15. Admin Panel Rebuilt — Live Books Manager (Turso DB, not localStorage)
+All changes in `src/app/page.tsx` + new `src/lib/custom-books.ts` + reworked APIs. Verified with `npx tsc --noEmit`, `npm run build`, and live round-trip tests on the prod server.
+
+**Decision (user):** "every time i import .csv it store in live website not store localstorage — correct it" → moved from localStorage (`islam360_custom_books`, was being merged client-side in `BooksTab`) to the **Turso DB**. `BooksTab` now just fetches the merged `/api/books` (localStorage merge removed).
+
+**DB schema (`tbl_CustomBooks`, `tbl_HiddenBooks`)** — created on demand by `src/lib/custom-books.ts` (`ensureTables`, with a `bakedKey` migration via try/catch `ALTER TABLE` since the table may already exist):
+- `tbl_CustomBooks`: id, title, author, pages, cover, thumbnail, url, pdf, audioUrl, audioPlay, audioDownload, **bakedKey** (original baked-book key, so an override stays attached to its built-in book even if the admin changes the URL), created_at.
+- `tbl_HiddenBooks`: key (UNIQUE, normalized lowercase of `url || cover`), title — one row per hidden built-in book.
+
+**`/api/books`** (merged view for visitors): baked `books.json` + custom overrides − hidden. Override = custom row whose key (bakedKey→url→cover) matches a baked book's key → replaces it in place (`source: 'Custom'`); brand-new customs appended; hidden keys filtered out. `cache-control: no-store` so edits appear instantly.
+
+**`/api/admin/books`** (new behaviors):
+- **GET** → ALL books (2471 baked + customs merged, each with `id`/`key`/`custom`/`deleted` flags) + `deletedBooks` list (hidden baked books for restore).
+- **POST** → upsert: `id` → UPDATE that custom row; else match by key (`bakedKey`/`url`/`cover`) → UPDATE; else INSERT (skips rows with no title and no url/cover). Returns `{ inserted, updated, skipped }`. Editing a built-in book sends `bakedKey` so the override always maps back to the original baked book.
+- **DELETE** → `{ id }` removes a custom row; `{ key }` hides a baked book (adds to `tbl_HiddenBooks`); `{ restoreKey }` unhides.
+
+**Admin panel UI (`AdminPanel`, page.tsx ~:1887)** — old tafseer/tarjma import + web-links management fully destroyed, replaced by the Books Manager:
+- **CSV upload** — parses 10-col schema client-side, POSTs rows, shows `Imported X (Y updated, Z skipped)`.
+- **Add Book Manually** — same 8 fields as before (title*, author, pages, cover, URL, PDF, audio play/download).
+- **All Books list** — every book (2471) with source badge (source/HIDDEN), Urdu title, author · pages, and per-row **✏️ Edit** + **🗑 Delete** buttons; live search box filters by title/author/url; shows "X of Y" when filtered.
+- **Edit modal** — pre-filled form (title*, author, pages, cover, url, pdf, audioPlay, audioDownload); built-in books save via `bakedKey` override (explains "stays after redeploys"); custom books update by id.
+- **Delete** — custom row: removes DB row; built-in (or overridden): deletes the override row AND hides the baked entry (both calls, in that order).
+- **🗑 Hidden Books section** — restorable list with ↩ Restore buttons (only shown when non-empty).
+- Note box: all books live in the website DB and appear to all visitors immediately; clearing both tables + redeploy restores the original CSV list.
+
+**Verification (prod server round-trip):** edit a baked book via `bakedKey` → `/api/books` shows edited title/source=Custom; hide → book gone + appears in `deletedBooks`; restore → back; delete override row → reverted to baked original; DB left clean (2471 baked, 0 custom, 0 hidden).
+
+## Key Files Changed (Admin Books Manager)
+| File | Change |
+|------|--------|
+| `src/lib/custom-books.ts` | NEW — shared: `ensureTables` (+bakedKey migration), `bookKey`, `listCustomBooks`, `listHiddenKeys`, `addHidden`/`removeHidden`, `cleanStr` |
+| `src/app/api/admin/books/route.ts` | REWRITTEN — GET all-books+deleted, POST upsert (id/key/bakedKey, inserted/updated/skipped), DELETE remove/hide/restore |
+| `src/app/api/books/route.ts` | Merged visitor view: baked + overrides − hidden, `no-store` |
+| `src/app/page.tsx` | `AdminPanel` → Books Manager (CSV import, manual add, all-books list w/ search, Edit modal, Delete, Hidden-restore); `api()` helper now accepts `RequestInit`; `BooksTab` localStorage merge removed; `saveBooks`/`removeBook`/old `AdminPanel` sections removed |
+| `src/app/api/admin/import-tafseer/route.ts`, `import-tarjma/route.ts` | Orphaned (old panel deleted) — left on disk, unused |
