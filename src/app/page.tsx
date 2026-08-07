@@ -93,6 +93,23 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    const onCtx = (e: MouseEvent) => { e.preventDefault() }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'F12') { e.preventDefault(); return }
+      if ((e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'K'].includes(e.key.toUpperCase())) ||
+          (e.ctrlKey && ['U', 'S'].includes(e.key.toUpperCase()))) {
+        e.preventDefault()
+      }
+    }
+    document.addEventListener('contextmenu', onCtx)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('contextmenu', onCtx)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [])
+
+  useEffect(() => {
     api('/quran/translations').then(setTarjmaList).catch(() => {})
     api('/quran/tafseer_types').then(setTafseerList).catch(() => {})
     const savedTarjma = localStorage.getItem('islam360_tarjma') || 'k_iman'
@@ -2029,6 +2046,17 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
 }
 
 // ============== BOOKS ==============
+function triggerDownload(url: string) {
+  const a = document.createElement('a')
+  a.href = url
+  a.target = '_blank'
+  a.rel = 'noopener noreferrer'
+  a.download = ''
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
 let bookAudioEl: HTMLAudioElement | null = null
 function playBookAudio(url: string, setPlaying: (v: boolean) => void) {
   if (bookAudioEl) { bookAudioEl.pause(); bookAudioEl = null }
@@ -2049,10 +2077,10 @@ function BookCard({ book }: { book: any }) {
   const flipButtons: React.ReactNode = (
     <div className="mt-auto w-full flex flex-col gap-1.5">
       {book.pdf || book.url ? (
-        <a href={book.pdf || book.url} target="_blank" rel="noopener noreferrer"
-          className="w-full px-2 py-2 bg-[#1a5c3a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer no-underline">
+        <button onClick={() => triggerDownload(book.pdf || book.url)}
+          className="w-full px-2 py-2 bg-[#1a5c3a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer">
           📥 Download PDF
-        </a>
+        </button>
       ) : <div className="w-full px-2 py-2 bg-[#f0f0f0] text-[#999] text-xs font-bold text-center rounded">PDF — N/A</div>}
       {hasAudio ? (
         <>
@@ -2064,10 +2092,10 @@ function BookCard({ book }: { book: any }) {
             {playing ? '⏸ Pause' : '▶ Listen'}
           </button>
           {book.audioDownload ? (
-            <a href={book.audioDownload} target="_blank" rel="noopener noreferrer"
-              className="w-full px-2 py-2 bg-[#1a3a1a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer no-underline">
+            <button onClick={() => triggerDownload(book.audioDownload)}
+              className="w-full px-2 py-2 bg-[#1a3a1a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer">
               ⬇ Download Audio
-            </a>
+            </button>
           ) : null}
         </>
       ) : (
