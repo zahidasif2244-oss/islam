@@ -6,6 +6,8 @@ export function json<T>(data: T, status = 200, cacheSec = 0) {
   const headers: Record<string, string> = { 'content-type': 'application/json' }
   if (cacheSec > 0) {
     headers['cache-control'] = `public, s-maxage=${cacheSec}, max-age=${cacheSec}, stale-while-revalidate=${cacheSec * 2}`
+  } else {
+    headers['cache-control'] = 'no-store'
   }
   return NextResponse.json(data, { status, headers })
 }

@@ -1,6 +1,8 @@
 import { createQuranClient, query, getText } from '@/lib/db'
 import { json } from '@/lib/api-utils'
 
+export const dynamic = 'force-dynamic'
+
 const TABLES = [
   ['tbl_dua', 'dua_ID', 'dua_title', 'dua_seq', 'dua_desc', 'dua_arabic', 'dua_urdu', 'dua_eng', 'dua_ref'],
   ['tbl_dua_Urdu', 'dua_ID', 'dua_title', 'dua_seq', 'dua_desc', 'dua_arabic', 'dua_urdu', 'dua_eng', 'dua_ref'],
@@ -24,5 +26,5 @@ export async function GET() {
   )
   const allDuas = results.filter(r => r.status === 'fulfilled').flatMap(r => (r as PromiseFulfilledResult<any[]>).value)
   allDuas.sort((a, b) => a.source.localeCompare(b.source) || (a.seq || 0) - (b.seq || 0))
-  return json(allDuas, 200, 86400)
+  return json(allDuas, 200, 0)
 }
