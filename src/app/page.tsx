@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react'
+import { useState, useEffect, useCallback, createContext, useContext } from 'react'
 import { arabicSnippet } from '@/lib/arabic'
 
 type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about' | 'books'
@@ -2029,31 +2029,166 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
 }
 
 // ============== BOOKS ==============
+let bookAudioEl: HTMLAudioElement | null = null
+function playBookAudio(url: string, setPlaying: (v: boolean) => void) {
+  if (bookAudioEl) { bookAudioEl.pause(); bookAudioEl = null }
+  const el = new Audio(url)
+  bookAudioEl = el
+  el.play().catch(() => { setPlaying(false); bookAudioEl = null })
+  el.onended = () => { if (bookAudioEl === el) bookAudioEl = null; setPlaying(false) }
+  el.onpause = () => { if (bookAudioEl === el) bookAudioEl = null; setPlaying(false) }
+}
+
+function BookCard({ book }: { book: any }) {
+  const [flipped, setFlipped] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const [imgOk, setImgOk] = useState(true)
+  const hasAudio = !!book.audioPlay
+  const cover = book.cover
+
+  const flipButtons: React.ReactNode = (
+    <div className="mt-auto w-full flex flex-col gap-1.5">
+      {book.url ? (
+        <a href={book.url} target="_blank" rel="noopener noreferrer"
+          className="w-full px-2 py-2 bg-[#1a5c3a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer no-underline">
+          📥 Download PDF
+        </a>
+      ) : <div className="w-full px-2 py-2 bg-[#f0f0f0] text-[#999] text-xs font-bold text-center rounded">PDF — N/A</div>}
+      {hasAudio ? (
+        <>
+          <button onClick={() => {
+            if (playing) { if (bookAudioEl) bookAudioEl.pause(); setPlaying(false) }
+            else { setPlaying(true); playBookAudio(book.audioPlay, setPlaying) }
+          }}
+            className="w-full px-2 py-2 bg-[#2a7a4e] text-white text-xs sm:text-sm font-bold rounded border-none cursor-pointer">
+            {playing ? '⏸ Pause' : '▶ Listen'}
+          </button>
+          {book.audioDownload ? (
+            <a href={book.audioDownload} target="_blank" rel="noopener noreferrer"
+              className="w-full px-2 py-2 bg-[#1a3a1a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer no-underline">
+              ⬇ Download Audio
+            </a>
+          ) : null}
+        </>
+      ) : (
+        <div className="w-full px-2 py-2 bg-[#f0f0f0] text-[#999] text-xs font-bold text-center rounded">Audio — N/A</div>
+      )}
+    </div>
+  )
+
+  return (
+    <div className={`book-flip cursor-pointer ${flipped ? 'flipped' : ''}`} style={{ aspectRatio: '3 / 4.5' }} onClick={() => setFlipped(f => !f)}>
+      <div className="book-flip-inner">
+        {/* FRONT: cover image */}
+        <div className="book-flip-face rounded-xl overflow-hidden bg-white border border-[#e0e0e0] shadow-md flex flex-col">
+          <div className="relative flex-1 overflow-hidden bg-[#e8e8e8]">
+            {cover && imgOk ? (
+              <img src={cover} alt={book.title} loading="lazy" className="w-full h-full object-cover" onError={() => setImgOk(false)} />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center font-arabic text-2xl text-[#1a5c3a] p-3 text-center" style={{ direction: 'rtl' }}>{book.title}</div>
+            )}
+            <span className="absolute top-1.5 right-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 text-[#1a5c3a] shadow">
+              {book.source === 'Alahazrat' ? 'ALAHAZRAT' : 'DAWATEISLAMI'}
+            </span>
+            <span className="absolute bottom-1.5 left-2 text-[20px] animate-bounceSlow">👆</span>
+          </div>
+          <div className="px-2.5 pt-1.5 pb-2">
+            <h3 className="font-urdu text-sm sm:text-[15px] font-semibold text-[#222] leading-snug line-clamp-2" style={{ direction: 'rtl' }}>{book.title}</h3>
+          </div>
+        </div>
+
+        {/* BACK: info + buttons */}
+        <div className="book-flip-face book-flip-back rounded-xl overflow-hidden bg-[#fffdf5] border border-[#1a5c3a]/40 shadow-lg flex flex-col p-3">
+          <div className="overflow-y-auto flex-1" onClick={e => e.stopPropagation()}>
+            <p className="text-[11px] text-[#1a5c3a] font-bold mb-1.5 uppercase tracking-wide">{book.source}</p>
+            <h4 className="font-urdu text-sm sm:text-base font-bold text-[#222] leading-snug mb-1.5" style={{ direction: 'rtl' }}>{book.title}</h4>
+            <div className="text-[11px] text-[#555] space-y-1 mb-2">
+              <p style={{ direction: 'rtl' }}><span className="font-bold text-[#1a5c3a]">مصنف: </span>{book.author || 'N/A'}</p>
+              <p><span className="font-bold text-[#1a5c3a]">Author: </span>{book.author || 'N/A'}</p>
+              <p><span className="font-bold text-[#1a5c3a]">Pages: </span>{book.pages || 'N/A'}</p>
+            </div>
+            {flipButtons}
+          </div>
+          <button onClick={e => { e.stopPropagation(); setFlipped(false) }}
+            className="mt-2 w-full text-[11px] py-1.5 bg-[#e8b840] text-[#1a3a1a] font-bold rounded border-none cursor-pointer">
+            ↩ Flip Back
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function BooksTab() {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [height, setHeight] = useState(800)
+  const [books, setBooks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(0)
+  const [filtered, setFiltered] = useState<any[]>([])
+  const PER_PAGE = 40
 
   useEffect(() => {
-    const frame = iframeRef.current
-    if (!frame) return
-    const resize = () => {
-      const doc = frame.contentDocument
-      if (doc && doc.body) {
-        doc.documentElement.style.overflow = 'hidden'
-        doc.body.style.overflow = 'hidden'
-        setHeight(doc.body.scrollHeight)
-      }
-    }
-    frame.addEventListener('load', resize)
-    const timer = setInterval(resize, 800)
-    return () => { frame.removeEventListener('load', resize); clearInterval(timer) }
+    api('/books')
+      .then(data => { setBooks(data); setFiltered(data) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    const q = query.trim().toLowerCase()
+    const next = q
+      ? books.filter(b => (b.title || '').toLowerCase().includes(q) || (b.author || '').toLowerCase().includes(q))
+      : books
+    setFiltered(next)
+    setPage(0)
+  }, [query, books])
+
+  const start = page * PER_PAGE
+  const end = Math.min(start + PER_PAGE, filtered.length)
+  const pageItems = filtered.slice(start, end)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
 
   return (
     <div className="animate-fadeIn">
-      <iframe ref={iframeRef} src="/books.html" title="کتب خانہ — Books Library" scrolling="no"
-        className="w-full bg-white rounded-xl border border-[#e0e0e0] block"
-        style={{ height, overflow: 'hidden' }} />
+      <div className="relative mb-3">
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="🔎  تلاش کریں — Search books by title or author..."
+          className="w-full px-4 py-2.5 rounded-lg border-2 border-[#2a7a4e]/30 focus:border-[#1a5c3a] outline-none text-sm bg-white"
+          style={{ direction: 'rtl' }}
+        />
+      </div>
+
+      <div className="flex items-center justify-between mb-3 text-xs text-[#666]">
+        <span>Showing {pageItems.length} of {filtered.length} books</span>
+        <span className="text-[#999]">Total: {books.length}</span>
+      </div>
+
+      {loading ? (
+        <div className="loading">Loading books...</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-[#999] text-sm">No books found.</div>
+      ) : (
+        <div className="grid gap-3.5 grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
+          {pageItems.map((b: any, i: number) => <BookCard key={b.url || b.cover || i} book={b} />)}
+        </div>
+      )}
+
+      {filtered.length > PER_PAGE && (
+        <div className="flex justify-center items-center gap-4 mt-6">
+          <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+            className="px-4 py-1.5 rounded text-sm font-semibold border-none cursor-pointer bg-[#2563eb] text-white disabled:bg-[#cbd5e1] disabled:cursor-default">
+            Previous
+          </button>
+          <span className="text-sm text-[#444]">Page {page + 1} / {totalPages}</span>
+          <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={start + PER_PAGE >= filtered.length}
+            className="px-4 py-1.5 rounded text-sm font-semibold border-none cursor-pointer bg-[#2563eb] text-white disabled:bg-[#cbd5e1] disabled:cursor-default">
+            Next
+          </button>
+        </div>
+      )}
     </div>
   )
 }
