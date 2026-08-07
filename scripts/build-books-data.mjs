@@ -67,7 +67,13 @@ if (!fs.existsSync(BOOKS_DIR)) {
 
 const files = fs.readdirSync(BOOKS_DIR).filter(f => f.toLowerCase().endsWith('.csv'))
 if (files.length === 0) {
-  console.error('No .csv files found in public/books/')
+  if (fs.existsSync(OUT_FILE)) {
+    console.warn('No .csv files found in public/books/ — keeping existing src/data/books.json')
+    const kept = JSON.parse(fs.readFileSync(OUT_FILE, 'utf8'))
+    console.log(`Books kept: ${kept.length}`)
+    process.exit(0)
+  }
+  console.error('No .csv files found in public/books/ and src/data/books.json does not exist')
   process.exit(1)
 }
 
