@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build-books-data.mjs && next build",
+    "books:sync": "node scripts/build-books-data.mjs",
     "start": "next start",
     "lint": "next lint"
   },

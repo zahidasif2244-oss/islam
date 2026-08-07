@@ -2048,8 +2048,8 @@ function BookCard({ book }: { book: any }) {
 
   const flipButtons: React.ReactNode = (
     <div className="mt-auto w-full flex flex-col gap-1.5">
-      {book.url ? (
-        <a href={book.url} target="_blank" rel="noopener noreferrer"
+      {book.pdf || book.url ? (
+        <a href={book.pdf || book.url} target="_blank" rel="noopener noreferrer"
           className="w-full px-2 py-2 bg-[#1a5c3a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer no-underline">
           📥 Download PDF
         </a>
