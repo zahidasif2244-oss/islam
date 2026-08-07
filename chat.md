@@ -151,3 +151,46 @@ All changes in `src/app/page.tsx` (`QuranTab`). Verified with `npx tsc --noEmit`
 | File | Change |
 |------|--------|
 | `src/app/page.tsx` | Hadith bookmarks: `BookmarkCtx` provider + `BookmarkIcon`/`BookmarkBtn`/`bmItem`, `Bookmarked (n)` button + saved-hadiths view in `HadithTab`, bookmark icon on list cards + number/word search results + detail modal (`openHadithDetail`/`HadithDetailBody` now carry `bookName`). Quran: surah bookmarks made reactive + added to browse header; ayah bookmark icon on every ayah in `browse`; "⭐ Surah Bookmark" and "🔖 Ayah Bookmark" views; `QuranView` → `'surah-bms'\|'ayat-bms'` |
+
+### 14. Books Tab Rebuilt — Real Data (baked JSON) + Recovery of Urdu/Hindi Titles
+All UI changes in `src/app/page.tsx`; build tooling in `scripts/build-books-data.mjs` + `package.json` + `src/data/books.json`. Verified with `npx tsc --noEmit` (clean) and `npm run build`/prod-server smoke tests (`/api/books` → 2471, 2409 Urdu titles, 66 with audio, 2471 with PDF links).
+
+**Books tab UI (replaces the old iframe embed of `/books.html`):**
+- `BooksTab` fetches `/api/books`, renders real-time search (by title or author), 3D flip cards (`BookCard`), and pagination at 40/page (`PER_PAGE`).
+- Flip card (`book-flip*` CSS in `src/app/globals.css`): front = cover image (falls back to title on `onError`), source badge (ALAHAZRAT / DAWATEISLAMI) + 👆; back = Urdu title, `مصنف: <author>` / English Author, Pages, then action buttons. Click to flip, "↩ Flip Back" button, back overflow scrolls.
+- Card actions:
+  - **Download PDF** button (NEW — `book.pdf`, direct URL from new `PDF_Download_URL` CSV column, falls back to `book.url`). Previously it linked to the book's page; the new column gives the actual PDF.
+  - Listen/Pause button (uses `book.audioPlay` + shared `playBookAudio` with a single `bookAudioEl`), **Download Audio** button (`book.audioDownload`).
+  - Emoji use in buttons (📥 PDF / ▶ Listen / ⏸ Pause / ⬇ Audio / 👆) per requested style.
+
+**Data pipeline (baked JSON, no CSV at runtime):**
+- **Decision (user): if you delete a CSV, do you save the info or re-read the CSV?** → chosen baked-data (option 2). The CSV source files are only needed at regeneration time (`npm run books:sync`).
+- `scripts/build-books-data.mjs`:
+  - Reads all `public/books/*.csv` (3 files), dedups by `url || cover` (Map), merges audio fields + PDF links across files (`audioPlay`/`audioDownload` merge, `pdf` fill).
+  - New parser: comma-separated 10-column schema (`Title, Author_Name, Number_of_Pages, Cover_Image_URL, Thumbnail_URL, Book_URL, PDF_Download_URL, Audio_Book_URL, Audio_Play_URL, Audio_Download_URL`) with quote/escaping support — 4 alahazrat rows have quoted titles containing commas.
+  - Output written to `src/data/books.json` (committed, ~1.4 MB / 2471 books).
+  - Package scripts: `books:sync` = `node scripts/build-books-data.mjs`; `build` = `node scripts/build-books-data.mjs && next build`.
+- `src/app/api/books/route.ts` imports `@/data/books.json` statically and serves it — **no `fs`/CSV reads at runtime** (the API works even when `public/books/` is empty). `BookItem` interface extended with `thumbnail`, `pdf`, `audioUrl`.
+- **Graceful fallback (Vercel fix):** if `public/books` dir is missing/empty at build time, the script keeps the existing committed `books.json` and exits 0 (instead of `exit(1)` — that was failing the whole Vercel build, so the old/corrupt deployment stayed live).
+
+**CSV corruption → title recovery (root cause):**
+- The inventory CSVs in `public/books/` were **committed already corrupt** — literal `?` (0x3F) bytes instead of Urdu text (only ~4–16 non-ASCII bytes existed; corrupted rows had thousands of `?`). This predates the session — the CSVs were the corruption, `books.html` still had real Urdu.
+- **Recovery sources (in priority order) explored**: `public/books.html` (2138 cards, 2133 Urdu `alt=` attribute; map key `url.split('?')[0]`), URL-slug percent-decoding (~103), clean-English CSV rows (~46 proved readable), cover-image filenames (~72). ~87 alahazrat titles were unrecoverable locally → would need a re-fetch from `alahazratnetwork.org`.
+- **Resolution:** the user re-copied the correct CSVs (10-col schema). After `npm run books:sync` + re-verification, all titles pass (2409 Urdu titles, 0 with `?`). The XLSX files (`alhazrat books.xlsx`, `audio books.xlsx`, `dawat e islami.xlsx`) were parsed and mirror the CSV row counts exactly (598 / 66 / 1873) — CSVs are the build source, XLSX are the same data.
+
+**Security / UX hardening (same session, still `page.tsx`):**
+- **Download button hover effect — URL hidden**: PDF/Audio actions converted from `<a href>` to `<button>` + `triggerDownload()` (creates a temp `<a download>`, clicks it, removes it). No download URL shows in the browser status bar/tooltip on hover.
+- **Right-click disabled** site-wide: `document.addEventListener('contextmenu', e => e.preventDefault())`.
+- **Inspect/DevTools blocked** (deterrent): keydown guard in `Home` blocks `F12`, `Ctrl+Shift+I/J/C/K`, `Ctrl+U`, `Ctrl+S`. NOTE: not fully unremovable (DevTools can't be truly turned off from a web page; this covers right-click + common shortcuts).
+
+**Verification:** local `/api/books` and the fresh-clone build both give 2471 books / 2409 Urdu / 0 `?` / 66 audio / 2471 pdf. Live Vercel needs a **manual Redeploy** (earlier builds failed because of the `books:sync` `exit 1` → last good deployment kept as corrupted data), then hard-refresh.
+
+## Key Files Changed (page.tsx Books tab / projects)
+| File | Change |
+|------|--------|
+| `src/app/page.tsx` | `BooksTab` grid + `BookCard` flip (front/back, badges, buttons); `triggerDownload`; `contextmenu` + keydown protection in `Home`; re-added `pdf` usage |
+| `src/app/api/books/route.ts` | Static import of `@/data/books.json`; `BookItem` gets `thumbnail`/`pdf`/`audioUrl` |
+| `src/data/books.json` | Committed 2471 books (generated by manual run) |
+| `scripts/build-books-data.mjs` | New, 10-col CSV parser; Map dedupe/merge; graceful fallback when CSVs missing |
+| `package.json` | `books:sync`; `build` now syncs books then `next build` |
+| `src/app/globals.css` | `.book-flip` / `.book-flip-*` 3-D flip card CSS |
