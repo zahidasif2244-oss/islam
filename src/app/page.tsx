@@ -20,8 +20,8 @@ function playAyah(surah: number, ayah: number) {
   audioRef.play().catch(() => {})
 }
 
-async function api(path: string) {
-  const res = await fetch(`${API}/api${path}`)
+async function api(path: string, init?: RequestInit) {
+  const res = await fetch(`${API}/api${path}`, init)
   if (!res.ok) throw new Error('API error')
   return res.json()
 }
@@ -1885,151 +1885,193 @@ function LoginModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: ()
 }
 
 function AdminPanel({ onClose }: { onClose: () => void }) {
-  const [filename, setFilename] = useState('')
-  const [columnName, setColumnName] = useState('tafseer_tibyan')
-  const [importing, setImporting] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
+  const [customBooks, setCustomBooks] = useState<any[]>([])
+  const [csvMsg, setCsvMsg] = useState<string | null>(null)
+  const [csvError, setCsvError] = useState<string | null>(null)
 
-  const [tFilename, setTFilename] = useState('')
-  const [tColumnName, setTColumnName] = useState('translation_urdu')
-  const [tImporting, setTImporting] = useState(false)
-  const [tResult, setTResult] = useState<string | null>(null)
+  const [bTitle, setBTitle] = useState('')
+  const [bAuthor, setBAuthor] = useState('')
+  const [bPages, setBPages] = useState('')
+  const [bCover, setBCover] = useState('')
+  const [bURL, setBURL] = useState('')
+  const [bPdf, setBPdf] = useState('')
+  const [bAudioPlay, setBAudioPlay] = useState('')
+  const [bAudioDownload, setBAudioDownload] = useState('')
+  const [addedMsg, setAddedMsg] = useState<string | null>(null)
 
-  const [linkName, setLinkName] = useState('')
-  const [linkUrl, setLinkUrl] = useState('')
-  const [linkMsg, setLinkMsg] = useState<string | null>(null)
-  const [savedLinks, setSavedLinks] = useState<any[]>([])
-
-  useEffect(() => {
-    const saved = localStorage.getItem('islam360_weblinks')
-    setSavedLinks(saved ? JSON.parse(saved) : [])
-  }, [])
-
-  function addLink() {
-    if (!linkName.trim() || !linkUrl.trim()) return
-    const updated = [...savedLinks, { name: linkName.trim(), url: linkUrl.trim() }]
-    localStorage.setItem('islam360_weblinks', JSON.stringify(updated))
-    setSavedLinks(updated)
-    setLinkName(''); setLinkUrl('')
-    setLinkMsg('Link added!')
-    setTimeout(() => setLinkMsg(null), 2000)
-  }
-
-  function removeLink(i: number) {
-    const updated = savedLinks.filter((_, idx) => idx !== i)
-    localStorage.setItem('islam360_weblinks', JSON.stringify(updated))
-    setSavedLinks(updated)
-  }
-
-  async function handleImportTafseer() {
-    if (!filename.trim() || !columnName.trim()) return
-    setImporting(true); setResult(null)
+  async function loadBooks() {
     try {
-      const res = await fetch('/api/admin/import-tafseer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: filename.trim(), columnName: columnName.trim() })
-      })
-      const data = await res.json()
-      if (data.error) setResult('Error: ' + data.error)
-      else setResult(`Success! Updated ${data.updated} of ${data.total} rows in column "${columnName}".`)
-    } catch (e: any) {
-      setResult('Error: ' + e.message)
-    }
-    setImporting(false)
+      const res = await api('/admin/books')
+      setCustomBooks(Array.isArray(res) ? res : res.books || [])
+    } catch { setCustomBooks([]) }
   }
 
-  async function handleImportTarjma() {
-    if (!tFilename.trim() || !tColumnName.trim()) return
-    setTImporting(true); setTResult(null)
-    try {
-      const res = await fetch('/api/admin/import-tarjma', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: tFilename.trim(), columnName: tColumnName.trim() })
-      })
-      const data = await res.json()
-      if (data.error) setTResult('Error: ' + data.error)
-      else setTResult(`Success! Updated ${data.updated} of ${data.total} rows in column "${tColumnName}".`)
-    } catch (e: any) {
-      setTResult('Error: ' + e.message)
+  useEffect(() => { loadBooks() }, [])
+
+  function parseCsvLine(line: string) {
+    const cols: string[] = []
+    let cur = ''; let inQ = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (inQ) {
+        if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++ } else inQ = false }
+        else cur += ch
+      } else if (ch === '"') inQ = true
+      else if (ch === ',') { cols.push(cur); cur = '' }
+      else cur += ch
     }
-    setTImporting(false)
+    cols.push(cur)
+    return cols.map(c => c.trim())
+  }
+
+  async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setCsvMsg(null); setCsvError(null)
+    try {
+      const text = await file.text()
+      const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim().length > 0)
+      const parsed: any[] = []
+      for (let i = 1; i < lines.length; i++) {
+        const c = parseCsvLine(lines[i])
+        if (c.length < 6) continue
+        const [title, author, pages, cover, thumbnail, url, pdf, audioUrl, aPlay, aDl] = c
+        const item = {
+          title: title || '',
+          author: author || 'N/A',
+          pages: pages || 'N/A',
+          cover: cover || '',
+          thumbnail: thumbnail || '',
+          url: url || '',
+          pdf: pdf || '',
+          audioUrl: audioUrl || '',
+          audioPlay: aPlay || '',
+          audioDownload: aDl || '',
+          source: 'Custom',
+        }
+        if (item.title || item.url || item.cover) parsed.push(item)
+      }
+      if (parsed.length === 0) {
+        setCsvError('No valid rows found. Expected header: Title,Author_Name,Number_Of_Pages,Cover_Image_URL,Thumbnail_URL,Book_URL,PDF_Download_URL,Audio_Book_URL,Audio_Play_URL,Audio_Download_URL')
+        return
+      }
+      try {
+        const res = await api('/admin/books', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ books: parsed.map(({ source, ...b }) => b) }),
+        })
+        await loadBooks()
+        setCsvMsg(`Imported ${res.inserted} books from "${file.name}" (${res.skipped} duplicates skipped).`)
+      } catch {
+        setCsvError('Failed to import — server error. Check server logs.')
+      }
+    } catch (err: any) {
+      setCsvError(err.message || 'Failed to read CSV')
+    }
+    e.target.value = ''
+  }
+
+  async function addManualBook() {
+    if (!bTitle.trim()) return
+    const item = {
+      title: bTitle.trim(),
+      author: bAuthor.trim() || 'N/A',
+      pages: bPages.trim() || 'N/A',
+      cover: bCover.trim(),
+      thumbnail: '',
+      url: bURL.trim(),
+      pdf: bPdf.trim(),
+      audioUrl: '',
+      audioPlay: bAudioPlay.trim(),
+      audioDownload: bAudioDownload.trim(),
+    }
+    try {
+      await api('/admin/books', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ books: [item] }),
+      })
+      await loadBooks()
+      setBTitle(''); setBAuthor(''); setBPages(''); setBCover(''); setBURL(''); setBPdf(''); setBAudioPlay(''); setBAudioDownload('')
+      setAddedMsg('Book added!')
+      setTimeout(() => setAddedMsg(null), 2500)
+    } catch { setAddedMsg('Failed to add book on server') }
+  }
+
+  async function removeBook(id: number | undefined, i: number) {
+    try {
+      if (id) {
+        await api('/admin/books', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) })
+      }
+      await loadBooks()
+    } catch {
+      setCustomBooks(customBooks.filter((_, idx) => idx !== i))
+    }
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-[5%]">
-      <div className="bg-white p-6 rounded-xl w-[90%] max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <div className="bg-white p-6 rounded-xl w-[90%] max-w-[680px] max-h-[82vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-[#1a5c3a]">&#128272; Admin Panel</h3>
+          <h3 className="text-lg font-bold text-[#1a5c3a]">🔒 Admin Panel — Books Manager</h3>
           <button onClick={onClose} className="text-2xl cursor-pointer text-[#999] hover:text-[#333]">&times;</button>
         </div>
-        <p className="text-sm text-[#666] mb-4">Welcome, Ali Raza.</p>
+        <p className="text-sm text-[#666] mb-4">Welcome, Ali Raza. Add books manually or upload a CSV — they appear in the Books tab.</p>
 
-        {/* Import sections */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0]">
-            <h4 className="font-bold text-[#1a5c3a] mb-2">&#128229; Import Tafseer</h4>
-            <p className="text-xs text-[#999] mb-2">DB needs <b>SurahNumber, AyahNumber, Tafseer</b>.</p>
-            <div className="mb-2">
-              <label className="text-xs text-[#666] block mb-0.5">Filename</label>
-              <input type="text" value={filename} onChange={e => setFilename(e.target.value)}
-                placeholder="tafseer.db" className="w-full p-2 border border-[#ccc] rounded text-sm" />
-            </div>
-            <div className="mb-3">
-              <label className="text-xs text-[#666] block mb-0.5">Target Column</label>
-              <input type="text" value={columnName} onChange={e => setColumnName(e.target.value)}
-                placeholder="tafseer_tibyan" className="w-full p-2 border border-[#ccc] rounded text-sm" />
-            </div>
-            <button onClick={handleImportTafseer} disabled={importing || !filename.trim() || !columnName.trim()}
-              className="px-4 py-2 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer hover:bg-[#2a7a4e] disabled:opacity-40 w-full">
-              {importing ? 'Importing...' : 'Import Tafseer'}
-            </button>
-            {result && <div className={`mt-2 text-xs p-2 rounded ${result.startsWith('Success') ? 'bg-[#e8f5e9] text-[#1a5c3a]' : 'bg-[#ffebee] text-red-700'}`}>{result}</div>}
-          </div>
-
-          <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0]">
-            <h4 className="font-bold text-[#1a5c3a] mb-2">&#128221; Import Tarjma</h4>
-            <p className="text-xs text-[#999] mb-2">DB needs <b>SurahNumber, AyahNumber, Translation</b>.</p>
-            <div className="mb-2">
-              <label className="text-xs text-[#666] block mb-0.5">Filename</label>
-              <input type="text" value={tFilename} onChange={e => setTFilename(e.target.value)}
-                placeholder="tarjama.db" className="w-full p-2 border border-[#ccc] rounded text-sm" />
-            </div>
-            <div className="mb-3">
-              <label className="text-xs text-[#666] block mb-0.5">Target Column</label>
-              <input type="text" value={tColumnName} onChange={e => setTColumnName(e.target.value)}
-                placeholder="translation_urdu" className="w-full p-2 border border-[#ccc] rounded text-sm" />
-            </div>
-            <button onClick={handleImportTarjma} disabled={tImporting || !tFilename.trim() || !tColumnName.trim()}
-              className="px-4 py-2 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer hover:bg-[#2a7a4e] disabled:opacity-40 w-full">
-              {tImporting ? 'Importing...' : 'Import Tarjma'}
-            </button>
-            {tResult && <div className={`mt-2 text-xs p-2 rounded ${tResult.startsWith('Success') ? 'bg-[#e8f5e9] text-[#1a5c3a]' : 'bg-[#ffebee] text-red-700'}`}>{tResult}</div>}
-          </div>
+        {/* CSV Upload */}
+        <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0] mb-4">
+          <h4 className="font-bold text-[#1a5c3a] mb-2">📄 Import Books from CSV</h4>
+          <p className="text-xs text-[#999] mb-2">CSV columns (header row required): <b>Title, Author_Name, Number_Of_Pages, Cover_Image_URL, Thumbnail_URL, Book_URL, PDF_Download_URL, Audio_Book_URL, Audio_Play_URL, Audio_Download_URL</b>. Extra columns are ignored; missing ones become empty.</p>
+          <label className="block mb-2">
+            <span className="text-xs text-[#666] block mb-1">Choose .csv file</span>
+            <input type="file" accept=".csv,text/csv" onChange={handleCsvUpload}
+              className="w-full p-2 border border-[#ccc] rounded text-sm bg-white" />
+          </label>
+          {csvMsg && <div className="text-xs mb-2 p-2 rounded bg-[#e8f5e9] text-[#1a5c3a]">{csvMsg}</div>}
+          {csvError && <div className="text-xs mb-2 p-2 rounded bg-[#ffebee] text-red-700">{csvError}</div>}
         </div>
 
-        {/* Website Links */}
+        {/* Manual Add */}
         <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0] mb-4">
-          <h4 className="font-bold text-[#1a5c3a] mb-2">&#128279; Manage Web Links</h4>
-          <p className="text-xs text-[#999] mb-2">Add external website URLs. They appear under <b>More &rarr; Other Web Links</b> and open inline.</p>
-          <div className="flex flex-wrap gap-2 mb-2">
-            <input type="text" value={linkName} onChange={e => setLinkName(e.target.value)}
-              placeholder="Site name" className="flex-1 min-w-[100px] p-2 border border-[#ccc] rounded text-sm" />
-            <input type="text" value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
-              placeholder="https://..." className="flex-[2] min-w-[150px] p-2 border border-[#ccc] rounded text-sm" />
-            <button onClick={addLink} disabled={!linkName.trim() || !linkUrl.trim()}
-              className="px-3 py-2 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer hover:bg-[#2a7a4e] disabled:opacity-40">Add</button>
+          <h4 className="font-bold text-[#1a5c3a] mb-2">➕ Add Book Manually</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+            <input type="text" value={bTitle} onChange={e => setBTitle(e.target.value)} placeholder="Title *"
+              className="w-full p-2 border border-[#ccc] rounded text-sm" />
+            <input type="text" value={bAuthor} onChange={e => setBAuthor(e.target.value)} placeholder="Author"
+              className="w-full p-2 border border-[#ccc] rounded text-sm" />
+            <input type="text" value={bPages} onChange={e => setBPages(e.target.value)} placeholder="Pages"
+              className="w-full p-2 border border-[#ccc] rounded text-sm" />
+            <input type="text" value={bCover} onChange={e => setBCover(e.target.value)} placeholder="Cover image URL"
+              className="w-full p-2 border border-[#ccc] rounded text-sm" />
+            <input type="text" value={bURL} onChange={e => setBURL(e.target.value)} placeholder="Book page URL"
+              className="w-full p-2 border border-[#ccc] rounded text-sm" />
+            <input type="text" value={bPdf} onChange={e => setBPdf(e.target.value)} placeholder="PDF download URL"
+              className="w-full p-2 border border-[#ccc] rounded text-sm" />
+            <input type="text" value={bAudioPlay} onChange={e => setBAudioPlay(e.target.value)} placeholder="Audio play URL"
+              className="w-full p-2 border border-[#ccc] rounded text-sm" />
+            <input type="text" value={bAudioDownload} onChange={e => setBAudioDownload(e.target.value)} placeholder="Audio download URL"
+              className="w-full p-2 border border-[#ccc] rounded text-sm" />
           </div>
-          {linkMsg && <div className="text-xs text-[#1a5c3a] mb-2">{linkMsg}</div>}
-          {savedLinks.length > 0 && (
+          <button onClick={addManualBook} disabled={!bTitle.trim()}
+            className="px-4 py-2 bg-[#1a5c3a] text-white border-none rounded text-sm cursor-pointer hover:bg-[#2a7a4e] disabled:opacity-40 w-full">
+            ➕ Add Book
+          </button>
+          {addedMsg && <div className="text-xs text-[#1a5c3a] mt-2">{addedMsg}</div>}
+        </div>
+
+        {/* Saved Books */}
+        <div className="p-4 bg-[#f9fdf9] rounded-lg border border-[#e0e0e0] mb-4">
+          <h4 className="font-bold text-[#1a5c3a] mb-2">📚 Custom Books ({customBooks.length})</h4>
+          {customBooks.length === 0 ? (
+            <p className="text-xs text-[#999]">No custom books yet. Upload a CSV or add manually — they show in the Books tab.</p>
+          ) : (
             <div>
-              <div className="text-xs text-[#666] mb-1">Saved links ({savedLinks.length}):</div>
-              {savedLinks.map((link, i) => (
-                <div key={i} className="flex items-center gap-2 mb-1 p-1.5 bg-white rounded border border-[#e0e0e0]">
-                  <span className="text-xs font-medium flex-1 truncate">{link.name}</span>
-                  <span className="text-[10px] text-[#999] truncate max-w-[200px]">{link.url}</span>
-                  <button onClick={() => removeLink(i)} className="text-xs text-red-500 bg-transparent border-none cursor-pointer hover:text-red-700">&times;</button>
+              {customBooks.map((b, i) => (
+                <div key={`${b.id || b.url || b.cover || i}`} className="flex items-center gap-2 mb-1 p-1.5 bg-white rounded border border-[#e0e0e0]">
+                  <span className="text-xs font-medium flex-1 truncate" style={{ direction: 'rtl' }}>{b.title}</span>
+                  <span className="text-[10px] text-[#999] truncate max-w-[160px]">{b.author} · {b.pages}pp</span>
+                  <button onClick={() => removeBook(b.id, i)} className="text-xs text-red-500 bg-transparent border-none cursor-pointer hover:text-red-700">&times;</button>
                 </div>
               ))}
             </div>
@@ -2037,8 +2079,8 @@ function AdminPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="p-4 bg-[#fffde7] rounded-lg border border-[#e8d84a]">
-          <h4 className="font-bold text-[#1a5c3a] mb-1">&#128161; Note</h4>
-          <p className="text-xs text-[#666]">After DB import, add the new column to <code className="bg-[#e8f5e9] px-1 rounded">TRANSLATION_COLUMNS</code> or <code className="bg-[#e8f5e9] px-1 rounded">TAFSEER_COLUMNS</code> in <code className="bg-[#e8f5e9] px-1 rounded">src/lib/constants.ts</code> and restart the server.</p>
+          <h4 className="font-bold text-[#1a5c3a] mb-1">💡 Note</h4>
+          <p className="text-xs text-[#666]">Custom books are saved to the website database (Turso, table <code className="bg-[#e8f5e9] px-1 rounded">tbl_CustomBooks</code>) and appear in the Books tab for <b>all visitors</b> immediately. To remove, click × on any custom book.</p>
         </div>
       </div>
     </div>
@@ -2116,7 +2158,7 @@ function BookCard({ book }: { book: any }) {
               <div className="w-full h-full flex items-center justify-center font-arabic text-2xl text-[#1a5c3a] p-3 text-center" style={{ direction: 'rtl' }}>{book.title}</div>
             )}
             <span className="absolute top-1.5 right-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 text-[#1a5c3a] shadow">
-              {book.source === 'Alahazrat' ? 'ALAHAZRAT' : 'DAWATEISLAMI'}
+              {book.source === 'Alahazrat' ? 'ALAHAZRAT' : book.source === 'Custom' ? 'CUSTOM' : 'DAWATEISLAMI'}
             </span>
             <span className="absolute bottom-1.5 left-2 text-[20px] animate-bounceSlow">👆</span>
           </div>
@@ -2157,7 +2199,10 @@ function BooksTab() {
 
   useEffect(() => {
     api('/books')
-      .then(data => { setBooks(data); setFiltered(data) })
+      .then((data: any[]) => {
+        setBooks(data)
+        setFiltered(data)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
