@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import AdminGate, { useAdminAuth } from '../components/AdminGate'
 
 const API = process.env.NEXT_PUBLIC_API_BASE || ''
 
@@ -12,9 +13,6 @@ const CATEGORIES = [
   { source: 'tbl_roza', label: 'Roza' },
 ]
 
-const ADMIN_EMAIL = 'REDACTED_EMAIL'
-const ADMIN_PASS = 'REDACTED_CREDENTIAL'
-
 async function api(path: string, init?: RequestInit) {
   const res = await fetch(`${API}${path}`, init)
   if (!res.ok) throw new Error('API error')
@@ -22,11 +20,15 @@ async function api(path: string, init?: RequestInit) {
 }
 
 export default function AdminDuasPage() {
-  const [authed, setAuthed] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loginError, setLoginError] = useState('')
+  return (
+    <AdminGate>
+      <DuasManager />
+    </AdminGate>
+  )
+}
 
+function DuasManager() {
+  const { logout } = useAdminAuth()
   const [categories, setCategories] = useState<any[]>([])
   const [active, setActive] = useState('tbl_dua')
   const [loading, setLoading] = useState(true)
@@ -38,12 +40,6 @@ export default function AdminDuasPage() {
   const [f, setF] = useState<any>({})
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem('islam360_admin_duas_auth') === '1') setAuthed(true)
-    } catch {}
-  }, [])
-
   async function load() {
     setLoading(true)
     try {
@@ -54,22 +50,7 @@ export default function AdminDuasPage() {
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { if (authed) load() }, [authed])
-
-  function handleLogin() {
-    if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
-      try { sessionStorage.setItem('islam360_admin_duas_auth', '1') } catch {}
-      setLoginError('')
-      setAuthed(true)
-    } else {
-      setLoginError('Invalid email or password')
-    }
-  }
-
-  function logout() {
-    try { sessionStorage.removeItem('islam360_admin_duas_auth') } catch {}
-    setAuthed(false)
-  }
+  useEffect(() => { load() }, [])
 
   const activeCat = categories.find(c => c.source === active)
 
@@ -140,29 +121,6 @@ export default function AdminDuasPage() {
     }
   }
 
-  if (!authed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-white p-6 rounded-xl w-full max-w-[380px] border border-[#e0e0e0] shadow">
-          <h3 className="text-lg font-bold text-[#1a5c3a] mb-4">🔒 Admin Login — Duas</h3>
-          <div className="mb-3">
-            <label className="text-xs text-[#666] block mb-1">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-              className="w-full p-2 border border-[#ccc] rounded text-sm" />
-          </div>
-          <div className="mb-3">
-            <label className="text-xs text-[#666] block mb-1">Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              className="w-full p-2 border border-[#ccc] rounded text-sm" />
-          </div>
-          {loginError && <div className="text-red-500 text-sm mb-3">{loginError}</div>}
-          <button onClick={handleLogin} className="w-full py-2 bg-[#1a5c3a] text-white border-none rounded font-bold cursor-pointer hover:bg-[#2a7a4e]">Login</button>
-          <a href="/" className="block text-center text-xs text-[#999] mt-3 hover:text-[#1a5c3a]">← Back to site</a>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-[#f5f5f5] p-4 sm:p-6">
       <div className="max-w-[960px] mx-auto">
@@ -172,6 +130,7 @@ export default function AdminDuasPage() {
             <p className="text-xs text-[#666]">Add, edit or delete duas per category — saved to the live database.</p>
           </div>
           <div className="flex gap-2">
+            <a href="/admin" className="text-xs text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-3 py-1.5 no-underline hover:bg-[#d0ead8]">← Admin Pages</a>
             <a href="/" className="text-xs text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-3 py-1.5 no-underline hover:bg-[#d0ead8]">← Site</a>
             <button onClick={logout} className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-1.5 cursor-pointer hover:bg-red-100">Logout</button>
           </div>
