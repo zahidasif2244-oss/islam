@@ -209,10 +209,10 @@ export default function AdminDuasPage() {
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#e8f5e9] text-[#1a5c3a]">#{d.id}</span>
                       <span className="text-[10px] text-[#999]">seq {d.seq ?? '-'}</span>
                     </div>
-                    <div className="text-sm font-semibold text-[#222] truncate mt-0.5" style={{ direction: 'rtl' }}>{d.title}</div>
-                    {d.arabic && <div className="text-sm text-[#333] truncate mt-0.5" style={{ direction: 'rtl' }}>{d.arabic}</div>}
-                    {d.urdu && <div className="text-xs text-[#555] truncate mt-0.5" style={{ direction: 'rtl' }}>{d.urdu}</div>}
-                    {d.ref && <div className="text-[10px] text-[#999] mt-0.5 truncate" style={{ direction: 'rtl' }}>{d.ref}</div>}
+                    <div className="font-urdu text-sm font-semibold text-[#222] truncate mt-0.5" style={{ direction: 'rtl' }}>{d.title}</div>
+                    {d.arabic && <div className="font-arabic text-sm text-[#333] truncate mt-0.5" style={{ direction: 'rtl' }}>{d.arabic}</div>}
+                    {d.urdu && <div className="font-urdu text-xs text-[#555] truncate mt-0.5" style={{ direction: 'rtl' }}>{d.urdu}</div>}
+                    {d.ref && <div className="font-urdu text-[10px] text-[#999] mt-0.5 truncate" style={{ direction: 'rtl' }}>{d.ref}</div>}
                   </div>
                   <div className="flex flex-col gap-1 shrink-0">
                     <button onClick={() => openEdit(d)} className="text-[11px] text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-2 py-1 cursor-pointer hover:bg-[#d0ead8] whitespace-nowrap">✏️ Edit</button>
@@ -236,7 +236,7 @@ export default function AdminDuasPage() {
                 <label className="block col-span-full">
                   <span className="text-xs text-[#666] block mb-0.5">Title *</span>
                   <input type="text" value={f.title || ''} onChange={e => setF((x: any) => ({ ...x, title: e.target.value }))}
-                    className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                    className="font-urdu w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
                 </label>
                 <label className="block">
                   <span className="text-xs text-[#666] block mb-0.5">Sequence (order) — optional</span>
@@ -246,22 +246,22 @@ export default function AdminDuasPage() {
                 <label className="block">
                   <span className="text-xs text-[#666] block mb-0.5">Reference (ref)</span>
                   <input type="text" value={f.ref || ''} onChange={e => setF((x: any) => ({ ...x, ref: e.target.value }))}
-                    className="w-full p-2 border border-[#ccc] rounded text-sm" />
+                    className="font-urdu w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
                 </label>
                 <label className="block col-span-full">
                   <span className="text-xs text-[#666] block mb-0.5">Arabic</span>
                   <textarea rows={3} value={f.arabic || ''} onChange={e => setF((x: any) => ({ ...x, arabic: e.target.value }))}
-                    className="w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
+                    className="font-arabic w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
                 </label>
                 <label className="block col-span-full">
                   <span className="text-xs text-[#666] block mb-0.5">Urdu</span>
                   <textarea rows={3} value={f.urdu || ''} onChange={e => setF((x: any) => ({ ...x, urdu: e.target.value }))}
-                    className="w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
+                    className="font-urdu w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
                 </label>
                 <label className="block col-span-full">
                   <span className="text-xs text-[#666] block mb-0.5">Description (if no Arabic/Urdu)</span>
                   <textarea rows={2} value={f.desc || ''} onChange={e => setF((x: any) => ({ ...x, desc: e.target.value }))}
-                    className="w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
+                    className="font-urdu w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
                 </label>
                 <label className="block col-span-full">
                   <span className="text-xs text-[#666] block mb-0.5">English</span>
