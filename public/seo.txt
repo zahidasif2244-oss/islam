@@ -1,0 +1,735 @@
+﻿ISLAMIC WEBSITES - SEO EXTRACTION
+Generated: 2026-08-04 12:13:05
+Source links: links.txt
+
+====================================================================================================
+
+====================================================================================================
+SITE 1: https://www.dawateislami.net
+====================================================================================================
+FINAL URL : https://www.dawateislami.net
+TITLE     : Learn about Islam and Islamic knowledge with an Islamic Organization
+
+META TAGS:
+  description         : Dawat e Islami is an international non-profit Islamic organization which is propagating Islamic knowledge and enlighting the message of Islam across the globe.
+  og:title            : Learn about Islam and Islamic knowledge with an Islamic Organization
+  og:description      : Dawat e Islami is an international non-profit Islamic organization which is propagating Islamic knowledge and enlighting the message of Islam across the globe.
+  og:type             : Website
+  og:url              : https://www.dawateislami.net/
+  og:image            : https://data2.dawateislami.net/static/images/main-website/global/og-images/main-website.jpg
+  twitter:card        : summary_large_image
+  twitter:title       : Learn about Islam and Islamic knowledge with an Islamic Organization
+  twitter:description : Dawat e Islami is an international non-profit Islamic organization which is propagating Islamic knowledge and enlighting the message of Islam across the globe.
+  twitter:image       : https://data2.dawateislami.net/static/images/main-website/global/og-images/main-website.jpg
+  canonical           : https://www.dawateislami.net/
+  json_ld_count       : 2
+  JSON-LD sample: {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        
+        "name": "Dawat-e-Islami",
+        "url": "https://www.dawateislami.net/",
+        
+        
+        "logo": "https://resources.dawateislami.net/global/globalhomeweb/resources/assets/images/main-img/logo.webp",
+        "description": "Dawat e Islami is an international non-profit Islamic organization which is propagating Islamic knowledge and enlighting the message of Islam across the globe.",
+        
+        "sameAs": [
+            "https://en.wikipedia.org/wiki/Dawat-e-Islami",
+            "https://www.facebook.com/dawateislami.net",
+            "https://www.instagram.com/dawateislamiofficial/",
+            "https://www.youtube.com/DawateIslami",
+            "https://x.com/MADANIinfo"
+        ],
+
+HEADINGS/H1-H3:
+  - [H1] A Brief Biography of Imam Ahmad Raza Khan رحمۃ اللہ تعالی علیہ
+  - [H1] Myths About Safar Ul Muzaffar
+  - [H1] Open Doors to the Quranic Encyclopedia with Digital Pen
+  - [H1] Ma’rifat-ul-Quran ala Kanz-ul-Irfan
+  - [H2] Ameer e Ahle Sunnat, Maulana Ilyas Qadri
+  - [H2] 5 PILLARS OF ISLAM
+  - [H2] Three Day Sunnah Inspired Ijtimah
+  - [H2] Three Day Sunnah Inspired Ijtimah
+  - [H2] ABOUT DAWATEISLAMI – AN ISLAMIC ORGANIZATION
+  - [H2] ABOUT DAWATEISLAMI – AN ISLAMIC ORGANIZATION
+  - [H2] 25 Safar - The Day of Ala Hazrat Imam Ahmed Raza Khan Barelvi رحمۃ اللہ علیہ
+  - [H2] DONATE - YOUR EXTRA IS SOMEONE’S NEED
+  - [H2] A HELPING HAND IN THE TIMES OF NEED
+  - [H2] A HELPING HAND IN THE TIMES OF NEED
+  - [H2] ENLIGHTENING YOUR VIEW
+  - [H2] LISTED 5000+ BOOKS
+  - [H2] DUA & ROHANI ILAJ
+  - [H2] Naat Collection Mobile Application
+  - [H2] Naat Collection Mobile Application
+  - [H2] Here you may read the islamic blogs
+  - [H2] IMAGE GALLERY
+  - [H2] SHAPING THE FUTURE - ISLAMIC PRINCIPLES OF UPBRINGING
+  - [H2] A COMPLETE GUIDANCE FOR SISTERS
+  - [H2] INSPIRING WORDS TO UPLIFT YOUR DAY
+  - [H2] Darul Ifta Ahlesunnat
+  - [H2] DAWATEISLAMI – UNITING THE MUSLIM UMMAH
+  - [H2] DAWATEISLAMI – UNITING THE MUSLIM UMMAH
+  - [H3] Now with improved design & easier features
+  - [H3] Faith/Shahada
+  - [H3] Prayer/Salah
+  - [H3] Alms/Zakat
+  - [H3] Pilgrimage/Hajj
+  - [H3] Fasting/Roza
+  - [H3] Madrasa tul Madina
+  - [H3] Jamia tul Madina
+  - [H3] Madani Channel
+  - [H3] Construct a Mosque
+  - [H3] Jamia tul Madina
+  - [H3] Madrasa tul Madina
+  - [H3] Dar ul Madina School
+
+BODY TEXT (first ~4000 chars):
+Personalities Websites
+Countries Websites
+Popular Websites
+I Must Strive to Reform Myself and the People of the Entire World
+Maulana Ilyas Qadri, the founder of Dawateislami. Ameer e ahle Sunnat is recognized for his profound impact on individuals, inspiring them to embrace righteousness and gives spiritual guide. Here you may read more about his spiritual life.
+Belief in the Unity of Allah & Prophet Muhammad ﷺ as Allah’s messenger.
+The act of worshipping Allah five times a day throughout your lifetime.
+Sharing a certain percentage of your wealth with less fortunate every year.
+A spiritual duty that every Muslim must offer once in their life, if able.
+Fasting from dawn to dusk for 30 days in the holy month of Ramadan.
+ACTIVITIES OF DAWATEISLAMI
+Dawat-e-Islami's Medical Department to Hold a Three-Day Sunnah-Inspired Gathering for Doctors and Paramedical Professionals
+Ameer e Ahle Sunnat’s Mission: I must strive to reform myself and people of the entire world. ان شاء اللہ
+Working for peace & serving humanity.
+Pursuing Islamic goals & objectives.
+Carrying out activities to assist the needy.
+Global spread of Islam's message.
+Students of Dar ul Madina
+Completed Hifz Quran & Nazra
+Certified Aalims
+Yearly Constructed Masajid
+The respected master, Imam Ahmed Raza Khan رحمۃ اللہ علیہ, who was a prominent leader of the Ahl-us-Sunnah, a learned scholar, and an esteemed figure, was born in the neighborhood of Jasoli in the holy town of Bareilly Shareef. On a Saturday, precisely during the time of the Zuhr prayer, on the 10th day of Shawwal-ul-Mukarram in the year 1272 A.H.
+Imam Aḥmad Razā and Khwāja Muʿīn Al Dīn
+Aphorisms Of Imam Ahmad Raza رَحْمَةُ الـلّٰـهِ عَلَيْه
+Ala Hadrat and Ameer-e-Ahl-e-Sunnat
+The Eminence of Imam Ahmad Raza رحمۃ اللہ علیہ
+Bareilly to Madina
+A Brief Biography of Imam Ahmad Raza Khan رحمۃ اللہ علیہ
+Some Glimpses Of Imam Ahmad Raza Khan's رحمۃ اللہ علیہ Life
+Autobiography of Imam Ahmad Raza Khan رحمۃ اللہ علیہ
+The Literary Genius of Imam Ahmad Raza Khan
+Our Aala Hazrat رحمۃ اللہ علیہ Ep 01 - Aala Hazrat Ancestors
+Great Titles Of Aala Hazrat رحمۃ اللہ علیہ
+Childhood Of Aala Hazrat رحمۃ اللہ علیہ
+The Great Titles Of Aala Hazrat رحمۃ اللہ علیہ
+ALA HAZRAT KI QURAN FAHMI
+Darulifta Ahlesunnat
+AALA HAZRAT IMAM AHMED RAZA KHAN رحمتہ اللہ علیہ KE ISHQ E RASOOL صلی اللّٰہ علیہ وآلہ وسلم KI DASTAN
+Mufti Muhammad Qasim Attari
+Your generosity can change lives. Join hands in spreading peace and love with Dawat-e-Islami. Make a difference, donate today, and be a reason for their better tomorrow.
+Transforming Lives Globally
+Join us from anywhere across the globe, share your bit, and aid the ones in need.
+Educating Scholars to Spread Islam
+Empowering future leaders with Islamic knowledge to spread peace and harmony.
+Thousands of students are given free Quran education
+Offering free Islamic education to thousands of students
+Islamic channel in Urdu, English & Bangla language
+Construction of 600+ Mosques Yearly
+Join the movement of compassion and support those in need by donating to Dawat-e-Islami. Your kindness will bring hope and change to innumerable souls.
+SOCIAL & WELFARE
+Disaster Management
+Skills Enhancement Programs
+Healthcare Assistance
+Rehabilitation Centers
+ISLAMIC EDUCATION
+Islamic education enlightens the mind, purifies the soul, and guides towards the righteous path. Through Islamic education, one gains wisdom, humility, and a deeper understanding of the divine purpose.
+Working relentlessly to provide Islamic education to students.
+Spreading a deep understanding of the Quran and the Hadith.
+Islamic education blending traditional & modern methods.
+Islamic Education Board ensuring examination standards.
+لَيْسَ مِنَّا مَنْ لَمْ يَرْحَمْ صَغِيرَنَا وَيَعْرِفْ شَرَفَ كَبِيرِنَا
+He who does not have mercy on our young, nor recognize the esteem of our elders, is not from us.
+Jāmi’ al-Tirmidhi, vol. 3, p. 369, Hadith 1927
+وَ الَّذِیْنَ یُؤْمِنُوْنَ بِمَاۤ اُنْزِلَ اِلَیْكَ وَ مَاۤ اُنْزِلَ مِنْ قَبْلِكَۚ-وَ بِالْاٰخِرَةِ هُمْ ی ... [truncated]
+
+====================================================================================================
+
+====================================================================================================
+SITE 2: https://www.alahazratnetwork.org
+====================================================================================================
+FINAL URL : https://www.alahazratnetwork.org
+TITLE     : Home Page » Alahazrat Network
+
+META TAGS:
+  og:title            : Home Page » Alahazrat Network
+  og:description      : Random Quotes from Fatawa Razaviah of Alahazrat Imam Ahmad Raza Khan رحمۃ اللہ علیہ Stay Updated: Join Alahazrat Lovers WhatsApp Group About Alahazrat Network Alahazrat Network is a digital Islamic knowledge platform dedicated to presenting the scholarly legacy of Imam Ahmad Raza Khan Bareilvi (رحمہ اللہ). Explore authentic Books, Articles and key extracts, on Aqeedah, […]
+  og:type             : website
+  og:url              : https://www.alahazratnetwork.org/
+  og:site_name        : Alahazrat Network
+  og:image            : https://www.alahazratnetwork.org/wp-content/uploads/2020/01/cropped-Logo-Alahazrat-Imam-Ahmad-Raza.jpg
+  twitter:card        : summary_large_image
+  robots              : index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1
+  canonical           : https://www.alahazratnetwork.org/
+  json_ld_count       : 1
+  JSON-LD sample: {"@context":"https:\/\/schema.org","@graph":[{"@type":"WebPage","@id":"https:\/\/www.alahazratnetwork.org\/","url":"https:\/\/www.alahazratnetwork.org\/","name":"Home Page » Alahazrat Network","isPartOf":{"@id":"https:\/\/www.alahazratnetwork.org\/#website"},"about":{"@id":"https:\/\/www.alahazratnetwork.org\/#organization"},"primaryImageOfPage":{"@id":"https:\/\/www.alahazratnetwork.org\/#primaryimage"},"image":{"@id":"https:\/\/www.alahazratnetwork.org\/#primaryimage"},"thumbnailUrl":"https:\/\/www.alahazratnetwork.org\/wp-content\/uploads\/2020\/01\/cropped-Logo-Alahazrat-Imam-Ahmad-Raza.jpg","datePublished":"2020-02-16T19:31:49+00:00","dateModified":"2026-03-24T16:44:50+00:00","breadcrumb":{"@id":"https:\/\/www.alahazratnetwork.org\/#breadcrumb"},"inLanguage":"en-US","potentialAction":
+
+HEADINGS/H1-H3:
+  - [H1] Home Page
+  - [H2] About Alahazrat Network
+  - [H2] موضوعاتِ قرآن کا انتخاب (Featured Topics)
+  - [H2] Read & Search Holy Quran Online
+  - [H2] Search Fatawa Razaviah
+  - [H2] Islamic Wisdom & Mobile Status Library
+  - [H2] شجرہ قادریہ رضویہ
+  - [H2] المكتبة العربية
+  - [H2] From the Books of Alahazrat Imam Ahmad Raza
+  - [H2] The Grand Encyclopedia: Fatawa Ridawiyyah
+  - [H2] Books by Other Sunni Scholars
+  - [H3] 🔊 Listen Audio Naats
+  - [H3] 🔔 Recently Uploaded
+  - [H3] Urdu Alphabetical Index
+  - [H3] مشائخِ سلسلہ قادریہ کی سیرت اور مقامِ مزار تک رسائی اب ایک کلک پر!
+  - [H3] القرآن الكريم وعلومه
+  - [H3] الحديث الشريف وأصوله
+  - [H3] الفقه وأصول الفقه
+  - [H3] السيرة النبوية والتراجم
+  - [H3] سيدي الشيخ عبد القادر الجيلاني
+  - [H3] شأن المصطفى ﷺ والمولد
+
+BODY TEXT (first ~4000 chars):
+Home Quran Quran Translation & Tafseer Quran Topics Quran Uloome Quran قرآن و علوم قرآن Hadith Alahazrat Fatawa Razaviah Books of Alahazrat Key Extracts (Alahazrat) Quotes Works on Alahazrat Books on Alahazrat Articles on Alahazrat Sunni Scholars Books Articles Topics All Topics Arguments Qadyaniyat Wahabism Deobandism Downloads All Downloads Download Books of Alahazrat Download Arabic Books Download English Books Download Fatawa Razaviyyah Download Articles on Alahazrat Download Books on Alahazrat Urdu Arabic English Hindi Media Hadaiq-e-Bakhshish Audio Zauq-e-Naat Audio Urdu Naats Audio Mobile Status Punabi Naats Audio Shajra Qadriyya Razaviyya Global Ziyarat Portal Search Home Page Language: Arabic English Hindi Urdu
+Random Quotes from Fatawa Razaviah of Alahazrat Imam Ahmad Raza Khan رحمۃ اللہ علیہ
+بدمذہب کی محبت آگ ہے
+اور صحبت ناگ اور دونوں سے پوری لاگ
+— Company of a deviant person
+Source: Fatawa Razaviah Volume 24
+Alahazrat Network is a digital Islamic knowledge platform dedicated to presenting the scholarly legacy of Imam Ahmad Raza Khan Bareilvi (رحمہ اللہ) . Explore authentic Books, Articles and key extracts, on Aqeedah, Fiqh, and Tasawwuf.
+اعلیٰ حضرت نیٹ ورک ایک علمی اسلامی پلیٹ فارم ہے جو امام احمد رضا خان بریلوی رحمہ اللہ اور اہلِ سنت کے اکابر علماء کی علمی میراث کو محفوظ اور عام فہم انداز میں پیش کرتا ہے۔ یہاں عقائد، فقہ اور تصوف سے متعلق مستند کتب، مضامین اور منتخب اقتباسات دستیاب ہیں۔
+قرآنِ کریم کی روشنی میں اہم موضوعات
+Explore with our advanced Ayah-based search engine . Featuring the authentic Kanzul Iman (Urdu/English) and Tafseer Khazain ul Irfan . Database format for effortless learning—jump to any Surah or Ayah with Translation On/Off toggles.
+Stay updated with the latest books and scholarly articles added to our network.
+/* Container & General Styling */ .ah-network-showcase { font-family: 'Segoe UI', Arial, sans-serif; max-width: 1200px; margin: 20px auto; padding: 10px; } .ah-card { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 30px; padding: 30px; border-top: 5px solid #00695c; } /* Quran Section */ .quran-header { text-align: center; margin-bottom: 30px; } .quran-header h2 { color: #00695c; font-size: 1.8rem; margin-bottom: 10px; } .quran-languages-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; } .lang-item { text-align: center; background: #f9f9f9; padding: 15px; border-radius: 8px; } .lang-item img { width: 100%; max-width: 180px; height: 240px; object-fit: cover; border-radius: 4px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); } .btn-read, .btn-dl { display: block; margin: 5px auto; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; font-weight: bold; } .btn-read { background: #00695c; color: white; } .btn-dl { background: #ffca28; color: #333; } /* Audio Section */ .audio-section h3, .update-section h3 { color: #00695c; margin-bottom: 20px; } .audio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; } .audio-btn { background: #e0f2f1; border-left: 5px solid #00695c; padding: 15px; text-decoration: none; color: #333; transition: 0.3s; } .audio-btn:hover { background: #b2dfdb; transform: translateX(5px); } .audio-btn strong { display: block; font-size: 1.1rem; } .audio-btn span { font-size: 0.85rem; color: #555; } /* Updates Section */ .update-section { border-top-color: #ffca28; text-align: center; } .view-all-btn { display: inline-block; margin-top: 15px; padding: 10px 25px; background: #00695c; color: white; border-radius: 30px; text-decoration: none; font-weight: bold; } /* Mobile Responsive */ @media (max-width: 600px) { .ah-card { padding: 15px; } .quran-header h2 { font-size: 1.4rem; } }
+Looking for an Islamic, Motivational, or Scholarly WhatsApp Status? Download high-quality, authentic images perfectly sized for your stories and status updates.
+Urdu, Arabic, English, Hindi, Roman, Bangla & Persian
+Quran,  ... [truncated]
+
+====================================================================================================
+
+====================================================================================================
+SITE 3: https://alahazrat.net
+====================================================================================================
+FINAL URL : https://alahazrat.net
+TITLE     : Alahazrat.net – Quran, Islamic Books, Audio Naats & Articles
+
+META TAGS:
+  description         : Alahazrat.net: Al Quran, Islamic books library, Urdu/English Islamic articles, Hamd/Naat/Manqabat/Qasida Burda audio, speeches, personalities & women section.
+  og:title            : Alahazrat.net – Quran, Islamic Books, Audio Naats & Articles
+  og:description      : Alahazrat.net: Al Quran, Islamic books library, Urdu/English Islamic articles, Hamd/Naat/Manqabat/Qasida Burda audio, speeches, personalities & women section.
+  og:type             : website
+  og:url              : https://alahazrat.net/
+  og:site_name        : Alahazrat.net – International Islamic Website
+  og:image            : https://alahazrat.net/wp-content/uploads/2018/04/logo.png
+  twitter:card        : summary_large_image
+  twitter:title       : Alahazrat.net – Quran, Islamic Books, Audio Naats & Articles
+  twitter:description : Alahazrat.net: Al Quran, Islamic books library, Urdu/English Islamic articles, Hamd/Naat/Manqabat/Qasida Burda audio, speeches, personalities & women section.
+  twitter:image       : https://alahazrat.net/wp-content/uploads/2018/04/logo.png
+  robots              : follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large
+  canonical           : https://alahazrat.net/
+  json_ld_count       : 1
+  JSON-LD sample: {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://alahazrat.net/#organization","name":"Alahazrat.net","url":"https://alahazrat.net","email":"alahazrat","logo":{"@type":"ImageObject","@id":"https://alahazrat.net/#logo","url":"https://alahazrat.net/wp-content/uploads/2018/04/logoSS.png","contentUrl":"https://alahazrat.net/wp-content/uploads/2018/04/logoSS.png","caption":"Alahazrat.net \u2013 International Islamic Website","inLanguage":"en-US","width":"1600","height":"1600"}},{"@type":"WebSite","@id":"https://alahazrat.net/#website","url":"https://alahazrat.net","name":"Alahazrat.net \u2013 International Islamic Website","alternateName":"Alahazrat.net","publisher":{"@id":"https://alahazrat.net/#organization"},"inLanguage":"en-US","potentialAction":{"@type":"Sea
+
+HEADINGS/H1-H3:
+  - [H1] Al Quran
+  - [H1] Audio Library
+  - [H1] Books
+  - [H1] Manqabat
+  - [H1] 2nd Month of Islamic Calendar Safar al Muzaffar
+  - [H1] Speeches
+  - [H1] Hamd o Naat
+  - [H1] Personalities
+  - [H1] Women Corner
+
+BODY TEXT (first ~4000 chars):
+Prayer Times for your location Tap once to show timings based on your current location. Use My Location More Details .layout_26202 .w-grid-item-h{} .us_custom_7e20fa79{animation-name:afl!important} .us_custom_7e20fa79{animation-name:afl!important} Al Quran > Read Complete Al Quran > Kanzul Eman Noorul Irfan > Al Quran Arabic > Al Quran MP3 Para Wise > Al Quran MP3 Surah Wise
+> Speeches > Hamd > Naat > Darse Fiqah > Hamara Islam
+Yazeedi Lashkarion Ka Anjame Bad
+Ziarate Gumbade Khizra
+Fatawa Razavia Vol 20
+Karamat o Wasilay Ka Saboot
+Salato Salam Per Aetiraz Kion
+Shayian Lillah Ya Abdul Qadir
+Peeroun Kay Ap Peer Hain Ya Ghous Al Madad
+Meran Walion Kay Imam De Do Panjatan Kay Nam
+Ghous e Azam Bamane Be Saro Saman Madade
+The blessed birth was 12th of Rabi al-Awal Sharif
+شب برات بیری کے پتوں سے غسل کرنا
+Pearls of Spirituality
+Halal o Haram Ingredients
+Raising your Child to be a Muslim
+Meaning and Excellence of Bayat (Pledge)
+The Book of Prayer (Kitaab-us-Salaat)
+Tauheed or Shirk
+Penalty for Insulting the Beloved Prophet
+Respect the things associated with Prophet
+Rashke Qamar Hun Range Rukhe Aftab Hun
+Kya Theek Ho Rukh-e-Nabwi Par Misaal-e-Gul
+Talab Ka Munh To Kis Qaabil Hai Ya Ghaus
+Al Aman Qahar he Ya Ghaus Woh Tikha Tera
+Phir Utha Walwala e Yaad e Mugheelaan e Arab
+Zahe Izzato Aetala-e-Muhammad ﷺ
+Soona Jungle Raat Andheri Chayi Badli Kali He
+Hai kalaam e Ilahi Me Shams-o-Duha
+Nabi Sarvar-e-har Rasool o vali hai
+Qaafile Ne Soo e Taibah Kamar Arayi Ki
+Question Answers
+Quran Kay Sajday Aik Sath Karna Kaisa He
+Can we read namaz e janaz in masjid
+Jamat Me Shamil Hone Ke Liye Imam Ke Qayam Me Anay Ka Intizar Karna Chahye ?
+Can we pray witar after few hours like in mid night
+Namaz Ke Liye Pent Ke Painchay Morna Kaisa He
+If we prey our prayers in ship or air flight will it be ok or we have to repeat again
+Loud Speaker Per Namaz Perhna Aur Uska Sawab
+Going overseas for Job what we do when we dont get any masjid for Jumma prayers
+What is Kafai Sow
+Asar Ki Namaz Ke Bad Qaza e Umri Parhna Kaisa He
+Rozay Main Ankh Aur Kan Me Dawa Dalna Kaisa He
+Rozay Ki Halat Main Insoleen Lagwana Kaisa He
+Rozay Mein Sugar Ya Khoon Test Karana
+Roza Tour Kar Niyat Karay Ke Baad Mein Roza Rakhoonga Tu Kia Hukum He
+Roza Kis Waqt Band Karna Chahye ?
+Roza Main Baal Katwana Kaisa Hay
+Rozay Mein Dantoun Ki Bharai Karna
+Saans Ka Mareez Roza Rakhega Ya Fidya Dega
+Rozay Main Tooth Paste Istamal Karna Kaisa
+Rozay Mein Injection Lagwana
+Umrah Ke Liye Aya Hoa Shahs Agar Ayame Haj Paaley To Kia Hukum He
+Who are sohran sayee in interior sindh
+When we should do niyyat for umrah
+Aurat Haj Ki Niyat Ke Bad Masah Ke Liye Sar Ka Romal Khol Sakti He ?
+Asal Safa Marwa Kahan Hay
+Hajj Ke Dino Me Qaza Namaz Ka Kia Tariqa He
+Agar Khemey Muzdalfa Mein Houn Tu Kia Hukum Hay
+Haj Mein Qurbani Ka Bayan
+Safa Aur Marwah Ki Kia Asal He
+Ek Driver Roz Makah Se Madina Jata He Kia Wo Umrah Ada Karay
+Kia Madani Channel Kay Liye Zakat De Saktay Hain
+Zarooriyat e Zindagi Ki Cheezoun Per Zakat He Ya Nahi
+How and whom to give Zakat
+Qarzdaar Ko Zakat De Kar Apna Qarz Wapis Lena Kaisa He
+Zakat Ka Heela Karna
+Zakat Ki Adaegi Ke Liye Milkiyat Shart He Wazahat Fermain
+Bahoo ya Damaad Ko Zakat Dena
+Zakat Ki Investment Karna
+Zakat Kis Mahinay Mein Ada Karna Afzal He
+Diye Hoay Qarz Ki Raqam Per Zakat
+Allah Ki Shan Mein Dunyavi Jumlay Kehna Kaisa He
+6 Kalmay Yaad Karna Kitna Zaroori Hay
+Jis Ka Koi Peer Na Ho Us Ka Peer Shaitan Hay ?
+Waqia e Meraj Ko Quran o Hadees Se Bayan Karain
+Tajdeed e Imaan Keliye Kin Bataoun Ka Hona Zaroori He
+Durood Shareef Per Wahabi Aetiraz Kion Kartay Hain
+Kia Huzoor Kay Paas Gaib Ka Elm He
+Abu Talib Ka Iman Lana Sabit Hay Ya Nahi
+Bad Mazhab Ke Peechay Namaz Parhna
+Hazrat Ayesha Ki Pakdamani Quran Ne Kaisay Bayan Fermai
+Peshgi Zakat Nikalna
+04-Un Chizon Ka Bayaan Jin se Roza Nahi Jata (Vol-8)
+Kisi Tanzeem Ka Zakat Zabardasti Wasool Karna
+Rozay ki Farziat
+Mustahiq Ko Bagair Bataey Zakat Dena
+Zakat Se Ghariboun Ko Khana Khilana
+Jis Ko Zakat Di Uskay Yahan Khana Khana Kaisa He
+Hum Madine ... [truncated]
+
+====================================================================================================
+
+====================================================================================================
+SITE 4: https://theislam360.com
+====================================================================================================
+FINAL URL : https://theislam360.com
+TITLE     : Islam360 - World's Biggest Quran & Hadith App
+
+META TAGS:
+  description         : Explore the Quran, Hadith, and Islamic encyclopedias with the world's first and only Islamic search engine. Download Islam360 for free.
+  og:title            : Islam360 - World's Biggest Quran & Hadith App
+  og:description      : Explore the Quran, Hadith, and Islamic encyclopedias with the world's first and only Islamic search engine. Download Islam360 for free.
+  og:type             : website
+  og:url              : https://theislam360.com/
+  og:site_name        : Islam360
+  og:image            : https://theislam360.com/og-image.png
+  twitter:card        : summary_large_image
+  twitter:title       : Islam360 - World's Biggest Quran & Hadith App
+  twitter:description : Explore the Quran, Hadith, and Islamic encyclopedias with the world's first and only Islamic search engine. Download Islam360 for free.
+  twitter:image       : https://theislam360.com/og-image.png
+  canonical           : https://theislam360.com/
+  json_ld_count       : 1
+  JSON-LD sample: {"@context":"https://schema.org","@type":"Organization","name":"Islam360","url":"https://theislam360.com","logo":"https://theislam360.com/logo.png","description":"World's biggest Quran & Hadith App"}
+
+HEADINGS/H1-H3:
+  - [H1] Islamic Search Engine
+  - [H2] Daily Inspiration
+  - [H2] Hadith of the Day
+  - [H2] Ayat of the Day
+  - [H2] Islam360 Features
+  - [H2] The Holy Quran
+  - [H2] Hadiths
+  - [H2] Thank You For Your Support
+  - [H2] What People Say About .css-ty7r4z{font-weight:800;} Islam360?
+  - [H2] Appreciated by .css-1vg6q84{font-weight:700;} Top Scholars
+  - [H2] Quick Links
+  - [H2] Legal
+  - [H2] Connect
+
+BODY TEXT (first ~4000 chars):
+Company .css-105r0no{width:1em;height:1em;display:inline-block;line-height:1em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;color:currentColor;margin-left:var(--chakra-space-1);} .css-17r0zh5{width:1em;height:1em;display:inline-block;line-height:1em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;color:currentColor;vertical-align:middle;width:1em;height:1em;display:inline-block;line-height:1em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;color:currentColor;margin-left:var(--chakra-space-1);}
+.css-1mkpnqu{min-height:100vh;padding-top:64px;}@media screen and (min-width: 48em){.css-1mkpnqu{padding-top:72px;}} .css-wth40m{background:var(--chakra-colors-brand-50);padding-top:var(--chakra-space-12);padding-bottom:var(--chakra-space-12);position:relative;overflow:hidden;}@media screen and (min-width: 48em){.css-wth40m{padding-top:var(--chakra-space-20);padding-bottom:var(--chakra-space-20);}} .css-5ur2j7{position:absolute;right:-100px;top:-50px;width:300px;height:300px;border-radius:var(--chakra-radii-full);background:var(--chakra-colors-brand-100);opacity:0.3;}@media screen and (min-width: 48em){.css-5ur2j7{right:-50px;top:-100px;width:600px;height:600px;}} .css-1x7le2q{width:100%;-webkit-margin-start:auto;margin-inline-start:auto;-webkit-margin-end:auto;margin-inline-end:auto;-webkit-padding-start:var(--chakra-space-4);padding-inline-start:var(--chakra-space-4);-webkit-padding-end:var(--chakra-space-4);padding-inline-end:var(--chakra-space-4);max-width:95%;}@media screen and (min-width: 48em){.css-1x7le2q{-webkit-padding-start:var(--chakra-space-6);padding-inline-start:var(--chakra-space-6);-webkit-padding-end:var(--chakra-space-6);padding-inline-end:var(--chakra-space-6);max-width:90%;}}@media screen and (min-width: 80em){.css-1x7le2q{max-width:1200px;}} .css-1rim8vv{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column-reverse;-ms-flex-direction:column-reverse;flex-direction:column-reverse;--chakra-space-y-reverse:1;--chakra-divide-y-reverse:1;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;gap:var(--chakra-space-8);}@media screen and (min-width: 48em){.css-1rim8vv{-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;gap:var(--chakra-space-12);}} .css-10405hv{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:column;-ms-flex-direction:column;flex-direction:column;-webkit-flex:1;-ms-flex:1;flex:1;text-align:center;}@media screen and (min-width: 48em){.css-10405hv{text-align:left;}} .css-1v01f29{letter-spacing:0.01em;font-family:Gilroy-regular;font-size:22px;color:var(--chakra-colors-neutral-500);}@media screen and (min-width: 48em){.css-1v01f29{font-size:28px;}}@media screen and (min-width: 62em){.css-1v01f29{font-size:36px;}} World's 1st & Only
+A comprehensive Islamic app that empowers and connects Muslims globally.
+.css-xjo5af{display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-ms-flex-pack:center;-webkit-justify-content:center;justify-content:center;-webkit-flex:1;-ms-flex:1;flex:1;position:relative;z-index:1;} .css-1bdkihh{max-width:240px;-webkit-filter:drop-shadow(0px 16px 32px rgba(0,0,0,0.12));filter:drop-shadow(0px 16px 32px rgba(0,0,0,0.12));}@media screen and (min-width: 30em){.css-1bdkihh{max-width:300px;}}@media screen and (min-width: 48em){.css-1bdkihh{max-width:100%;}} .css-1u1vcfp{background:var(--chakra-colors-neutral-100);padding-top:var(--chakra-space-10);padding-bottom:var(--chakra-space-10);}@media screen and (min-width: 48em){.css-1u1vcfp{padding-top:var(--chakra-space-16);padding-bottom:var(--chakra-space-16);}} .css-129hsw3{font-family:"Gilroy-bold",var(--font-inter),sans-serif;font-weight:var(--chakra-fontWeights-bold);color:var(--chakra-colors-neutral-800);letter-spacing:-0.02em;line-h ... [truncated]
+
+====================================================================================================
+
+====================================================================================================
+SITE 5: https://quran.com/en
+====================================================================================================
+FINAL URL : https://quran.com/en
+TITLE     : The Noble Quran - Quran.com
+
+META TAGS:
+  description         : The Quran translated into many languages in a simple and easy interface
+  og:title            : The Noble Quran - Quran.com
+  og:description      : The Quran translated into many languages in a simple and easy interface
+  og:type             : website
+  og:url              : https://quran.com
+  og:site_name        : Quran.com
+  og:image            : https://og.qurancdn.com/api/og?lang=en
+  twitter:card        : summary_large_image
+  twitter:image       : https://og.qurancdn.com/api/og?lang=en
+  robots              : index,follow
+  canonical           : https://quran.com
+  json_ld_count       : 3
+  JSON-LD sample: {"@context":"https://schema.org","@type":"Organization","@id":"https://quran.foundation#organization","name":"Quran Foundation","url":"https://quran.foundation"}
+
+HEADINGS/H1-H3:
+  - [H1] Start Reading
+  - [H1] Explore Topics
+  - [H1] Start Learning
+  - [H1] Verse of the Week
+  - [H1] Quran in a Year
+  - [H1] Community
+  - [H1] Quran Verse of the Day
+  - [H2] Quran Apps
+  - [H3] QuranReflect
+  - [H3] Quran Space
+  - [H3] Quran iOS
+  - [H3] Qirtaas
+
+BODY TEXT (first ~4000 chars):
+Sign in Sign in Sign in Select Language English العربية বাংলা فارسی Français Indonesia Italiano Dutch Português русский Shqip ภาษาไทย Türkçe اردو 简体中文 Melayu Español Kiswahili Tiếng Việt Navigate Quran
+Achieve Your Quran Goals Track Streaks, Create Custom Goals, Stay Consistent
+About the Quran What is Dhul-Hijjah? Start Learning See More New! Verse of the Week 0 Views 0 Reflections Share Start Reflecting Read reflections on Quran in a Year Calendar Safar 21 1448 Week 20 A thoughtfully designed schedule that makes it easy for you to read and understand the entire Quran from one Ramadan to the next, at a steady and manageable pace.
+This Week's Readings
+011 Hud · Verse 123 11:123 بقيت الله خير لكم ان كنتم مومنين وما انا عليكم بحفيظ ٨٦ بَقِيَّتُ ٱللَّهِ خَيْرٌۭ لَّكُمْ إِن كُنتُم مُّؤْمِنِينَ ۚ وَمَآ أَنَا۠ عَلَيْكُم بِحَفِيظٍۢ ٨٦ A verse from this week's reading
+Read today's featured Verses and Reflections
+Connected apps to further your growth with the Quran.
+Read & Share Reflections
+Live Study Circle
+Quran.com for iPhone
+Rich note taking for students of knowledge
+Surah Juz Revelation Order Sort by : Ascending 1 Al-Fatihah The Opener 001 7 Ayahs 2 Al-Baqarah The Cow 002 286 Ayahs 3 Ali 'Imran Family of Imran 003 200 Ayahs 4 An-Nisa The Women 004 176 Ayahs 5 Al-Ma'idah The Table Spread 005 120 Ayahs 6 Al-An'am The Cattle 006 165 Ayahs 7 Al-A'raf The Heights 007 206 Ayahs 8 Al-Anfal The Spoils of War 008 75 Ayahs 9 At-Tawbah The Repentance 009 129 Ayahs 10 Yunus Jonah 010 109 Ayahs 11 Hud Hud 011 123 Ayahs 12 Yusuf Joseph 012 111 Ayahs 13 Ar-Ra'd The Thunder 013 43 Ayahs 14 Ibrahim Abraham 014 52 Ayahs 15 Al-Hijr The Rocky Tract 015 99 Ayahs 16 An-Nahl The Bee 016 128 Ayahs 17 Al-Isra The Night Journey 017 111 Ayahs 18 Al-Kahf The Cave 018 110 Ayahs 19 Maryam Mary 019 98 Ayahs 20 Taha Ta-Ha 020 135 Ayahs 21 Al-Anbiya The Prophets 021 112 Ayahs 22 Al-Hajj The Pilgrimage 022 78 Ayahs 23 Al-Mu'minun The Believers 023 118 Ayahs 24 An-Nur The Light 024 64 Ayahs 25 Al-Furqan The Criterion 025 77 Ayahs 26 Ash-Shu'ara The Poets 026 227 Ayahs 27 An-Naml The Ant 027 93 Ayahs 28 Al-Qasas The Stories 028 88 Ayahs 29 Al-'Ankabut The Spider 029 69 Ayahs 30 Ar-Rum The Romans 030 60 Ayahs 31 Luqman Luqman 031 34 Ayahs 32 As-Sajdah The Prostration 032 30 Ayahs 33 Al-Ahzab The Combined Forces 033 73 Ayahs 34 Saba Sheba 034 54 Ayahs 35 Fatir Originator 035 45 Ayahs 36 Ya-Sin Ya Sin 036 83 Ayahs 37 As-Saffat Those who set the Ranks 037 182 Ayahs 38 Sad The Letter "Saad" 038 88 Ayahs 39 Az-Zumar The Troops 039 75 Ayahs 40 Ghafir The Forgiver 040 85 Ayahs 41 Fussilat Explained in Detail 041 54 Ayahs 42 Ash-Shuraa The Consultation 042 53 Ayahs 43 Az-Zukhruf The Ornaments of Gold 043 89 Ayahs 44 Ad-Dukhan The Smoke 044 59 Ayahs 45 Al-Jathiyah The Crouching 045 37 Ayahs 46 Al-Ahqaf The Wind-Curved Sandhills 046 35 Ayahs 47 Muhammad Muhammad 047 38 Ayahs 48 Al-Fath The Victory 048 29 Ayahs 49 Al-Hujurat The Rooms 049 18 Ayahs 50 Qaf The Letter "Qaf" 050 45 Ayahs 51 Adh-Dhariyat The Winnowing Winds 051 60 Ayahs 52 At-Tur The Mount 052 49 Ayahs 53 An-Najm The Star 053 62 Ayahs 54 Al-Qamar The Moon 054 55 Ayahs 55 Ar-Rahman The Beneficent 055 78 Ayahs 56 Al-Waqi'ah The Inevitable 056 96 Ayahs 57 Al-Hadid The Iron 057 29 Ayahs 58 Al-Mujadila The Pleading Woman 058 22 Ayahs 59 Al-Hashr The Exile 059 24 Ayahs 60 Al-Mumtahanah She that is to be examined 060 13 Ayahs 61 As-Saf The Ranks 061 14 Ayahs 62 Al-Jumu'ah The Congregation, Friday 062 11 Ayahs 63 Al-Munafiqun The Hypocrites 063 11 Ayahs 64 At-Taghabun The Mutual Disillusion 064 18 Ayahs 65 At-Talaq The Divorce 065 12 Ayahs 66 At-Tahrim The Prohibition 066 12 Ayahs 67 Al-Mulk The Sovereignty 067 30 Ayahs 68 Al-Qalam The Pen 068 52 Ayahs 69 Al-Haqqah The Reality 069 52 Ayahs 70 Al-Ma'arij The Ascending Stairways 070 44 Ayahs 71 Nuh Noah 071 28 Ayahs 72 Al-Jinn The Jinn 072 28 Ayahs 73 Al-Muzzammil The Enshrouded One 073 20 Ayahs 74 Al-Muddaththir The Cloaked One 074 56 Ayahs 75 Al-Qiyamah The Resurrection 075 ... [truncated]
+
+====================================================================================================
+
+====================================================================================================
+SITE 6: https://read.quranmajeed.com
+====================================================================================================
+FINAL URL : https://read.quranmajeed.com
+TITLE     : Quran Majeed القران الكريم for web
+
+META TAGS:
+  canonical           : 
+  json_ld_count       : 0
+
+HEADINGS/H1-H3:
+  - [H1] Sura Al-Fatiha سورۃ الفَاتِحَة بِسۡمِ اللّٰهِ الرَّحۡمٰنِ الرَّحِيۡمِ
+
+BODY TEXT (first ~4000 chars):
+An Error Occured Click to Reload Again
+Offline(No Network)
+Juz
+Reciters
+Sura
+Juz 1 الٓمّٓ
+Juz 2 سَيَقُوۡلُ
+Juz 3 تِلۡكَ الرُّسُلُ
+Juz 4 لَنۡ تَنَالُوا
+Juz 5 وَّالۡمُحۡصَنٰتُ
+Juz 6 لَا يُحِبُّ اللّٰهُ
+Juz 7 وَاِذَا سَمِعُوۡا
+Juz 8 وَلَوۡ اَنَّـنَا
+Juz 9 قَالَ الۡمَلَاُ
+Juz 10 وَاعۡلَمُوۡۤا
+Juz 11 يَعۡتَذِرُوۡنَ
+Juz 12 وَمَا مِنۡ دَآ بَّةٍ
+Juz 13 وَمَاۤ اُبَرِّئُ
+Juz 14 رُبَمَا
+Juz 15 سُبۡحٰنَ الَّذِىۡۤ
+Juz 16 قَالَ اَ لَمۡ
+Juz 17 اِقۡتَرَبَ
+Juz 18 قَدۡ اَفۡلَحَ
+Juz 19 وَقَالَ الَّذِيۡنَ
+Juz 20 اَمَّنۡ خَلَقَ
+Juz 21 اُتۡلُ مَاۤ اُوۡحِىَ
+Juz 22 وَمَنۡ يَّقۡنُتۡ
+Juz 23 وَمَا لِىَ
+Juz 24 فَمَنۡ اَظۡلَمُ
+Juz 25 اِلَيۡهِ يُرَدُّ
+Juz 26 حٰمٓ
+Juz 27 قَالَ فَمَا خَطۡبُكُمۡ
+Juz 28 قَدۡ سَمِعَ اللّٰهُ
+Juz 29 تَبٰرَكَ الَّذِىۡ
+Juz 30 عَمَّ
+1 Al-Fatiha الفَاتِحَة
+2 Al-Baqara البَقَرَة
+3 Al-E-Imran آل عِمرَان
+4 An-Nisa النِّسَاء
+5 Al-Maeda المَائدة
+6 Al-Anaam الاٴنعَام
+7 Al-Araf الاٴعرَاف
+8 Al-Anfal الاٴنفَال
+9 Al-Tawba التّوبَة
+10 Yunus یُونس
+11 Hud هُود
+12 Yusuf یُوسُف
+13 Al-Rad الرّعد
+14 Ibrahim إبراهیم
+15 Al-Hijr الحِجر
+16 An-Nahl النّحل
+17 Al-Isra بنیٓ اسرآئیل / الإسرَاء
+18 Al-Kahf الکهف
+19 Maryam مَریَم
+20 Ta-Ha طٰه
+21 Al-Anbiya الاٴنبیَاء
+22 Al-Hajj الحَجّ
+23 Al-Mumenoon المؤمنون
+24 Al-Noor النُّور
+25 Al-Furqan الفُرقان
+26 Al-Shuara الشُّعَرَاء
+27 Al-Naml النَّمل
+28 Al-Qasas القَصَص
+29 Al-Ankaboot العَنکبوت
+30 Al-Room الرُّوم
+31 Luqman لقمَان
+32 As-Sajda السَّجدَة
+33 Al-Ahzab الاٴحزَاب
+34 Saba سَبَإ
+35 Fatir فَاطِر
+36 Ya-Seen یسٓ
+37 As-Saaffat الصَّافات
+38 Sad صٓ
+39 Az-Zumar الزُّمَر
+40 Ghafir مؤمن / غَافر
+41 Fussilat حٰمٓ السجدة / فُصّلَت
+42 Ash-Shura الشّوریٰ
+43 Az-Zukhruf الزّخرُف
+44 Ad-Dukhan الدّخان
+45 Al-Jathiya الجَاثیَة
+46 Al-Ahqaf الاٴحقاف
+47 Muhammad محَمَّد
+48 Al-Fath الفَتْح
+49 Al-Hujraat الحُجرَات
+50 Qaf قٓ
+51 Adh-Dhariyat الذّاریَات
+52 At-Tur الطُّور
+53 An-Najm النّجْم
+54 Al-Qamar القَمَر
+55 Ar-Rahman الرَّحمٰن
+56 Al-Waqia الواقِعَة
+57 Al-Hadid الحَدید
+58 Al-Mujadila المجَادلة
+59 Al-Hashr الحَشر
+60 Al-Mumtahina المُمتَحنَة
+61 As-Saff الصَّف
+62 Al-Jumua الجُمُعَة
+63 Al-Munafiqoon المنَافِقون
+64 At-Taghabun التّغَابُن
+65 At-Talaq الطّلاَق
+66 At-Tahrim التّحْریم
+67 Al-Mulk المُلک
+68 Al-Qalam القَلَم
+69 Al-Haaqqa الحَاقَّة
+70 Al-Maarij المعَارج
+71 Nooh نُوح
+72 Al-Jinn الجنّ
+73 Al-Muzzammil المُزمّل
+74 Al-Muddaththir المدَّثِّر
+75 Al-Qiyama القِیَامَة
+76 Al-Insan دهر / الإنسَان
+77 Al-Mursalat المُرسَلات
+78 An-Naba النّبَإِ
+79 An-Naziat النَّازعَات
+80 Abasa عَبَسَ
+81 At-Takwir التّکویر
+82 Al-Infitar الانفِطار
+83 Al-Mutaffifin المطفّفِین
+84 Al-Inshiqaq الانشقاق
+85 Al-Burooj البُرُوج
+86 At-Tariq الطّارق
+87 Al-Ala الاٴعلی
+88 Al-Ghashiya الغَاشِیَة
+89 Al-Fajr الفَجر
+90 Al-Balad البَلَد
+91 Ash-Shams الشّمس
+92 Al-Lail اللیْل
+93 Ad-Dhuha الضّحیٰ
+94 Al-Inshirah الشَّرح
+95 At-Tin التِّین
+96 Al-Alaq العَلق
+97 Al-Qadr القَدر
+98 Al-Bayyina البَیّنَة
+99 Al-Zalzala الزّلزَلة
+100 Al-Adiyat العَادیَات
+101 Al-Qaria القَارعَة
+102 At-Takathur التّکاثُر
+103 Al-Asr العَصر
+104 Al-Humaza الهُمَزة
+105 Al-Fil الفِیل
+106 Quraish القُرَیش
+107 Al-Maun المَاعون
+108 Al-Kauther الکَوثَر
+109 Al-Kafiroon الکافِرون
+110 An-Nasr النّصر
+111 Al-Masadd لهب / المَسَد
+112 Al-Ikhlas الإخلاص
+113 Al-Falaq الفَلَق
+114 An-Nas النَّاس
+
+====================================================================================================
+
+====================================================================================================
+SITE 7: https://quranmajeed.com
+====================================================================================================
+FINAL URL : https://quranmajeed.com
+TITLE     : Home - Quran Majeed Web
+
+META TAGS:
+  description         : Come Close to Allah. Read Quran Now By developing various Islamic apps we help people getting closer to Allah, helping them adhere to the Muslim lifestyle and seek the pleasure of Allah (subhanahu wa tala). Gift Quran Majeed To Ummah Earn Sadqa-e-Jaria by gifting Quran Majeed app to usersDiscover Quran Majeed App What Our Users
+  og:title            : Home - Quran Majeed Web
+  og:description      : Come Close to Allah. Read Quran Now By developing various Islamic apps we help people getting closer to Allah, helping them adhere to the Muslim lifestyle and seek the pleasure of Allah (subhanahu wa tala). Gift Quran Majeed To Ummah Earn Sadqa-e-Jaria by gifting Quran Majeed app to usersDiscover Quran Majeed App What Our Users
+  og:type             : website
+  og:url              : https://quranmajeed.com/
+  og:site_name        : Quran Majeed Web -
+  og:image            : https://quranmajeed.com/wp-content/uploads/2023/01/Quranmajeed-1.png
+  twitter:card        : summary_large_image
+  twitter:title       : Home - Quran Majeed Web
+  twitter:description : Come Close to Allah. Read Quran Now By developing various Islamic apps we help people getting closer to Allah, helping them adhere to the Muslim lifestyle and seek the pleasure of Allah (subhanahu wa tala). Gift Quran Majeed To Ummah Earn Sadqa-e-Jaria by gifting Quran Majeed app to usersDiscover Quran Majeed App What Our Users
+  twitter:image       : https://quranmajeed.com/wp-content/uploads/2023/01/Quranmajeed-1.png
+  robots              : max-image-preview:large
+  canonical           : https://quranmajeed.com/
+  json_ld_count       : 1
+  JSON-LD sample: {"@context":"https:\/\/schema.org","@graph":[{"@type":"BreadcrumbList","@id":"https:\/\/quranmajeed.com\/#breadcrumblist","itemListElement":[{"@type":"ListItem","@id":"https:\/\/quranmajeed.com#listItem","position":1,"name":"Home"}]},{"@type":"Organization","@id":"https:\/\/quranmajeed.com\/#organization","name":"Quran Majeed Web","url":"https:\/\/quranmajeed.com\/","logo":{"@type":"ImageObject","url":"https:\/\/quranmajeed.com\/wp-content\/uploads\/2023\/01\/Quranmajeed-1.png","@id":"https:\/\/quranmajeed.com\/#organizationLogo","width":119,"height":119},"image":{"@id":"https:\/\/quranmajeed.com\/#organizationLogo"}},{"@type":"WebPage","@id":"https:\/\/quranmajeed.com\/#webpage","url":"https:\/\/quranmajeed.com\/","name":"Home - Quran Majeed Web","description":"Come Close to Allah. Read Q
+
+HEADINGS/H1-H3:
+  - [H1] Quran Majeed
+  - [H1] By developing various Islamic apps we help people getting closer to Allah, helping them adhere to the Muslim lifestyle and seek the pleasure of Allah (subhanahu wa tala).
+  - [H2] Come Close to Allah.
+  - [H2] Gift Quran Majeed To Ummah
+  - [H2] What Our Users Say
+  - [H2] Share the Quran Majeed App
+  - [H2] Follow us on
+  - [H3] By developing various Islamic apps we help people getting closer to Allah, helping them adhere to the Muslim lifestyle and seek the pleasure of Allah (subhanahu wa tala).
+  - [H3] Quran Majeed App
+
+BODY TEXT (first ~4000 chars):
+","library":"fa-solid"},"toggle":"burger"}" data-widget_type="nav-menu.default"> Home Quran Majeed App Blog Get Involved Content Partners Career Contact Us Quran For Everyone Advertise With Us Quran Gift Privacy Policy Menu Home Quran Majeed App Blog Get Involved Content Partners Career Contact Us Quran For Everyone Advertise With Us Quran Gift Privacy Policy Come Close to Allah. Read Quran Now window.PrayerWidgetConfig = { animation: false, theme: null, oddCardBgColor: "#096b2b", evenCardBgColor: "#009934", widgetBgColor: null, infoTextColor: "white", inputBgColor: "#18a247a3", inputBorderColor: "#099539", inputFocusColor: null, width: '750px', height: '220px', isBgTransparent: true, customTheme: true }; By developing various Islamic apps we help people getting closer to Allah, helping them adhere to the Muslim lifestyle and seek the pleasure of Allah (subhanahu wa tala). Gift Quran Majeed To Ummah Earn Sadqa-e-Jaria by gifting Quran Majeed app to users
+“Wonderful in so many ways, from the Qibla compass to the options for repeating, slowing down, and listening to various voices for recitation, and the plurality of Du’a. I use it everyday and have been totally satisfied – and there are many features I havent even explored! Truly majeed!”.
+Connect With Allah (SWT)
+
+====================================================================================================
+
+====================================================================================================
+SITE 8: https://islamonline.net/en/home/
+====================================================================================================
+FINAL URL : https://islamonline.net/en/home/
+TITLE     : Home - IslamOnline
+
+META TAGS:
+  description         : IslamOnline have been keen to provide what we expect you need from information about Islam, its sciences, civilization and nation, the universe, its worlds and its transformations.
+  og:title            : Home - IslamOnline
+  og:description      : IslamOnline have been keen to provide what we expect you need from information about Islam, its sciences, civilization and nation, the universe, its worlds and its transformations.
+  og:type             : website
+  og:url              : https://islamonline.net/en/home/
+  og:site_name        : IslamOnline
+  og:image            : https://islamonline.net/wp-content/uploads/2021/09/pink-globe-geometric-yellow-line.jpg
+  twitter:card        : summary_large_image
+  twitter:title       : Home - IslamOnline
+  twitter:description : IslamOnline have been keen to provide what we expect you need from information about Islam, its sciences, civilization and nation, the universe, its worlds and its transformations.
+  twitter:image       : https://islamonline.net/wp-content/uploads/2021/09/pink-globe-geometric-yellow-line.jpg
+  robots              : follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large
+  canonical           : https://islamonline.net/en/home/
+  json_ld_count       : 1
+  JSON-LD sample: {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://islamonline.net/#organization","name":"Islamonline","sameAs":["https://www.facebook.com/IslamOnline/","https://twitter.com/islamonline","https://www.instagram.com/islamonline_net/","https://www.linkedin.com/company/islamonline","https://www.youtube.com/user/islamonline","https://ar.wikipedia.org/wiki/%d8%a5%d8%b3%d9%84%d8%a7%d9%85_%d8%a3%d9%88%d9%86_%d9%84%d8%a7%d9%8a%d9%86","https://soundcloud.com/islamonline_net"],"logo":{"@type":"ImageObject","@id":"https://islamonline.net/#logo","url":"https://islamonline.net/wp-content/uploads/2025/11/islamOnlineLogo01-Copy.jpg","contentUrl":"https://islamonline.net/wp-content/uploads/2025/11/islamOnlineLogo01-Copy.jpg","caption":"IslamOnline \u0625\u0633\u0644\u0627\u06
+
+HEADINGS/H1-H3:
+  - [H1] Home
+  - IslamOnline
+  - [H2] Recent Posts
+  - [H2] Main Sections
+  - [H2] About Muhammad
+  - [H2] Sharia
+  - [H2] Archive
+  - [H2] Read More
+  - [H2] Audio
+  - [H2] Moderated by
+  - [H2] Annual Sponsors
+
+BODY TEXT (first ~4000 chars):
+`; document.body.appendChild(scrollUpBtn); const style = document.createElement("style"); style.textContent = `.scroll-btn { position: fixed; right: 10px; bottom: 60px; border: none; cursor: pointer; display: none; z-index: 2; transition: opacity 0.3s ease; border-radius: 100%; padding: 0;}.scroll-btn.show {display: block;}`; document.head.appendChild(style); window.addEventListener("scroll", function () { if (window.scrollY > 200) { scrollUpBtn.classList.add("show"); } else { scrollUpBtn.classList.remove("show"); } }); scrollUpBtn.addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); }); }); Settings & Appearance × Contrast Hide Feature Image Text Size Increase Font Size 16 Decrease Font Size Reset My Saved × Search Powered by Fanar AI × Join to our mailing list Join to our mailing list & get notifiction about the letest content document.addEventListener('DOMContentLoaded', function() { let subscribeForm = document.getElementById("subscribeForm"); let subscribeStatusMsg = document.getElementById("subscribeStatusMsg"); let subscribeFormData = document.getElementById("subscribeFormData"); let action = "/static/mail-list/mail-list.php"; function subscribeFunc(data) { fetch(action, { method: "POST", body: data, headers: { 'X-Requested-With': 'XMLHttpRequest' } }) } function subscribeGreeting(formdata, status) { status.classList.add('loading'); setTimeout(function() { status.classList.remove('loading'); status.innerHTML = "Thank you for your subscription.!"; status.style.color = 'var(--color2)'; }, 3000); } let submitSubscribeEvent = subscribeForm.addEventListener("submit", (event) => { event.preventDefault(); let formData = new FormData(subscribeForm); subscribeFunc(formData); subscribeGreeting(subscribeFormData, subscribeStatusMsg); }); }); IslamOnline We strive to guide you on a comprehensive journey into Islam, whether you are a first-time explorer or an in-depth scholar. You will discover foundational tenets, study the analytical Seerah of the Prophet Muhammad, and find trusted guidance on the principles of Sharia and the practical application of Fiqh.
+`; const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'd-flex btn-secondary load-more mx-auto mt-3'; const label = root.getAttribute('data-load-more') || getLangText('تحميل المزيد', 'Load More', 'Charger plus'); btn.innerHTML = label + downArrow; btn.setAttribute('aria-label', label); /* place after the items container (same place you already use elsewhere) */ container.insertAdjacentElement('afterend', btn); return true; } function isSearchUrl(input) { try { const u = new URL(input, window.location.origin); return /\/wp-json\/wp\/v2\/search\/?$/.test(u.pathname); } catch { return /\/wp-json\/wp\/v2\/search\/?(\?|$)/.test(String(input)); } } function getRootDomain(url) { const host = new URL(url).hostname; const parts = host.split('.'); if (parts.length u.searchParams.set(k, String(v))); return u.toString(); } catch { let out = base; for (const [k, v] of Object.entries(params)) { const re = new RegExp(`([?&])${k}=\\d+`); out = out.replace(re, `$1${k}=${v}`); if (!new RegExp(`[?&]${k}=`).test(out)) { out += (out.includes('?') ? '&' : '?') + `${k}=${v}`; } } return out; } } function smoothCenter(el, scroller) { if (typeof el.scrollIntoView === 'function') { el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); } else if (scroller) { const r1 = el.getBoundingClientRect(); const r2 = scroller.getBoundingClientRect(); const delta = (r1.left - r2.left) - ((scroller.clientWidth - el.offsetWidth) / 2); scroller.scrollBy({ left: delta, behavior: 'smooth' }); } } function getInitialPageFromUrl(url) { try { const u = new URL(url, window.location.origin); const p = parseInt(u.searchParams.get('page') || '1', 10); return Number.isFinite(p) && p > 0 ? p : 1; } catch { return 1; } } function getUrlWithPage(baseUrl, page) { if (isSearchUrl(baseUrl)) { try { const u = new URL(baseUrl, window.location.ori ... [truncated]
+
+====================================================================================================
+
+====================================================================================================
+SITE 9: https://allonlineislam.com
+====================================================================================================
+FINAL URL : https://allonlineislam.com
+TITLE     : Online Islam
+
+META TAGS:
+  og:title            : Online Islam
+  og:type             : website
+  og:url              : https://allonlineislam.com/
+  og:site_name        : Online Islam
+  twitter:card        : summary_large_image
+  twitter:title       : Online Islam
+  robots              : index, follow
+  canonical           : https://allonlineislam.com/
+  json_ld_count       : 1
+  JSON-LD sample: {"@context":"https://schema.org","@graph":[{"@type":"Person","@id":"https://allonlineislam.com/#person","name":"Online Islam","image":{"@type":"ImageObject","@id":"https://allonlineislam.com/#logo","url":"https://allonlineislam.com/wp-content/uploads/2020/08/lgnew.png","contentUrl":"https://allonlineislam.com/wp-content/uploads/2020/08/lgnew.png","caption":"Online Islam","inLanguage":"en-US","width":"190","height":"70"}},{"@type":"WebSite","@id":"https://allonlineislam.com/#website","url":"https://allonlineislam.com","name":"Online Islam","publisher":{"@id":"https://allonlineislam.com/#person"},"inLanguage":"en-US","potentialAction":{"@type":"SearchAction","target":"https://allonlineislam.com/?s={search_term_string}","query-input":"required name=search_term_string"}},{"@type":"CollectionPa
+
+HEADINGS/H1-H3:
+  - [H1] Recent Posts
+  - [H2] سیاست اور خدمتِ خلق: قرآنی تعلیمات اور عصری المیہ
+  - [H2] ہمارے پیارے نبی ہمارے آئیڈیل
+  - [H2] والدین کے حقوق اور ان کی عظمت
+  - [H2] استاذ کا مقام ايك مختصر اور جامع تقرير
+  - [H2] قرآن مجید کتابِ ہدایت
+  - [H2] دور الشباب في نهضة الأمة
+  - [H2] الأخلاقُ ميزانُ رقيِ الأمم
+  - [H2] قرآنِ کریم سرچشمۂ ہدایت ونجات
+  - [H2] الإسلام دين الرحمة والتسامح
+  - [H2] توحید کی امانت سینوں میں ہے ہمارے
+  - [H2] Useful Links
+  - [H3] Hashim Bastawi
+
+BODY TEXT (first ~4000 chars):
+سیاست اور خدمتِ خلق: قرآنی تعلیمات، اسوۂ نبوى اور عصری المیہ بقلم محمد ہاشم قاسمى بستوى، جامعہ اسلاميہ مظفر پور اعظم گڑھ انسانی معاشرت کا ارتقاء جن بنیادی ستونوں پر…
+ہمارے پیارے نبی ہمارے آئیڈیل نوٹ: " ہمارے پیارے نبی ﷺ، ہمارے آئیڈیل" يہ تقرير مدارس اور اسكول كے چھوٹے بچوں كے معيار كى ہے، اس ميں آپ ﷺ كے…
+والدین کے حقوق اور ان کی عظمت پر ايك مختصر اور جامع تقرير بقلم: محمد ہاشم قاسمى بستوى الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ، وَالْعَاقِبَةُ لِلْمُتَّقِينَ، وَالصَّلَاةُ وَالسَّلَامُ عَلَى سَيِّدِ الْأَنْبِيَاءِ وَالْمُرْسَلِينَ،…
+بقلم: محمد ہاشم قاسمى بستوى الْحَمْدُ لِلَّهِ الَّذِي عَلَّمَ بِالْقَلَمِ، عَلَّمَ الْإِنسَانَ مَا لَمْ يَعْلَمْ، وَالصَّلَاةُ وَالسَّلَامُ عَلَى سَيِّدِنَا مُحَمَّدٍ، الَّذِي قَالَ: «إِنَّمَا بُعِثْتُ مُعَلِّمًا»، وَعَلَى آلِهِ وَصَحْبِهِ أَجْمَعِينَ، أَمَّا…
+قرآن مجید کتابِ ہدایت بقلم: محمد ہاشم قاسمى بستوى الْحَمْدُ لِلَّهِ وَكَفَى، وَسَلَامٌ عَلَى عِبَادِهِ الَّذِينَ اصْطَفَى، أَمَّا بَعْدُ! فَأَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ، بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ: إِنَّ هَذَا…
+دور الشباب في نهضة الأمة الإعداد: محمد هاشم القاسمي البستوي الحمدُ للهِ الذي جعلَ القوةَ بعدَ الضعف، ثم جعلَ من بعدِ القوةِ ضعفاً وشيبة، والصلاةُ والسلامُ على من نصرَهُ الشبابُ…
+الإعداد: محمد هاشم القاسمي البستوي الحمدُ للهِ الذي جعلَ الأخلاقَ وعاءَ الدين، وميزانَ الثقلِ يومَ الدين، والصلاةُ والسلامُ على من كانَ خُلقُهُ القرآن، نبينا محمدٍ وعلى آلهِ وصحبِه الكرام. أما…
+بقلم: محمد ہاشم قاسمى بستوى قرآنِ کریم سرچشمۂ ہدایت ونجات اَلْحَمْدُ لِلّٰهِ الَّذِيْ أَنْزَلَ عَلَى عَبْدِهِ الْكِتَابَ وَلَمْ يَجْعَلْ لَهُ عِوَجًا، وَالصَّلَاةُ وَالسَّلَامُ عَلَى مَنْ كَانَ خُلُقُهُ الْقُرْآنَ، سَيِّدِنَا وَنَبِيِّنَا…
+الإسلام دين الرحمة والتسامح الإعداد: محمد هاشم القاسمي البستوي الحمد لله الذي جعل الإسلامَ شريعةً ومنهاجاً، وجعل الرحمةَ فيه روحاً وسراجاً. الحمد لله الذي سبقت رحمتُه غضبَه، ووسعت مغفرتُه خلقَه،…
+توحید کی امانت سینوں میں ہے ہمارے بقلم:محمد ہاشم قاسمى بستوى نحمده ونصلي على رسوله الكريم أما بعد: أَمَّا بَعْدُ! فَقَدْ قَالَ اللّٰهُ تَبَارَكَ وَتَعَالَى فِى الْقُرْآنِ الْـمَجِيْدِ: وَلَا تَهِنُوا…
+Online Islam is an Islamic blog designed and founded by Mohammad Hashim Qasmi Bastavi in 2018. In this blog come islamic issues and articles in Urdu, Hindi Arabic and English. Read More
+
+====================================================================================================

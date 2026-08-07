@@ -230,3 +230,64 @@ All changes in `src/app/page.tsx` + new `src/lib/custom-books.ts` + reworked API
 | `src/app/api/books/route.ts` | Merged visitor view: baked + overrides − hidden, `no-store` |
 | `src/app/page.tsx` | `AdminPanel` → Books Manager (CSV import, manual add, all-books list w/ search, Edit modal, Delete, Hidden-restore); `api()` helper now accepts `RequestInit`; `BooksTab` localStorage merge removed; `saveBooks`/`removeBook`/old `AdminPanel` sections removed |
 | `src/app/api/admin/import-tafseer/route.ts`, `import-tarjma/route.ts` | Orphaned (old panel deleted) — left on disk, unused |
+
+### 16. Admin Duas Manager — New Full-Screen Page (`/admin/duas`)
+New standalone admin page + API to manage all duas. Verified with `npx tsc --noEmit`, `npm run build`, live round-trip tests.
+
+**Decision (user):** Duas tab has 5 category tabs — "Duas", "More Duas", "Prayers", "Janaza", "Roza". Requested a new admin page showing all categories with every dua listed + **edit / delete / add-new** buttons ("make sure create new page under admin" — so a real Next.js route, not a modal).
+
+**`/api/admin/duas`** (new `src/app/api/admin/duas/route.ts`):
+- **GET** → `{ categories: [ { source, label, count, duas[] } ] }` across the 5 Turso tables (`tbl_dua`, `tbl_dua_Urdu`, `tbl_prayer`, `tbl_namaz_e_janaza`, `tbl_roza`), each dua mapped from the same 8 columns the read-side uses: `dua_ID, dua_title, dua_seq, dua_desc, dua_arabic, dua_urdu, dua_eng, dua_ref`.
+- **POST** → add or update: `{ table, dua: { id?, title, seq?, desc, arabic, urdu, english, ref } }`. Update by id (8-col UPDATE); insert computes next `dua_ID` (`MAX+1`) and default `dua_seq` (`MAX+1`) per table. Tables are whitelist-validated to prevent injection.
+- **DELETE** → `{ table, id }` removes the row.
+
+**`/admin/duas` page** (`src/app/admin/duas/page.tsx`, `'use client'`):
+- Category tabs (the 5 categories) with live counts + full list per category: #id, seq, Urdu title, Arabic, Urdu, ref — each row with **✏️ Edit** and **🗑 Delete** buttons.
+- **➕ Add New Dua** button → modal form (Title*, Sequence, Reference, Arabic, Urdu, Description, English) with live save (auto id + seq); Edit mode pre-fills the same form.
+- Font fix: Arabic uses `font-arabic` (NooreHuda) and Urdu/titles/ref use `font-urdu` (AlviNastaleeq) + `direction: rtl` — matches the site fonts (was rendering in default sans).
+
+**Verification:** GET 5 cats (Duas=64, More Duas=275, Prayers=25, Janaza=7, Roza=3); POST insert→UPDATE→verify `/api/admin/duas`→DELETE, DB left clean; page route 200.
+
+## Key Files Changed (Admin Duas Manager)
+| File | Change |
+|------|--------|
+| `src/app/api/admin/duas/route.ts` | NEW — GET list all 5 categories, POST upsert (auto id/seq), DELETE by `{table,id}` |
+| `src/app/admin/duas/page.tsx` | NEW — login-gated manager: category tabs, all-duas list, Edit/Delete per row, Add-New modal, Arabic/Urdu fonts |
+| `src/app/page.tsx` | Books Manager modal gained a "🕌 Duas Manager Open →" link to `/admin/duas` |
+
+### 17. Admin Pages Hub — `/admin` + Books as Full-Screen Page (modal removed)
+Decision (user): "under admin page it must show pages link. 1 page is books and 2 is dua when i click any page it show full screen page."
+
+**New unified admin area (all full-screen pages, no more site modal):**
+- **`/admin`** (hub, `src/app/admin/page.tsx`) — login-gated dashboard with two page-link cards: **📚 Books** → `/admin/books`, **🕌 Duas** → `/admin/duas`, plus Logout + "← Site".
+- **`/admin/books`** (`src/app/admin/books/page.tsx`, NEW) — the former `AdminPanel` modal extracted 1:1 into a full-screen page: CSV import, manual add, all-2471-book list with search, Edit modal (bakedKey override), Delete (override+hide), Hidden/Restore section.
+- **`/admin/components/AdminGate.tsx`** (NEW) — shared session-auth wrapper: single `sessionStorage` key `islam360_admin_auth`, Login form (same credentials), context `useAdminAuth()` exposing `logout`. All three admin pages wrap content in `<AdminGate>`; `/admin/duas` refactored from its own inline auth to it.
+- **`src/app/page.tsx`** — old modal admin removed entirely: `LoginModal`, `AdminPanel`, `loginOpen`/`adminOpen` state all deleted; bottom **Admin** link is now `<a href="/admin">`.
+
+**Verified:** `/admin`, `/admin/books`, `/admin/duas` all 200; one login covers all pages; homepage + `/api/books` (2471) + `/api/admin/duas` (5 cats) healthy.
+
+## Key Files Changed (Admin Pages Hub)
+| File | Change |
+|------|--------|
+| `src/app/admin/components/AdminGate.tsx` | NEW — shared session auth gate + `useAdminAuth` (login form, logout, single `islam360_admin_auth` key) |
+| `src/app/admin/page.tsx` | NEW — admin home: Books + Duas page-link cards, Logout |
+| `src/app/admin/books/page.tsx` | NEW — Books Manager extracted from site modal to full-screen page |
+| `src/app/admin/duas/page.tsx` | REWRITTEN — uses shared `AdminGate` (was own inline login); matched fonts |
+| `src/app/page.tsx` | Removed `LoginModal` + `AdminPanel` + `loginOpen`/`adminOpen`; Admin button → `<a href="/admin">` |
+
+### 18. Duas Tab Not Showing Admin Edits — 24h Cache Fix
+**Symptom (user):** editing a dua in the Duas Manager (title or any field) didn't appear on the Duas tab.
+
+**Root cause:** `/api/duas/all` (the Duas tab data source) returned `Cache-Control: public, s-maxage=86400, max-age=86400` via `json(data, 200, 86400)` — browsers/CDN caches the whole list for 24 hours, so DB edits were invisible. `/api/duas` and `/api/duas/urdu` had the same cache.
+
+**Fix:**
+1. `src/app/api/duas/all`, `duas`, `duas/urdu` → `export const dynamic = 'force-dynamic'` + cache changed to `json(..., 200, 0)`.
+2. `src/lib/api-utils.ts` → `json()` now emits `Cache-Control: no-store` when `cacheSec <= 0` (previously omitted the header, leaving heuristic caching).
+
+**Verified:** `/api/duas/all` header is now `Cache-Control: no-store`; edits show immediately on the Duas tab (hard-refresh once to drop the old cached payload).
+
+## Key Files Changed (Cache Fix)
+| File | Change |
+|------|--------|
+| `src/lib/api-utils.ts` | `json()` emits `no-store` when `cacheSec <= 0` |
+| `src/app/api/duas/all/route.ts`, `duas/route.ts`, `duas/urdu/route.ts` | `force-dynamic` + removed 86400s cache |
