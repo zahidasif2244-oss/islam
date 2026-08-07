@@ -60,12 +60,10 @@ function parseCsv(content) {
   return out
 }
 
-if (!fs.existsSync(BOOKS_DIR)) {
-  console.error(`Books dir not found: ${BOOKS_DIR}`)
-  process.exit(1)
-}
+const files = fs.existsSync(BOOKS_DIR)
+  ? fs.readdirSync(BOOKS_DIR).filter(f => f.toLowerCase().endsWith('.csv'))
+  : []
 
-const files = fs.readdirSync(BOOKS_DIR).filter(f => f.toLowerCase().endsWith('.csv'))
 if (files.length === 0) {
   if (fs.existsSync(OUT_FILE)) {
     console.warn('No .csv files found in public/books/ — keeping existing src/data/books.json')
