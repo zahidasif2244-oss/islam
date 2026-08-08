@@ -40,6 +40,9 @@ function DuasManager() {
   const [f, setF] = useState<any>({})
   const [saving, setSaving] = useState(false)
 
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+
   async function load() {
     setLoading(true)
     try {
@@ -121,6 +124,105 @@ function DuasManager() {
     }
   }
 
+  // ============== CSV import ==============
+  function downloadSampleCsv() {
+    const header = 'table,title,seq,desc,arabic,urdu,english,ref'
+    const sample =
+      `${active},"Sample Dua - نمونہ دعا","1","Example description",` +
+      '"اللَّهُمَّ اغْفِرْ لِي ذَنْبِي","میرے گناہ معاف فرما","O Allah, forgive my sin","Reference (e.g. Bukhari)"'
+    const csv = '\uFEFF' + header + '\r\n' + sample + '\r\n'
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'duas-sample.csv'
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  function parseCsv(text: string): string[][] {
+    const rows: string[][] = []
+    let row: string[] = []
+    let cur = ''
+    let inQ = false
+    const src = text.replace(/^\uFEFF/, '')
+    for (let i = 0; i < src.length; i++) {
+      const ch = src[i]
+      if (inQ) {
+        if (ch === '"') {
+          if (src[i + 1] === '"') { cur += '"'; i++ } else inQ = false
+        } else cur += ch
+      } else if (ch === '"') inQ = true
+      else if (ch === ',') { row.push(cur); cur = '' }
+      else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = '' }
+      else if (ch !== '\r') cur += ch
+    }
+    if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row) }
+    return rows.filter(r => r.some(c => c.trim() !== ''))
+  }
+
+  function parseRows(cells: string[][]): any[] {
+    if (cells.length < 2) throw new Error('CSV has no data rows (only a header)')
+    const headers = cells[0].map(h => h.trim().toLowerCase())
+    const idx: Record<string, number> = {}
+    headers.forEach((h, i) => { idx[h] = i })
+    if (idx.title === undefined) throw new Error('CSV must have a "title" column — download the sample CSV for the exact format')
+    const out: any[] = []
+    for (let r = 1; r < cells.length; r++) {
+      const g = (name: string) => (idx[name] !== undefined ? (cells[r][idx[name]] || '').trim() : '')
+      out.push({
+        table: g('table') || '',
+        title: g('title'),
+        seq: g('seq'),
+        desc: g('desc'),
+        arabic: g('arabic'),
+        urdu: g('urdu'),
+        english: g('english'),
+        ref: g('ref'),
+      })
+    }
+    return out
+  }
+
+  async function uploadCsv() {
+    if (!csvFile) { setErr('Choose a .csv file first'); return }
+    setUploading(true); setMsg(null); setErr(null)
+    try {
+      const text = await csvFile.text()
+      const parsed = parseRows(parseCsv(text))
+      const valid = new Set(CATEGORIES.map(c => c.source))
+      const groups = new Map<string, any[]>()
+      for (const row of parsed) {
+        const table = valid.has(row.table) ? row.table : active
+        if (!groups.has(table)) groups.set(table, [])
+        groups.get(table)!.push(row)
+      }
+      const mainTable = groups.keys().next().value as string
+      let total = 0
+      let skipped = 0
+      const labels: string[] = []
+      for (const [table, tableRows] of groups) {
+        const res = await fetch(`${API}/api/admin/duas/import`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ table, rows: tableRows }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data.error || 'Import failed')
+        total += data.inserted || 0
+        skipped += (data.skipped || []).length
+        const label = CATEGORIES.find(c => c.source === table)?.label || table
+        labels.push(`${label} (+${data.inserted || 0})`)
+      }
+      setActive(mainTable)
+      setCsvFile(null)
+      ;(document.getElementById('dua-csv-file') as HTMLInputElement | null)?.value && ((document.getElementById('dua-csv-file') as HTMLInputElement).value = '')
+      await load()
+      setMsg(`✅ Imported ${total} dua${total === 1 ? '' : 's'}: ${labels.join(', ')}${skipped ? ` — ${skipped} row(s) skipped (empty title)` : ''}`)
+    } catch (e: any) {
+      setErr(e.message || 'Upload failed')
+    } finally { setUploading(false) }
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] p-4 sm:p-6">
       <div className="max-w-[960px] mx-auto">
@@ -144,6 +246,35 @@ function DuasManager() {
               {c.label} <span className="text-[10px] opacity-70">({activeCat?.source === c.source ? activeCat.count : categories.find(x => x.source === c.source)?.count ?? 0})</span>
             </button>
           ))}
+        </div>
+
+        {/* CSV import */}
+        <div className="bg-white rounded-xl border border-[#e0e0e0] p-3 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-bold text-[#1a5c3a] text-sm">📄 Import Duas from CSV</h2>
+            <button onClick={downloadSampleCsv} className="text-xs text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-3 py-1.5 cursor-pointer hover:bg-[#d0ead8]">⬇️ Download Sample CSV</button>
+          </div>
+          <p className="text-[11px] text-[#888] mb-2">
+            Columns: <code className="bg-[#f5f5f5] px-1 rounded">table, title, seq, desc, arabic, urdu, english, ref</code> — only <strong>title</strong> is required.
+            Leave <code className="bg-[#f5f5f5] px-1 rounded">table</code> empty to add rows into the selected tab (<strong>{activeCat?.label}</strong>), or write e.g. <code className="bg-[#f5f5f5] px-1 rounded">tbl_dua_Urdu</code> to fill a specific category.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-xs text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-3 py-1.5 cursor-pointer hover:bg-[#d0ead8]">
+              📁 Choose .csv File
+              <input id="dua-csv-file" type="file" accept=".csv,text/csv" className="hidden"
+                onChange={e => setCsvFile(e.target.files?.[0] || null)} />
+            </label>
+            <button onClick={uploadCsv} disabled={!csvFile || uploading}
+              className="text-xs bg-[#1a5c3a] text-white border-none rounded px-3 py-1.5 cursor-pointer hover:bg-[#2a7a4e] disabled:opacity-40">
+              {uploading ? '⏳ Uploading…' : '📤 Upload CSV'}
+            </button>
+            {csvFile && (
+              <span className="text-[11px] text-[#666]">
+                {csvFile.name} ({csvFile.size} bytes)
+                <button onClick={() => setCsvFile(null)} className="ml-1 text-red-500 cursor-pointer">✕</button>
+              </span>
+            )}
+          </div>
         </div>
 
         {err && <div className="text-xs mb-2 p-2 rounded bg-[#ffebee] text-red-700">{err}</div>}
