@@ -26,6 +26,8 @@ function BooksManager() {
   const [search, setSearch] = useState('')
   const [csvMsg, setCsvMsg] = useState<string | null>(null)
   const [csvError, setCsvError] = useState<string | null>(null)
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [uploadingCsv, setUploadingCsv] = useState(false)
   const [listMsg, setListMsg] = useState<string | null>(null)
   const [listError, setListError] = useState<string | null>(null)
 
@@ -69,12 +71,23 @@ function BooksManager() {
     return cols.map(c => c.trim())
   }
 
-  async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setCsvMsg(null); setCsvError(null)
+  function downloadSampleCsv() {
+    const header = 'Title,Author_Name,Number_Of_Pages,Cover_Image_URL,Thumbnail_URL,Book_URL,PDF_Download_URL,Audio_Book_URL,Audio_Play_URL,Audio_Download_URL'
+    const sample = '"Sample Book - نمونہ کتاب","Author Name","300","https://example.com/cover.jpg","https://example.com/thumb.jpg","https://example.com/book","https://example.com/book.pdf","https://example.com/audio.mp3","https://example.com/play.mp3","https://example.com/download.mp3"'
+    const csv = '\uFEFF' + header + '\r\n' + sample + '\r\n'
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'books-sample.csv'
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
+  async function uploadCsvFile() {
+    if (!csvFile) { setCsvError('Choose a .csv file first'); return }
+    setUploadingCsv(true); setCsvMsg(null); setCsvError(null)
     try {
-      const text = await file.text()
+      const text = await csvFile.text()
       const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim().length > 0)
       const parsed: any[] = []
       for (let i = 1; i < lines.length; i++) {
@@ -99,21 +112,19 @@ function BooksManager() {
         setCsvError('No valid rows found. Expected header: Title,Author_Name,Number_Of_Pages,Cover_Image_URL,Thumbnail_URL,Book_URL,PDF_Download_URL,Audio_Book_URL,Audio_Play_URL,Audio_Download_URL')
         return
       }
-      try {
-        const res = await api('/api/admin/books', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ books: parsed }),
-        })
-        await loadBooks()
-        setCsvMsg(`Imported ${res.inserted} books from "${file.name}" (${res.updated} updated, ${res.skipped} skipped).`)
-      } catch {
-        setCsvError('Failed to import — server error. Check server logs.')
-      }
+      const res = await api('/api/admin/books', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ books: parsed }),
+      })
+      await loadBooks()
+      setCsvMsg(`Imported ${res.inserted} books from "${csvFile.name}" (${res.updated} updated, ${res.skipped} skipped) — shown below and on the site Books tab.`)
+      setCsvFile(null)
+      const inp = document.getElementById('books-csv-file') as HTMLInputElement | null
+      if (inp) inp.value = ''
     } catch (err: any) {
-      setCsvError(err.message || 'Failed to read CSV')
-    }
-    e.target.value = ''
+      setCsvError(err.message || 'Upload failed — server error')
+    } finally { setUploadingCsv(false) }
   }
 
   async function addManualBook() {
@@ -242,17 +253,32 @@ function BooksManager() {
           </div>
         </div>
 
-        {/* CSV Upload */}
+        {/* CSV import */}
         <div className="bg-white p-4 rounded-xl border border-[#e0e0e0] mb-4">
-          <h4 className="font-bold text-[#1a5c3a] mb-2">📄 Import Books from CSV</h4>
-          <p className="text-xs text-[#999] mb-2">CSV columns (header row required): <b>Title, Author_Name, Number_Of_Pages, Cover_Image_URL, Thumbnail_URL, Book_URL, PDF_Download_URL, Audio_Book_URL, Audio_Play_URL, Audio_Download_URL</b>. Extra columns are ignored; missing ones become empty.</p>
-          <label className="block mb-2">
-            <span className="text-xs text-[#666] block mb-1">Choose .csv file</span>
-            <input type="file" accept=".csv,text/csv" onChange={handleCsvUpload}
-              className="w-full p-2 border border-[#ccc] rounded text-sm bg-white" />
-          </label>
-          {csvMsg && <div className="text-xs mb-2 p-2 rounded bg-[#e8f5e9] text-[#1a5c3a]">{csvMsg}</div>}
-          {csvError && <div className="text-xs mb-2 p-2 rounded bg-[#ffebee] text-red-700">{csvError}</div>}
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-bold text-[#1a5c3a]">📄 Import Books from CSV</h4>
+            <button onClick={downloadSampleCsv} className="text-xs text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-3 py-1.5 cursor-pointer hover:bg-[#d0ead8]">⬇️ Download Sample CSV</button>
+          </div>
+          <p className="text-xs text-[#999] mb-2">CSV columns (header row required): <b>Title, Author_Name, Number_Of_Pages, Cover_Image_URL, Thumbnail_URL, Book_URL, PDF_Download_URL, Audio_Book_URL, Audio_Play_URL, Audio_Download_URL</b>. Extra columns are ignored; missing ones become empty. Imported books appear in the list below and on the site <b>Books tab</b> immediately.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-xs text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-3 py-1.5 cursor-pointer hover:bg-[#d0ead8]">
+              📁 Choose .csv File
+              <input id="books-csv-file" type="file" accept=".csv,text/csv" className="hidden"
+                onChange={e => setCsvFile(e.target.files?.[0] || null)} />
+            </label>
+            <button onClick={uploadCsvFile} disabled={!csvFile || uploadingCsv}
+              className="text-xs bg-[#1a5c3a] text-white border-none rounded px-3 py-1.5 cursor-pointer hover:bg-[#2a7a4e] disabled:opacity-40">
+              {uploadingCsv ? '⏳ Uploading…' : '📤 Upload CSV'}
+            </button>
+            {csvFile && (
+              <span className="text-[11px] text-[#666]">
+                {csvFile.name} ({csvFile.size} bytes)
+                <button onClick={() => setCsvFile(null)} className="ml-1 text-red-500 cursor-pointer">✕</button>
+              </span>
+            )}
+          </div>
+          {csvMsg && <div className="text-xs mt-2 p-2 rounded bg-[#e8f5e9] text-[#1a5c3a]">{csvMsg}</div>}
+          {csvError && <div className="text-xs mt-2 p-2 rounded bg-[#ffebee] text-red-700">{csvError}</div>}
         </div>
 
         {/* Manual Add */}
