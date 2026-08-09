@@ -291,3 +291,67 @@ Decision (user): "under admin page it must show pages link. 1 page is books and 
 |------|--------|
 | `src/lib/api-utils.ts` | `json()` emits `no-store` when `cacheSec <= 0` |
 | `src/app/api/duas/all/route.ts`, `duas/route.ts`, `duas/urdu/route.ts` | `force-dynamic` + removed 86400s cache |
+
+### 19. Google SEO — Sitemap, Robots, Privacy Policy, Full Metadata + OG Image
+User approved SEO items #3 and #4 only: sitemap.xml, robots.txt and a Privacy Policy (GTM + HTML verification deferred until user supplies codes). Implemented + verified live.
+
+- **`src/app/sitemap.ts`** → `/sitemap.xml` — URLs `/`, `/privacy/`, `/dua-shifa/` with changefreq/priority/lastModified.
+- **`src/app/robots.ts`** → `/robots.txt` — allow `*`, `disallow: /admin/, /api/`, sitemap URL.
+- **`src/app/privacy/page.tsx`** → `/privacy` — 10 sections incl. localStorage, cookies, ad opt-outs.
+- **`layout.tsx`** — `metadataBase`, static title/description, keywords, canonical, OpenGraph + Twitter tags (summary_large_image), robots/googleBot directives, author/creator/publisher/category.
+- **`src/app/opengraph-image.tsx`** — `ImageResponse` 1200×630 brand-green OG image. Arabic glyphs were removed from it — opentype.js `lookupType 5 substFormat 3` is unsupported and aborted the build prerender.
+
+**Verified live:** `/sitemap.xml` 200, `/robots.txt` 200, `/opengraph-image` 200 (70 KB PNG), `/privacy` 200. Next step for user: submit `/sitemap.xml` in Google Search Console.
+
+### 20. Admin Security Hardening — Server-Side Auth (no more hardcoded credentials)
+**Problems found (audit):**
+1. `AdminGate.tsx` had the admin email + password **hardcoded in client code** (visible in the public JS bundle).
+2. `/api/admin/books` and `/api/admin/duas` had **no authentication at all** — anyone could call POST/DELETE and modify the database.
+3. `.env.local` (all 20+ Turso **read-write** tokens + URLs) had been **accidentally committed** in git history, and the tracked `.next/` dev build-cache (binary `.sst` files) embedded the token values too.
+
+**Fixes:**
+- **`src/lib/admin-auth.ts`** — env-backed credentials (`ADMIN_EMAIL`, `ADMIN_PASS`, `ADMIN_SECRET`), HMAC-SHA256 signed session tokens, constant-time compare (`timingSafeEqual`), 7-day expiry.
+- **`/api/admin/login|logout|session`** — login sets an `HttpOnly; Secure; SameSite=Lax` cookie named `quranweb_admin`; session returns `{authed}`; logout clears it.
+- **All admin APIs now 401 without a valid session** (GET/POST/DELETE in both books and duas routes).
+- **`AdminGate.tsx` rewritten** — no secrets in code, logs in through the API, session-driven (old `sessionStorage` flag removed).
+- Env vars added to `.env.local` (gitignored) and Vercel production; password generated strong (charset excludes `$`/`#` because dotenv-expand/`#`-comments corrupt them).
+
+**Lessons learned:** Next 16 + Turbopack **inlines `process.env` at build time** → rebuild locally after env changes; `next start` serves the baked values.
+
+**Verified (local):** wrong password → 401, correct → 200 + cookie, session `{"authed":true}`, tampered token → false, books/duas with cookie → 200, logout → 401 again.
+
+### 21. Git History Purge — Leaked Secrets Scrubbed From All 46 Commits
+Per user request ("remove that information hackers can steal"), rewrote all history:
+
+- `py -m git_filter_repo --invert-paths --path .env.local --path .next --replace-text replacements.txt --force` (git-filter-repo installed via pip; invoked as a module).
+- replacements.txt: `literal:A{786}Ra3EI=C==>REDACTED_CREDENTIAL`, `literal:ali.raza260286@gmail.com==>REDACTED_EMAIL`.
+- Verified: zero matches for `.env.local`, `.next`, old password, old email, or any Turso JWT (`eyJhbGciOiJFZERTQS`) across **all** commits; repo has **0 forks**.
+- filter-repo removes the remote → re-added `origin`, force-pushed `main`.
+- `.gitignore` already covers `.env*`, `.next/`, `node_modules/`.
+- Old history backup kept at `F:\0\Download\Github\islam-backup.git` (user asked to keep; contains the old tokens — treat as sensitive, local-only).
+
+### 22. Vercel Environment Variables — Live Site Repair
+Live DB calls (`/api/duas/all`, `/api/books`, `/api/quran/*`) were returning **500 empty** — Vercel had no `TURSO_*` variables (local worked fine).
+
+- User pasted all 39 `KEY=VALUE` lines from `.env.local` into Vercel → **Production**; an empty commit forced a redeploy.
+- Verified live: `/api/duas/all` 200, `/api/books` 200 (1.4 MB), `/api/quran/surahs` 200.
+- Admin login still 401 afterward → user deleted the three `ADMIN_*` vars (previous paste-import had left the old mistyped values) and re-added them with Sensitive OFF → login works from the browser.
+- Prod gotcha: Vercel env changes trigger a deploy that bakes env at build time (same Turbopack behavior as local).
+
+### 23. Admin Duas — CSV Import (sample download + upload + batch insert API)
+- **`src/app/api/admin/duas/import/route.ts`** — POST `{table, rows[]}`: table whitelist-validated, auto `dua_ID` = MAX+1, `dua_seq` = given value or MAX+1, rows with empty title skipped, auth-protected (401 without session).
+- **Page** (`/admin/duas`) — CSV card: **⬇️ Download Sample CSV** (UTF-8 BOM, one sample row), **📁 Choose .csv File** + **📤 Upload CSV**, client-side quoted-CSV parser, optional `table` column routes rows to specific categories (default = active tab), after success `load()` refreshes all 5 tabs immediately and switches to the imported tab.
+- **`src/lib/dua-tables.ts`** extracted (shared `DUA_TABLES`/`DUA_COLS`/`isDuaTable`/`resolveDuaTable`); the duas route refactored onto it.
+
+**Verified local + live:** 3 rows → 2 inserted + 1 skipped (empty title), Arabic/Urdu persisted, counts restored 64→66→64 after cleanup.
+
+### 24. Admin Books — CSV Import Upgraded (sample + explicit upload button)
+Replaced the old auto-import-on-file-select with the same UX as Duas:
+
+- **⬇️ Download Sample CSV** (`books-sample.csv`, BOM, 10-column header + example row), **📁 Choose .csv File** + **📤 Upload CSV** (no accidental upload on selection anymore).
+- Reuses upsert via `POST /api/admin/books`; after import the admin list refreshes via `loadBooks()`.
+
+**Verified:** 2 test books imported → appear in admin list AND in public `/api/books` (Books tab) instantly as `source: "Custom"` (total 2473) → deleted → back to 2471.
+
+### 25. Security Q&A — "Save All Resources" Cannot Hack the Site
+Confirmed for the user: a Chrome-extension download of the site only captures public content (HTML/CSS/JS/images/data). DB tokens, `ADMIN_*` vars and admin APIs are server-side: admin endpoints return 401 without a signed session cookie, and the downloaded bundle contains zero secrets. Remaining risk is content copying (copyright concern), not a hack vector — this was made true by entries #20–#22.

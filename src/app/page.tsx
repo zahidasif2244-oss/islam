@@ -154,10 +154,9 @@ export default function Home() {
       <div>
         {/* Navbar */}
         <nav className="bg-[#1a5c3a] text-white px-3 sm:px-5 py-2 sm:py-3 flex items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={goHome}>
-            <img src="/logo.svg" alt="Quran Web" className="h-8 w-8 sm:h-11 sm:w-11" />
-            <span className="text-sm sm:text-base font-bold tracking-wide hidden sm:inline">Quran Web</span>
-            <span className="text-sm font-bold tracking-wide sm:hidden">QW</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 cursor-pointer shrink-0 min-w-0" onClick={goHome}>
+            <img src="/logo.svg" alt="Quran Web" className="h-7 w-7 sm:h-11 sm:w-11 shrink-0" />
+            <span className="text-xs sm:text-base font-bold tracking-wide truncate">Quran Web</span>
           </div>
 
           {/* Font size sliders - desktop */}
@@ -194,26 +193,26 @@ export default function Home() {
 
         {/* Mobile font slider panel */}
         {mobileMenuOpen && (
-          <div className="sm:hidden bg-[#1a5c3a] px-3 pb-3 flex items-center gap-3 border-t border-white/10">
-            <label className="flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded cursor-pointer">
-              <span className="text-white/80 font-semibold">Arabic</span>
-              <input type="range" min={14} max={50} defaultValue={28} className="w-[80px] h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
+          <div className="sm:hidden bg-[#1a5c3a] px-3 pb-3 pt-2 flex flex-col gap-2 border-t border-white/10">
+            <label className="flex items-center gap-2 text-[11px] bg-white/10 px-2 py-1.5 rounded cursor-pointer w-full min-w-0">
+              <span className="text-white/80 font-semibold shrink-0">Arabic</span>
+              <input type="range" min={14} max={50} defaultValue={28} className="flex-1 min-w-0 h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
                 localStorage.setItem('islam360_arabic_size', e.target.value)
                 const el = document.getElementById('arabicSizeLabel')
                 if (el) el.textContent = e.target.value
                 document.querySelectorAll('.arabic, .arabic-ayah, .r-arabic, .dua-arabic').forEach(el => (el as HTMLElement).style.fontSize = e.target.value + 'px')
               }} />
-              <span className="text-white/60 min-w-[16px] text-right text-[10px]">28</span>
+              <span className="text-white/60 min-w-[16px] text-right text-[10px] shrink-0">28</span>
             </label>
-            <label className="flex items-center gap-1 text-[11px] bg-white/10 px-2 py-1 rounded cursor-pointer">
-              <span className="text-white/80 font-semibold">Urdu</span>
-              <input type="range" min={10} max={40} defaultValue={20} className="w-[80px] h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
+            <label className="flex items-center gap-2 text-[11px] bg-white/10 px-2 py-1.5 rounded cursor-pointer w-full min-w-0">
+              <span className="text-white/80 font-semibold shrink-0">Urdu</span>
+              <input type="range" min={10} max={40} defaultValue={20} className="flex-1 min-w-0 h-1 accent-[#e8b840] cursor-pointer" onChange={e => {
                 localStorage.setItem('islam360_urdu_size', e.target.value)
                 const el = document.getElementById('urduSizeLabel')
                 if (el) el.textContent = e.target.value
                 document.querySelectorAll('.translation.urdu, .text.urdu, .dua-urdu').forEach(el => (el as HTMLElement).style.fontSize = e.target.value + 'px')
               }} />
-              <span className="text-white/60 min-w-[16px] text-right text-[10px]">20</span>
+              <span className="text-white/60 min-w-[16px] text-right text-[10px] shrink-0">20</span>
             </label>
           </div>
         )}
