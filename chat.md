@@ -355,3 +355,17 @@ Replaced the old auto-import-on-file-select with the same UX as Duas:
 
 ### 25. Security Q&A — "Save All Resources" Cannot Hack the Site
 Confirmed for the user: a Chrome-extension download of the site only captures public content (HTML/CSS/JS/images/data). DB tokens, `ADMIN_*` vars and admin APIs are server-side: admin endpoints return 401 without a signed session cookie, and the downloaded bundle contains zero secrets. Remaining risk is content copying (copyright concern), not a hack vector — this was made true by entries #20–#22.
+
+### 26. Mobile Responsive Fixes - Navbar Title + Font Size Sliders
+User reported on mobile: the "Quran Web" title was not shown responsively, and both text-size sliders needed to be responsive.
+
+**Navbar (page.tsx ~line 156):** the brand previously hid "Quran Web" on mobile (`hidden sm:inline`) and showed a tiny "QW" abbreviation instead. Now the full title always renders:
+- Brand container `min-w-0` + logo `shrink-0`, title `text-xs sm:text-base ... truncate` - scales down on phones and truncates gracefully on very narrow screens instead of overflowing.
+
+**Mobile font slider panel (page.tsx ~line 195, opened via the "Aa" button):** the two sliders previously sat side-by-side in a row with fixed `w-[80px]` ranges, which overflowed small phones. Now:
+- Panel is `flex flex-col gap-2` - Arabic slider row then Urdu slider row (full-width rows, `w-full min-w-0`).
+- Each row: pinned label + value with `shrink-0`, and the `<input type="range">` stretches with `flex-1 min-w-0` across whatever width is available (320px and up).
+
+**Desktop sliders unchanged** (`hidden sm:flex`, 50px each, beside the logo).
+
+**Verified:** `npm run build` passes clean.
