@@ -991,15 +991,17 @@ function WordByWordTab() {
                   <th className="p-1.5 sm:p-2 text-center text-xs sm:text-sm">Arabic</th>
                   <th className="p-1.5 sm:p-2 text-center text-xs sm:text-sm">Urdu</th>
                   <th className="p-1.5 sm:p-2 text-center text-xs sm:text-sm">English</th>
+                  <th className="p-1.5 sm:p-2 text-center text-xs sm:text-sm">Hindi</th>
                 </tr>
               </thead>
               <tbody>
-                {Array.from({ length: Math.max(data.arabic.length, data.urdu.length, data.english.length) }, (_, i) => (
+                {Array.from({ length: Math.max(data.arabic.length, data.urdu.length, data.english.length, data.hindi.length) }, (_, i) => (
                   <tr key={i} className="border-b border-[#e0e0e0]">
                     <td className="p-1 sm:p-1.5 text-center text-[10px] sm:text-xs text-[#888]">{i + 1}</td>
                     <td className="p-1 sm:p-1.5 text-right font-arabic text-base sm:text-[22px] text-[#1a3a1a]" style={{ direction: 'rtl' }}>{data.arabic[i] || ''}</td>
                     <td className="p-1 sm:p-1.5 text-right text-sm sm:text-lg text-[#1a5c3a]" style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq','Noto Nastaliq Urdu',serif", direction: 'rtl' }}>{data.urdu[i] || ''}</td>
                     <td className="p-1 sm:p-1.5 text-left text-[11px] sm:text-sm text-[#555]">{data.english[i] || ''}</td>
+                    <td className="p-1 sm:p-1.5 text-left text-[11px] sm:text-sm text-[#555]" style={{ fontFamily: "'Nirmala UI','Noto Sans Devanagari',sans-serif" }}>{data.hindi[i] || ''}</td>
                   </tr>
                 ))}
               </tbody>

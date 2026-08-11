@@ -21,8 +21,11 @@ export async function GET(req: Request) {
   const [engRow] = await query(db, 'SELECT translation FROM word_by_word_english WHERE surat_id = ? AND ayat_number = ? ORDER BY id LIMIT 1', [surah, ayah])
   const eng = engRow ? parseWbw(engRow.translation) : []
 
+  const [hindiRow] = await query(db, 'SELECT translation FROM word_by_word_hindi WHERE surat_id = ? AND ayat_number = ? ORDER BY id LIMIT 1', [surah, ayah])
+  const hindi = hindiRow ? parseWbw(hindiRow.translation) : []
+
   const arabicRows = await query(db, 'SELECT arabic_word FROM tbl_arabic_words WHERE arabic_surat_id = ? AND arabic_ayat_number = ? ORDER BY word_id', [surah, ayah])
   const arabic = arabicRows.map(r => getText(r.arabic_word).trim())
 
-  return json({ arabic, urdu, english: eng })
+  return json({ arabic, urdu, english: eng, hindi })
 }

@@ -369,3 +369,14 @@ User reported on mobile: the "Quran Web" title was not shown responsively, and b
 **Desktop sliders unchanged** (`hidden sm:flex`, 50px each, beside the logo).
 
 **Verified:** `npm run build` passes clean.
+
+### 27. 14 New Translation Languages + Hindi Word-by-Word
+**Data import** (scripts/import-translations.mjs):
+- Imported 14 full translations (6236 ayahs each) from api.quran.com v4 into Turso tbl_QuranComplete: Saheeh International, Yusuf Ali, Hilali & Khan, Spanish (Isa Garcia), Bengali, Tamil, French, German, Turkish, Indonesian, Malay, Nepali, Marathi, Telugu.
+- Staging-table approach: _staging table, chunked multi-row INSERTs (1500 rows), single UPDATE...SELECT JOIN per chunk; SQL single-quote escaping (JSON.stringify broke on embedded quotes); skip-if-already-imported guard; 4x retry w/ backoff.
+
+**Frontend**:
+- TRANSLATION_COLUMNS in src/lib/constants.ts +14 entries -> Settings tarjma dropdown auto-lists them (server-baked) and checkboxes/sliders work per language.
+- Word-by-word tab: Hindi column added (word_by_word_hindi data, Devanagari), API /api/quran/wordbyword now returns hindi, table shows Arabic/Urdu/English/Hindi.
+
+**Verify**: build passes; baked HTML contains all new language names; Turso COUNT(*)=6236 for all 14 columns.

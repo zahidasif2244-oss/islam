@@ -78,6 +78,20 @@ export const TRANSLATION_COLUMNS = [
   ['translation_english', 'English', false],
   ['hindi_nazar', 'Hindi', false],
   ['translation_roman_urdu', 'Roman Urdu', false],
+  ['translation_saheeh_international', 'English (Saheeh International)', false],
+  ['translation_yusuf_ali', 'English (Yusuf Ali)', false],
+  ['translation_hilali_khan', 'English (Hilali & Khan)', false],
+  ['translation_spanish_isa_garcia', 'Spanish (Isa Garcia)', false],
+  ['translation_bengali', 'Bengali', false],
+  ['translation_tamil', 'Tamil', false],
+  ['translation_french', 'French', false],
+  ['translation_german', 'German', false],
+  ['translation_turkish', 'Turkish', false],
+  ['translation_indonesian', 'Indonesian', false],
+  ['translation_malay', 'Malay', false],
+  ['translation_nepali', 'Nepali', false],
+  ['translation_marathi', 'Marathi', false],
+  ['translation_telugu', 'Telugu', false],
 ] as const
 
 export const TAFSEER_COLUMNS = [
