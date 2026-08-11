@@ -12,8 +12,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const rows = await query(db, `
     SELECT id, surat_id, para_id, ayat_number,
            arabic, arabic_tajweed,
-           translation_urdu, translation_english,
-           translation_roman_urdu, translation_mufti_taqi
+           translation_urdu, translation_english, translation_roman_urdu, translation_mufti_taqi,
+           hindi_nazar
     FROM tbl_QuranComplete WHERE surat_id = ? ORDER BY ayat_number
   `, [surahId])
 
@@ -40,7 +40,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       id: r.id, surah: r.surat_id, para: r.para_id, ayah: r.ayat_number,
       arabic: getText(r.arabic), arabic_tajweed: getText(r.arabic_tajweed),
       urdu: cleanUrdu(urduText, romanText),
-      english: getText(r.translation_english), roman_urdu: romanText
+      english: getText(r.translation_english), roman_urdu: romanText,
+      hindi: getText(r.hindi_nazar)
     }
     if (needsTarjma) {
       const tv = tarjmaMap.get(r.id as number)

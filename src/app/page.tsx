@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback, createContext, useContext } from 'react'
 import { arabicSnippet } from '@/lib/arabic'
@@ -177,7 +177,7 @@ export default function Home() {
                 localStorage.setItem('islam360_urdu_size', e.target.value)
                 const el = document.getElementById('urduSizeLabel')
                 if (el) el.textContent = e.target.value
-                document.querySelectorAll('.translation.urdu, .text.urdu, .dua-urdu').forEach(el => (el as HTMLElement).style.fontSize = e.target.value + 'px')
+                document.querySelectorAll('.translation.urdu, .translation.hindi, .text.urdu, .dua-urdu').forEach(el => (el as HTMLElement).style.fontSize = e.target.value + 'px')
               }} />
               <span className="text-white/60 min-w-[16px] text-right text-[10px]" id="urduSizeLabel">20</span>
             </label>
@@ -210,7 +210,7 @@ export default function Home() {
                 localStorage.setItem('islam360_urdu_size', e.target.value)
                 const el = document.getElementById('urduSizeLabel')
                 if (el) el.textContent = e.target.value
-                document.querySelectorAll('.translation.urdu, .text.urdu, .dua-urdu').forEach(el => (el as HTMLElement).style.fontSize = e.target.value + 'px')
+                document.querySelectorAll('.translation.urdu, .translation.hindi, .text.urdu, .dua-urdu').forEach(el => (el as HTMLElement).style.fontSize = e.target.value + 'px')
               }} />
               <span className="text-white/60 min-w-[16px] text-right text-[10px] shrink-0">20</span>
             </label>
@@ -326,6 +326,8 @@ function QuranTab() {
   const [browseId, setBrowseId] = useState<number>(1)
   const [showArabic, setShowArabic] = useState(true)
   const [showTarjma, setShowTarjma] = useState(true)
+  const [showEnglish, setShowEnglish] = useState(true)
+  const [showHindi, setShowHindi] = useState(true)
   const [showTafseer, setShowTafseer] = useState(false)
   const { tarjma, tafseer, tarjmaList, tafseerList, showTab } = useSettings()
 
@@ -400,6 +402,12 @@ function QuranTab() {
           <label className="text-xs bg-[#e8f5e9] px-2.5 py-1 rounded cursor-pointer">
             <input type="checkbox" checked={showTarjma} onChange={e => setShowTarjma(e.target.checked)} /> {tarjmaLabel}
           </label>
+          <label className="text-xs bg-[#e8f5e9] px-2.5 py-1 rounded cursor-pointer">
+            <input type="checkbox" checked={showEnglish} onChange={e => setShowEnglish(e.target.checked)} /> English
+          </label>
+          <label className="text-xs bg-[#e8f5e9] px-2.5 py-1 rounded cursor-pointer">
+            <input type="checkbox" checked={showHindi} onChange={e => setShowHindi(e.target.checked)} /> Hindi
+          </label>
           {tafseer && (
             <label className="text-xs bg-[#fff3e0] px-2.5 py-1 rounded cursor-pointer">
               <input type="checkbox" checked={showTafseer} onChange={e => setShowTafseer(e.target.checked)} /> {tafseerLabel}
@@ -407,11 +415,11 @@ function QuranTab() {
           )}
         </div>
         <div className="surah-header">
-          <h2>{(surahNames.find((s: any) => s.id === browseId) as any)?.arabic} — {(surahNames.find((s: any) => s.id === browseId) as any)?.english || `Surah ${browseId}`}</h2>
+          <h2>{(surahNames.find((s: any) => s.id === browseId) as any)?.arabic} â€” {(surahNames.find((s: any) => s.id === browseId) as any)?.english || `Surah ${browseId}`}</h2>
           <div className="text-xs opacity-90 flex items-center gap-2">
             <span>{verses.length} verses</span>
             <span className="text-base cursor-pointer" onClick={() => toggleBm(browseId)} title={surahBms.includes(browseId) ? 'Remove surah bookmark' : 'Bookmark this surah'}>
-              {surahBms.includes(browseId) ? '⭐' : '☆'}
+              {surahBms.includes(browseId) ? 'â­' : 'â˜†'}
             </span>
           </div>
         </div>
@@ -432,6 +440,8 @@ function QuranTab() {
               </div>
               {showArabic && <div className="arabic">{v.arabic}</div>}
               {showTarjma && <div className="translation urdu">{v.tarjma_text || v.urdu || v.english}</div>}
+              {showEnglish && v.english && <div className="translation english">{v.english}</div>}
+              {showHindi && v.hindi && <div className="translation hindi">{v.hindi}</div>}
               {showTafseer && v.tafseer_text && <div className="translation urdu" style={{ background: '#fffde7', padding: '6px 8px', borderRadius: 6, marginTop: 6, borderLeft: '3px solid #e8b840', whiteSpace: 'pre-wrap' }}>{v.tafseer_text}</div>}
             </div>
           ))}
@@ -447,7 +457,7 @@ function QuranTab() {
           <button key={v} onClick={() => setView(v)}
             className={`px-4 py-1.5 text-sm border-none rounded cursor-pointer capitalize
               ${view === v ? 'bg-[#f5f5f5] text-[#1a5c3a]' : 'bg-[#2a7a4e] text-[#ddd]'}`}
-          >{v === 'surah-bms' ? '⭐ Surah Bookmark' : v === 'ayat-bms' ? '🔖 Ayah Bookmark' : v === 'search' ? '🔍 Search' : v}</button>
+          >{v === 'surah-bms' ? 'â­ Surah Bookmark' : v === 'ayat-bms' ? 'ðŸ”– Ayah Bookmark' : v === 'search' ? 'ðŸ” Search' : v}</button>
         ))}
       </div>
       {view === 'surahs' && (
@@ -462,7 +472,7 @@ function QuranTab() {
                 </div>
               </div>
               <span className="text-lg sm:text-[22px] cursor-pointer px-2 sm:px-2.5 shrink-0" onClick={e => { e.stopPropagation(); toggleBm(s.id) }}>
-                {surahBms.includes(s.id) ? '⭐' : '☆'}
+                {surahBms.includes(s.id) ? 'â­' : 'â˜†'}
               </span>
             </div>
           ))}
@@ -484,7 +494,7 @@ function QuranTab() {
       {view === 'surah-bms' && (
         <div className="grid gap-1">
           <h3 className="text-[#1a5c3a] text-sm font-bold mb-1">Surah Bookmarks</h3>
-          {surahBms.length === 0 && <div className="loading">No saved surah bookmarks yet. ⭐ a surah to add it here.</div>}
+          {surahBms.length === 0 && <div className="loading">No saved surah bookmarks yet. â­ a surah to add it here.</div>}
           {surahBms.map(id => {
             const s = surahNames.find((n: any) => n.id === id)
             if (!s) return null
@@ -497,7 +507,7 @@ function QuranTab() {
                     <span className="text-xs sm:text-sm text-[#666] truncate">{s.english}</span>
                   </div>
                 </div>
-                <span className="text-lg sm:text-[22px] cursor-pointer px-2 sm:px-2.5 shrink-0" onClick={e => { e.stopPropagation(); toggleBm(s.id) }}>⭐</span>
+                <span className="text-lg sm:text-[22px] cursor-pointer px-2 sm:px-2.5 shrink-0" onClick={e => { e.stopPropagation(); toggleBm(s.id) }}>â­</span>
               </div>
             )
           })}
@@ -595,7 +605,7 @@ function QuranSearch() {
 
   const matchBadge = (r: any) => r.match_count && r.total_words > 1 && (
     <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${r.match_count >= r.total_words ? 'bg-[#c8e6c9] text-[#1a5c3a]' : r.phrase_match ? 'bg-[#ffe0b2] text-[#e65100]' : 'bg-[#eceff1] text-[#546e7a]'}`}>
-      {r.match_count}/{r.total_words} words{r.phrase_match ? ' · phrase' : ''}
+      {r.match_count}/{r.total_words} words{r.phrase_match ? ' Â· phrase' : ''}
     </span>
   )
 
@@ -607,7 +617,7 @@ function QuranSearch() {
         <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Surah:Ayah Number</h3>
         <input type="text" inputMode="numeric" placeholder="Type reference, e.g. 2:255" value={refQuery} onChange={e => setRefQuery(e.target.value)}
           className="w-full p-2 border border-[#ccc] rounded text-base" />
-        <p className="text-[10px] text-[#558b2f] mt-1">Real-time — use format Surah:Ayah, e.g. 2:255.</p>
+        <p className="text-[10px] text-[#558b2f] mt-1">Real-time â€” use format Surah:Ayah, e.g. 2:255.</p>
         {refSearching && <div className="loading">Loading ayah...</div>}
         {!refSearching && refQuery.trim() && refQuery.trim().includes(':') && (
           <div className="mt-2">
@@ -626,7 +636,7 @@ function QuranSearch() {
         <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Urdu Words</h3>
         <input type="text" placeholder="Type Urdu words to search in translations..." value={urduQuery} onChange={e => setUrduQuery(e.target.value)}
           className="w-full p-2 border border-[#ccc] rounded text-base" />
-        <p className="text-[10px] text-[#a1883a] mt-1">Real-time — multiple words match ANY word, best matches rank first.</p>
+        <p className="text-[10px] text-[#a1883a] mt-1">Real-time â€” multiple words match ANY word, best matches rank first.</p>
         {urduSearching && <div className="loading">Searching...</div>}
         {!urduSearching && urduQuery.trim() && (
           <div className="mt-2">
@@ -650,7 +660,7 @@ function QuranSearch() {
         <h3 className="text-[#1565c0] text-sm font-bold mb-2">Search by Arabic Words</h3>
         <input type="text" placeholder="Type Arabic words to search in Quran text..." value={arabicQuery} onChange={e => setArabicQuery(e.target.value)}
           className="w-full p-2 border border-[#ccc] rounded text-base" />
-        <p className="text-[10px] text-[#1565c0] mt-1">Real-time — multiple words match ANY word, best matches rank first.</p>
+        <p className="text-[10px] text-[#1565c0] mt-1">Real-time â€” multiple words match ANY word, best matches rank first.</p>
         {arabicSearching && <div className="loading">Searching...</div>}
         {!arabicSearching && arabicQuery.trim() && (
           <div className="mt-2">
@@ -715,9 +725,9 @@ function makeSnippet(text: string, words: string[], before = 120, after = 220) {
   const snippet = text.slice(start, end)
   return (
     <span>
-      {start > 0 ? <span className="text-[#999]">…</span> : null}
+      {start > 0 ? <span className="text-[#999]">â€¦</span> : null}
       {highlightText(snippet, words)}
-      {end < text.length ? <span className="text-[#999]">…</span> : null}
+      {end < text.length ? <span className="text-[#999]">â€¦</span> : null}
     </span>
   )
 }
@@ -833,7 +843,7 @@ function HadithTab() {
         <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Hadith Number</h3>
         <input type="text" inputMode="numeric" placeholder={`Type hadith number in ${bookName}...`} value={numQuery} onChange={e => setNumQuery(e.target.value)}
           className="w-full p-2 border border-[#ccc] rounded text-base" />
-        <p className="text-[10px] text-[#558b2f] mt-1">Real-time — partial number matches with exact match first.</p>
+        <p className="text-[10px] text-[#558b2f] mt-1">Real-time â€” partial number matches with exact match first.</p>
         {numSearching && <div className="loading">Searching numbers...</div>}
         {!numSearching && numQuery.trim() && (
           <div className="mt-2">
@@ -862,7 +872,7 @@ function HadithTab() {
         <h3 className="text-[#1a5c3a] text-sm font-bold mb-2">Search by Urdu Words</h3>
         <input type="text" placeholder={`Type Urdu words to search in ${bookName}...`} value={wordQuery} onChange={e => setWordQuery(e.target.value)}
           className="w-full p-2 border border-[#ccc] rounded text-base" />
-        <p className="text-[10px] text-[#a1883a] mt-1">Real-time — multiple words match ANY word, best matches (phrase / most words) rank first. Click a result to open full hadith.</p>
+        <p className="text-[10px] text-[#a1883a] mt-1">Real-time â€” multiple words match ANY word, best matches (phrase / most words) rank first. Click a result to open full hadith.</p>
         {wordSearching && <div className="loading">Searching...</div>}
         {!wordSearching && wordQuery.trim() && (
           <div className="mt-2">
@@ -876,7 +886,7 @@ function HadithTab() {
                         Hadith #{r.number}{r.international_number ? ` | International: ${r.international_number}` : ''}
                         {r.match_count && r.total_words > 1 && (
                           <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${r.match_count >= r.total_words ? 'bg-[#c8e6c9] text-[#1a5c3a]' : r.phrase_match ? 'bg-[#ffe0b2] text-[#e65100]' : 'bg-[#eceff1] text-[#546e7a]'}`}>
-                            {r.match_count}/{r.total_words} words{r.phrase_match ? ' · phrase' : ''}
+                            {r.match_count}/{r.total_words} words{r.phrase_match ? ' Â· phrase' : ''}
                           </span>
                         )}
                       </span>
@@ -945,7 +955,7 @@ function HadithDetailBody({ h, bookId, bookName }: { h: any; bookId: string; boo
   return (
     <div className="hadith-card">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <div style={{ fontSize: 14, color: '#999' }}>Hadith #{detail.number}{bookName ? ` — ${bookName}` : ''}</div>
+        <div style={{ fontSize: 14, color: '#999' }}>Hadith #{detail.number}{bookName ? ` â€” ${bookName}` : ''}</div>
         <BookmarkBtn item={bmItem(detail, bookId, bookName || detail.bookName || '')} showText />
       </div>
       <div style={{ fontFamily: "'NooreHuda','AlviNastaleeq','Traditional Arabic',serif", fontSize: 22, lineHeight: 2, textAlign: 'right', direction: 'rtl', color: '#1a3a1a', marginBottom: 10 }}>{detail.arabic}</div>
@@ -1117,7 +1127,7 @@ function TafseerTab() {
             {searching ? 'Searching...' : 'Search'}
           </button>
         </div>
-        <p className="text-[10px] text-[#a1883a] mt-1">Real-time search — type to search instantly. Multiple words match ANY word, best matches (phrase / most words) rank first. Click a result to deep dive into the full tafseer with highlights.</p>
+        <p className="text-[10px] text-[#a1883a] mt-1">Real-time search â€” type to search instantly. Multiple words match ANY word, best matches (phrase / most words) rank first. Click a result to deep dive into the full tafseer with highlights.</p>
         {!tfType && <p className="text-xs text-[#e65100] mt-1">Please select a tafseer type first</p>}
       </div>
 
@@ -1134,7 +1144,7 @@ function TafseerTab() {
                     Surah {r.surah}:{(r.surah === 1 || r.surah === 9) ? r.ayah + 1 : r.ayah} | {r.tafseer_label}
                     {r.match_count && r.total_words > 1 && (
                       <span className={`ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${r.match_count >= r.total_words ? 'bg-[#c8e6c9] text-[#1a5c3a]' : r.phrase_match ? 'bg-[#ffe0b2] text-[#e65100]' : 'bg-[#eceff1] text-[#546e7a]'}`}>
-                        {r.match_count}/{r.total_words} words{r.phrase_match ? ' · phrase' : ''}
+                        {r.match_count}/{r.total_words} words{r.phrase_match ? ' Â· phrase' : ''}
                       </span>
                     )}
                   </div>
@@ -1403,10 +1413,10 @@ function MoreTab() {
   const [content, setContent] = useState<React.ReactNode>(null)
 
   const features = [
-    { id: 'randomHadith', label: 'Random Hadith', icon: '🎲', desc: 'Display a random hadith from the database' },
-    { id: 'subjects', label: 'English Subjects', icon: '📚', desc: 'Quran subjects in English' },
-    { id: 'subjectsUrdu', label: 'Urdu Subjects', icon: '📖', desc: 'Quran subjects in Urdu' },
-    { id: 'childsites', label: 'Other Websites', icon: '📂', desc: 'Websites hosted within this portal' },
+    { id: 'randomHadith', label: 'Random Hadith', icon: 'ðŸŽ²', desc: 'Display a random hadith from the database' },
+    { id: 'subjects', label: 'English Subjects', icon: 'ðŸ“š', desc: 'Quran subjects in English' },
+    { id: 'subjectsUrdu', label: 'Urdu Subjects', icon: 'ðŸ“–', desc: 'Quran subjects in Urdu' },
+    { id: 'childsites', label: 'Other Websites', icon: 'ðŸ“‚', desc: 'Websites hosted within this portal' },
   ]
 
   return (
@@ -1453,7 +1463,7 @@ function OtherLinksView({ type }: { type?: 'child' | 'external' }) {
     <div>
       {showChild && childSites.length > 0 && (
         <>
-          <h3 className="text-[#1a5c3a] mb-2.5">📂 Other Websites</h3>
+          <h3 className="text-[#1a5c3a] mb-2.5">ðŸ“‚ Other Websites</h3>
           <div style={{ display: 'grid', gap: 6, marginBottom: 16 }}>
             {childSites.map((site, i) => (
               <div key={i} className="list-card" onClick={() => window.open(site.url, '_blank', 'noopener')}>
@@ -1465,7 +1475,7 @@ function OtherLinksView({ type }: { type?: 'child' | 'external' }) {
       )}
       {showExternal && links.length > 0 && (
         <>
-          <h3 className="text-[#1a5c3a] mb-2.5">🔗 External Links</h3>
+          <h3 className="text-[#1a5c3a] mb-2.5">ðŸ”— External Links</h3>
           <div style={{ display: 'grid', gap: 6 }}>
             {links.map((link, i) => (
               <div key={i} className="list-card" onClick={() => openModal(link.name, <WebLinkModalBody name={link.name} url={link.url} />)}>
@@ -1718,13 +1728,13 @@ function AboutTab() {
     <div className="max-w-3xl mx-auto animate-fadeIn">
       {/* Dedication */}
       <div className="text-center mb-6 px-4 py-3 bg-gradient-to-r from-[#fff5f5] via-white to-[#fff5f5] rounded-xl border border-[#ffcdd2] relative overflow-hidden">
-        <span className="absolute text-lg animate-floatHeart" style={{ left: '10%', animationDelay: '0s' }}>❤️</span>
-        <span className="absolute text-lg animate-floatHeart" style={{ left: '30%', animationDelay: '1s' }}>❤️</span>
-        <span className="absolute text-lg animate-floatHeart" style={{ left: '50%', animationDelay: '0.5s' }}>❤️</span>
-        <span className="absolute text-lg animate-floatHeart" style={{ left: '70%', animationDelay: '1.5s' }}>❤️</span>
-        <span className="absolute text-lg animate-floatHeart" style={{ left: '90%', animationDelay: '2s' }}>❤️</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '10%', animationDelay: '0s' }}>â¤ï¸</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '30%', animationDelay: '1s' }}>â¤ï¸</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '50%', animationDelay: '0.5s' }}>â¤ï¸</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '70%', animationDelay: '1.5s' }}>â¤ï¸</span>
+        <span className="absolute text-lg animate-floatHeart" style={{ left: '90%', animationDelay: '2s' }}>â¤ï¸</span>
         <p className="text-sm sm:text-base text-[#c62828] font-medium leading-relaxed relative z-10">
-          Dedicated to Prophet Muhammad (PBUH) — mercy to the universe and guide of humanity
+          Dedicated to Prophet Muhammad (PBUH) â€” mercy to the universe and guide of humanity
         </p>
       </div>
 
@@ -1739,14 +1749,14 @@ function AboutTab() {
       {/* Contact + Location */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-xl p-4 border border-[#e0e0e0] flex items-center gap-3 animate-slideRight" style={{animationDelay: '0.1s', animationFillMode: 'both'}}>
-          <span className="text-2xl">📍</span>
+          <span className="text-2xl">ðŸ“</span>
           <div>
             <div className="text-xs text-[#999] uppercase tracking-wide">Location</div>
             <div className="font-semibold">Okara, Punjab, Pakistan</div>
           </div>
         </div>
         <div className="bg-white rounded-xl p-4 border border-[#e0e0e0] flex items-center gap-3 animate-slideRight" style={{animationDelay: '0.2s', animationFillMode: 'both'}}>
-          <span className="text-2xl">📱</span>
+          <span className="text-2xl">ðŸ“±</span>
           <div>
             <div className="text-xs text-[#999] uppercase tracking-wide">WhatsApp</div>
             <a href="https://wa.me/923216957139" className="font-semibold text-[#1a5c3a] underline hover:text-[#2a7a4e] transition-colors" target="_blank" rel="noopener noreferrer">0321-6957139</a>
@@ -1756,7 +1766,7 @@ function AboutTab() {
 
       {/* What I Build */}
       <div className="bg-white rounded-xl p-6 border border-[#e0e0e0] mb-6 animate-fadeIn" style={{animationDelay: '0.3s', animationFillMode: 'both'}}>
-        <h3 className="text-lg font-bold text-[#1a5c3a] mb-3">🚀 What I Build</h3>
+        <h3 className="text-lg font-bold text-[#1a5c3a] mb-3">ðŸš€ What I Build</h3>
         <div className="flex flex-wrap gap-2">
           {['Modern Web Applications', 'Android Applications', 'Desktop Software', 'End-to-End Full Stack Solutions', 'Custom Business Software'].map(s => (
             <span key={s} className="bg-gradient-to-r from-[#e8f5e9] to-[#f1f8e9] text-[#1a5c3a] px-3 py-1.5 rounded-full text-sm font-medium border border-[#a5d6a7]">{s}</span>
@@ -1766,7 +1776,7 @@ function AboutTab() {
 
       {/* Tech Stack */}
       <div className="bg-white rounded-xl p-6 border border-[#e0e0e0] mb-6 animate-fadeIn" style={{animationDelay: '0.4s', animationFillMode: 'both'}}>
-        <h3 className="text-lg font-bold text-[#1a5c3a] mb-4">🛠️ Tech Stack</h3>
+        <h3 className="text-lg font-bold text-[#1a5c3a] mb-4">ðŸ› ï¸ Tech Stack</h3>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div>
             <div className="text-xs text-[#999] uppercase tracking-wide font-bold mb-2">Frontend</div>
@@ -1805,7 +1815,7 @@ function AboutTab() {
 
       {/* Services */}
       <div className="bg-gradient-to-r from-[#1a5c3a] to-[#2a7a4e] rounded-xl p-6 text-white mb-6 animate-fadeIn" style={{animationDelay: '0.5s', animationFillMode: 'both'}}>
-        <h3 className="text-lg font-bold mb-3">💡 Services</h3>
+        <h3 className="text-lg font-bold mb-3">ðŸ’¡ Services</h3>
         <p className="text-sm leading-relaxed text-[#e0f2e0]">
           I design and develop fast, scalable, and user-friendly software tailored to your business needs.
           From responsive websites and powerful web applications to Android apps and desktop solutions,
@@ -1815,12 +1825,12 @@ function AboutTab() {
 
       {/* Freelance CTA */}
       <div className="bg-white rounded-xl p-6 border border-[#e0e0e0] text-center animate-fadeIn" style={{animationDelay: '0.6s', animationFillMode: 'both'}}>
-        <h3 className="text-lg font-bold text-[#1a5c3a] mb-2">🤝 Available for Freelance Work</h3>
+        <h3 className="text-lg font-bold text-[#1a5c3a] mb-2">ðŸ¤ Available for Freelance Work</h3>
         <p className="text-sm text-[#666] mb-3">Open to freelance projects, long-term collaborations, and custom software development.</p>
         <p className="text-sm text-[#1a5c3a] font-semibold mb-2">Let&apos;s turn your ideas into powerful digital solutions.</p>
         <a href="https://wa.me/923216957139" target="_blank" rel="noopener noreferrer"
           className="inline-block px-6 py-2.5 bg-[#1a5c3a] text-white rounded-lg font-semibold hover:bg-[#2a7a4e] transition-colors">
-          📲 Contact via WhatsApp
+          ðŸ“² Contact via WhatsApp
         </a>
       </div>
 
@@ -1869,9 +1879,9 @@ function BookCard({ book }: { book: any }) {
       {book.pdf || book.url ? (
         <button onClick={() => triggerDownload(book.pdf || book.url)}
           className="w-full px-2 py-2 bg-[#1a5c3a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer">
-          📥 Download PDF
+          ðŸ“¥ Download PDF
         </button>
-      ) : <div className="w-full px-2 py-2 bg-[#f0f0f0] text-[#999] text-xs font-bold text-center rounded">PDF — N/A</div>}
+      ) : <div className="w-full px-2 py-2 bg-[#f0f0f0] text-[#999] text-xs font-bold text-center rounded">PDF â€” N/A</div>}
       {hasAudio ? (
         <>
           <button onClick={() => {
@@ -1879,17 +1889,17 @@ function BookCard({ book }: { book: any }) {
             else { setPlaying(true); playBookAudio(book.audioPlay, setPlaying) }
           }}
             className="w-full px-2 py-2 bg-[#2a7a4e] text-white text-xs sm:text-sm font-bold rounded border-none cursor-pointer">
-            {playing ? '⏸ Pause' : '▶ Listen'}
+            {playing ? 'â¸ Pause' : 'â–¶ Listen'}
           </button>
           {book.audioDownload ? (
             <button onClick={() => triggerDownload(book.audioDownload)}
               className="w-full px-2 py-2 bg-[#1a3a1a] text-white text-xs sm:text-sm font-bold text-center rounded border-none cursor-pointer">
-              ⬇ Download Audio
+              â¬‡ Download Audio
             </button>
           ) : null}
         </>
       ) : (
-        <div className="w-full px-2 py-2 bg-[#f0f0f0] text-[#999] text-xs font-bold text-center rounded">Audio — N/A</div>
+        <div className="w-full px-2 py-2 bg-[#f0f0f0] text-[#999] text-xs font-bold text-center rounded">Audio â€” N/A</div>
       )}
     </div>
   )
@@ -1908,7 +1918,7 @@ function BookCard({ book }: { book: any }) {
             <span className="absolute top-1.5 right-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/90 text-[#1a5c3a] shadow">
               {book.source === 'Alahazrat' ? 'ALAHAZRAT' : book.source === 'Custom' ? 'CUSTOM' : 'DAWATEISLAMI'}
             </span>
-            <span className="absolute bottom-1.5 left-2 text-[20px] animate-bounceSlow">👆</span>
+            <span className="absolute bottom-1.5 left-2 text-[20px] animate-bounceSlow">ðŸ‘†</span>
           </div>
           <div className="px-2.5 pt-1.5 pb-2">
             <h3 className="font-urdu text-sm sm:text-[15px] font-semibold text-[#222] leading-snug line-clamp-2" style={{ direction: 'rtl' }}>{book.title}</h3>
@@ -1921,7 +1931,7 @@ function BookCard({ book }: { book: any }) {
             <p className="text-[11px] text-[#1a5c3a] font-bold mb-1.5 uppercase tracking-wide">{book.source}</p>
             <h4 className="font-urdu text-sm sm:text-base font-bold text-[#222] leading-snug mb-1.5" style={{ direction: 'rtl' }}>{book.title}</h4>
             <div className="text-[11px] text-[#555] space-y-1 mb-2">
-              <p style={{ direction: 'rtl' }}><span className="font-bold text-[#1a5c3a]">مصنف: </span>{book.author || 'N/A'}</p>
+              <p style={{ direction: 'rtl' }}><span className="font-bold text-[#1a5c3a]">Ù…ØµÙ†Ù: </span>{book.author || 'N/A'}</p>
               <p><span className="font-bold text-[#1a5c3a]">Author: </span>{book.author || 'N/A'}</p>
               <p><span className="font-bold text-[#1a5c3a]">Pages: </span>{book.pages || 'N/A'}</p>
             </div>
@@ -1929,7 +1939,7 @@ function BookCard({ book }: { book: any }) {
           </div>
           <button onClick={e => { e.stopPropagation(); setFlipped(false) }}
             className="mt-2 w-full text-[11px] py-1.5 bg-[#e8b840] text-[#1a3a1a] font-bold rounded border-none cursor-pointer">
-            ↩ Flip Back
+            â†© Flip Back
           </button>
         </div>
       </div>
@@ -1976,7 +1986,7 @@ function BooksTab() {
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="🔎  تلاش کریں — Search books by title or author..."
+          placeholder="ðŸ”Ž  ØªÙ„Ø§Ø´ Ú©Ø±ÛŒÚº â€” Search books by title or author..."
           className="w-full px-4 py-2.5 rounded-lg border-2 border-[#2a7a4e]/30 focus:border-[#1a5c3a] outline-none text-sm bg-white"
           style={{ direction: 'rtl' }}
         />

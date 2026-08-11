@@ -76,6 +76,7 @@ export const TRANSLATION_COLUMNS = [
   ['k_iman', 'Kanzul Eman', true],
   ['translation_mufti_taqi', 'Mufti Taqi Usmani', true],
   ['translation_english', 'English', false],
+  ['hindi_nazar', 'Hindi', false],
   ['translation_roman_urdu', 'Roman Urdu', false],
 ] as const
 

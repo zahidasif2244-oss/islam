@@ -11,7 +11,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const db = createQuranClient()
   const rows = await query(db, `
     SELECT id, surat_id, para_id, ayat_number, arabic, arabic_tajweed,
-           translation_urdu, translation_english, translation_roman_urdu, translation_mufti_taqi
+           translation_urdu, translation_english, translation_roman_urdu, translation_mufti_taqi,
+           hindi_nazar
     FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number
   `, [paraId])
 
@@ -21,7 +22,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       id: r.id, surah: r.surat_id, para: r.para_id, ayah: r.ayat_number,
       arabic: getText(r.arabic), arabic_tajweed: getText(r.arabic_tajweed),
       urdu: cleanUrdu(r.translation_urdu, r.translation_roman_urdu),
-      english: getText(r.translation_english), roman_urdu: getText(r.translation_roman_urdu)
+      english: getText(r.translation_english), roman_urdu: getText(r.translation_roman_urdu),
+      hindi: getText(r.hindi_nazar)
     }
     if (tarjma && !['translation_urdu', 'translation_english', 'translation_roman_urdu'].includes(tarjma)) {
       const [tv] = await query(db, `SELECT "${tarjma}" FROM tbl_QuranComplete WHERE id = ?`, [r.id])
