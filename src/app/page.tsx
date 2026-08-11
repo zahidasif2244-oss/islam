@@ -326,8 +326,8 @@ function QuranTab() {
   const [browseId, setBrowseId] = useState<number>(1)
   const [showArabic, setShowArabic] = useState(true)
   const [showTarjma, setShowTarjma] = useState(true)
-  const [showEnglish, setShowEnglish] = useState(true)
-  const [showHindi, setShowHindi] = useState(true)
+  const [showEnglish, setShowEnglish] = useState(false)
+  const [showHindi, setShowHindi] = useState(false)
   const [showTafseer, setShowTafseer] = useState(false)
   const { tarjma, tafseer, tarjmaList, tafseerList, showTab } = useSettings()
 
