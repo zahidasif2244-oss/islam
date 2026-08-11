@@ -324,6 +324,7 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
   const [parahNames, setParahNames] = useState<any[]>(initialParahNames)
   const [verses, setVerses] = useState<any[]>([])
   const [browseId, setBrowseId] = useState<number>(1)
+  const [browseKind, setBrowseKind] = useState<'surah' | 'parah'>('surah')
   const [showArabic, setShowArabic] = useState(true)
   const [showTarjma, setShowTarjma] = useState(true)
   const [showEnglish, setShowEnglish] = useState(false)
@@ -367,6 +368,7 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
   function loadVerses(id: number, scrollAyah?: number) {
     setView('browse')
     setBrowseId(id)
+    setBrowseKind('surah')
     const url = `/quran/surah/${id}?tarjma=${encodeURIComponent(tarjma)}${tafseer ? `&tafseer=${encodeURIComponent(tafseer)}` : ''}`
     api(url).then(data => {
       setVerses(data)
@@ -379,12 +381,22 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
   }
 
   function loadParah(id: number) {
+    setView('browse')
+    setBrowseId(id)
+    setBrowseKind('parah')
     const url = `/quran/parah/${id}?tarjma=${encodeURIComponent(tarjma)}${tafseer ? `&tafseer=${encodeURIComponent(tafseer)}` : ''}`
     api(url).then(data => { setVerses(data); setView('browse') })
   }
 
   const tarjmaLabel = tarjmaList.find((t: any) => t.key === tarjma)?.label || 'Tarjma'
   const tafseerLabel = tafseerList.find((t: any) => t.key === tafseer)?.label || 'Tafseer'
+
+  useEffect(() => {
+    if (view !== 'browse') return
+    if (browseKind === 'parah') loadParah(browseId)
+    else loadVerses(browseId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tarjma, tafseer])
 
   if (view === 'browse') {
     return (
