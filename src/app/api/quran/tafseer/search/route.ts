@@ -1,6 +1,7 @@
 import { createQuranClient, query, getText, decodeUrdu } from '@/lib/db'
 import { json, error } from '@/lib/api-utils'
 import { TAFSEER_COLUMNS, COL_IS_URDU } from '@/lib/constants'
+import tafseerTypes from '@/data/static/tafseer_types.json'
 
 function encodeUrdu(text: string): string {
   let result = ''
@@ -17,13 +18,10 @@ function encodeUrdu(text: string): string {
 
 let colCounts: Record<string, number> | null = null
 
-async function getColCounts(db: any): Promise<Record<string, number>> {
+function getColCounts(): Record<string, number> {
   if (colCounts) return colCounts
   colCounts = {}
-  for (const [col] of TAFSEER_COLUMNS) {
-    const [r] = await query(db, `SELECT count(*) c FROM tbl_QuranComplete WHERE "${col}" IS NOT NULL AND "${col}" != ''`)
-    colCounts[col] = Number(r.c) || 0
-  }
+  for (const t of tafseerTypes) colCounts[t.key] = Number(t.count) || 0
   return colCounts
 }
 
@@ -42,8 +40,7 @@ export async function GET(req: Request) {
     : TAFSEER_COLUMNS
 
   if (!type) {
-    const counts = await getColCounts(db)
-    colInfo = colInfo.filter(([c]) => counts[c] > 0)
+    colInfo = colInfo.filter(([c]) => (getColCounts()[c] || 0) > 0)
   }
 
   const typedWords = q.trim().split(/\s+/).filter(Boolean).slice(0, 8)

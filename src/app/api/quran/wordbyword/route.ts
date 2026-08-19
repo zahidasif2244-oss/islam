@@ -27,5 +27,5 @@ export async function GET(req: Request) {
   const arabicRows = await query(db, 'SELECT arabic_word FROM tbl_arabic_words WHERE arabic_surat_id = ? AND arabic_ayat_number = ? ORDER BY word_id', [surah, ayah])
   const arabic = arabicRows.map(r => getText(r.arabic_word).trim())
 
-  return json({ arabic, urdu, english: eng, hindi })
+  return json({ arabic, urdu, english: eng, hindi }, 200, 86400)
 }

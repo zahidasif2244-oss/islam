@@ -32,5 +32,5 @@ export async function GET(req: Request) {
     english: getText(r.translation_english), roman_urdu: getText(r.translation_roman_urdu),
     mufti_taqi: getText(r.translation_mufti_taqi)
   }))
-  return json(verses)
+  return json(verses, 200, 86400)
 }

@@ -33,7 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return json({
       hadiths, total: Number(total), page, pages: Math.ceil(Number(total) / perPage),
       name: BOOK_NAMES[id] || id
-    }, 200, 300)
+    }, 200, 86400)
   } catch {
     return error('Book not found')
   }

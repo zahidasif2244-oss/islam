@@ -16,5 +16,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ surah: s
     else if (isUrdu) result[col] = decodeUrdu(r[col])
     else result[col] = getText(r[col])
   }
-  return json(result)
+  return json(result, 200, 86400)
 }

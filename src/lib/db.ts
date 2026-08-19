@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client'
 import type { Client } from '@libsql/client'
+import { BOOK_NAMES } from './constants'
 
 function getEnv(key: string): string {
   const val = process.env[key]
@@ -7,9 +8,46 @@ function getEnv(key: string): string {
   return val
 }
 
+const QURAN_INDEX_SQL = [
+  'CREATE INDEX IF NOT EXISTS idx_quran_surat_ayah ON tbl_QuranComplete(surat_id, ayat_number)',
+  'CREATE INDEX IF NOT EXISTS idx_quran_para ON tbl_QuranComplete(para_id)',
+  'CREATE INDEX IF NOT EXISTS idx_arabic_words_surat_ayah ON tbl_arabic_words(arabic_surat_id, arabic_ayat_number)',
+]
+
+const HADITH_INDEX_SQL = [
+  'CREATE INDEX IF NOT EXISTS idx_hadees_number ON hadees(hadees_number)',
+  'CREATE INDEX IF NOT EXISTS idx_hadees_lang_rec ON hadees_languages(hadees_record_id, language_id)',
+]
+
+let indexPromise: Promise<void> | null = null
+
+export function ensureIndexes(): Promise<void> {
+  if (!indexPromise) {
+    indexPromise = (async () => {
+      const runIndexes = async (client: Client, sqls: string[]) => {
+        for (const sql of sqls) {
+          try {
+            await client.execute(sql)
+          } catch {}
+        }
+      }
+      try {
+        await runIndexes(createQuranClient(), QURAN_INDEX_SQL)
+      } catch {}
+      for (const key of Object.keys(BOOK_NAMES)) {
+        try {
+          await runIndexes(createHadithClient(key), HADITH_INDEX_SQL)
+        } catch {}
+      }
+    })().catch(() => {})
+  }
+  return indexPromise
+}
+
 const quranClientCache = new Map<string, Client>()
 
 export function createQuranClient(): Client {
+  ensureIndexes()
   const key = 'quran'
   let c = quranClientCache.get(key)
   if (!c) {
@@ -22,6 +60,7 @@ export function createQuranClient(): Client {
 const hadithClientCache = new Map<string, Client>()
 
 export function createHadithClient(bookId: string): Client {
+  ensureIndexes()
   const key = `TURSO_HADITH_${bookId.toUpperCase()}_DB_URL`
   let c = hadithClientCache.get(key)
   if (!c) {

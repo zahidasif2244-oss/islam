@@ -19,5 +19,5 @@ export async function GET(req: Request) {
     root: getText(r.root), word_id: r.word_id,
     without_aeraab: getText(r.arabic_without_aeraab_arabic)
   }))
-  return json(words)
+  return json(words, 200, 86400)
 }

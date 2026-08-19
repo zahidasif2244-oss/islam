@@ -1,3 +1,22 @@
-error while push via github desktop.
+Good news: I found the actual culprit — and it's not solved by splitting files. Here's what Turso's quota really counts, and the fix that cuts your usage ~100x.
+How the quota actually works (verified from Turso docs)
+- Your free tier is 500M rows read / 10M rows written per month (not 50M — and splitting DBs doesn't help anyway; quota is account-wide, all your 18 DBs share the same pool).
+- A "row read" = every row the query scans, not what it returns. An unindexed query on tbl_QuranComplete (6,236 rows) counts 6,236 reads per request — even if it returns 1 ayah.
+Your biggest quota burners right now
+Every visitor who opens the Quran tab triggers:
+Endpoint
+/api/quran/surahs
+/api/quran/translations
+/api/quran/tafseer_types
+/api/quran/parah_names
+Then any surah open (WHERE surat_id=? — unindexed)
+≈ 300,000 reads per visitor → you exhaust 500M in ~1,700 visitors. That's your real problem, not file size.
+The plan (no file-splitting needed — 3 moves)
+1. Bake the static lists to JSON (zero reads) — exactly your books.json pattern, with a scripts/bake-static-data.mjs run at build: surahs, parah_names, tafseer_types+counts, translations+counts, topics, amazing_topics, mutradif, subjects, hadith book counts. Rewrite those 8 routes to serve the JSON. Removes ~300k reads per visitor → 0.
+2. Add SQL indexes to Turso (one-time): tbl_QuranComplete(surat_id, ayat_number), (para_id), hadith hadees(hadees_number), tbl_arabic_words(arabic_surat_id, arabic_ayat_number). Turns each ayah/surah read from 6,236 scans → ~1–300. One-time CREATE INDEX script run with your token (also add idempotent creation to ensureTables-style code).
+3. HTTP-cache the immutable routes — surah/ayah/tafseer content never changes; add Cache-Control so browsers don't re-query.
+Optional bonus: bake a compact search index (id/surah/ayah/arabic/urdu only, ~5 MB) and run Urdu/Arabic search client-side — kills the LIKE-scan reads from search too (6k per keystroke currently).
+Net result: same data, same features, reads drop from ~300k per visitor to near zero, admin writes unaffected (they're tiny).
+Want me to implement steps 1–3?
 
-This file uses 'LF' line endings, but Git is configured to convert them to 'CRLF' the next time the file is checked out.
+yes implemet all steps 1-3

@@ -35,5 +35,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     }
     verses.push(v)
   }
-  return json(verses)
+  return json(verses, 200, 86400)
 }
