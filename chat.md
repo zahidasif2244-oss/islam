@@ -380,3 +380,37 @@ User reported on mobile: the "Quran Web" title was not shown responsively, and b
 - Word-by-word tab: Hindi column added (word_by_word_hindi data, Devanagari), API /api/quran/wordbyword now returns hindi, table shows Arabic/Urdu/English/Hindi.
 
 **Verify**: build passes; baked HTML contains all new language names; Turso COUNT(*)=6236 for all 14 columns.
+
+### 28. Turso Quota Crisis — Reads Blocked + 3-Part Fix (bake static lists, indexes, HTTP cache)
+**Symptom (critical):** ALL Turso DBs (quran + 17 hadith) answered `BLOCKED: SQL read operations are forbidden (reads are blocked, do you need to upgrade your plan?)` — the free tier's 500M rows-read / 10M rows-written monthly quota was exhausted (500M ≈ only ~1,700 visitors at ~300k reads/visitor). Writes still worked.
+
+**Root cause analysis:** the free-tier quota is account-wide (18 DBs share one pool) and counts every row a query *scans*, not what it returns. Every Quran-tab visitor triggered 4 full-list queries + any surah open did unindexed `WHERE surat_id=?` on `tbl_QuranComplete` (6,236 rows scanned per request ≈ 300k reads/visitor).
+
+**Step 1 — Bake static lists to JSON (zero reads):**
+- `scripts/bake-static-data.mjs` (NEW, wired into `npm run build`) bakes 11 static lists to `src/data/static/*.json` (~5 MB total, committed): `surahs`, `parah_names`, `tafseer_types`+counts, `translations`+counts, `topics`, `amazing_topics`, `mutradif` (3.86 MB), `subjects_english`, `subjects_urdu`, `fahmul_quran`, `hadith_books` (17 book counts).
+- **Source: local DB copies** (`F:\0\Download\Github\assets\quranDb.db` + `assets\databases\*.db`, schema-verified identical to Turso) read via sql.js — Turso reads were blocked at bake time, so the build no longer needs Turso at all. Fallback order: local file → Turso env vars → keep existing committed JSON (graceful, mirrors `books.json` pattern).
+- Local `quranDb.db` already contains all admin-imported tafseers (khazain/noor/sirat/jalalain = 6,349 ayahs, zia 4,707, irfan 5,733, hasanaat 4,723, tibyan 2,927); 9 tafseer columns are empty in the source (never imported) and correctly filtered out.
+- **11 routes rewritten to serve the JSON statically** (0 DB calls): `/api/quran/{surahs,parah_names,tafseer_types,translations,topics,amazing_topics,mutradif,subjects,subjects/urdu,fahmul_quran}` + `/api/hadith/books`.
+- `/api/quran/tafseer/search` now reuses baked tafseer counts for its empty-column skip (was 20 `COUNT(*)` full scans per search ≈ 124k reads).
+
+**Step 2 — SQL indexes (applied to all 18 live Turso DBs):**
+- `scripts/create-indexes.mjs` (NEW, `npm run db:indexes`) ran successfully against every DB while reads were still blocked (writes allowed): `idx_quran_surat_ayah ON tbl_QuranComplete(surat_id, ayat_number)`, `idx_quran_para (para_id)`, `idx_arabic_words_surat_ayah (arabic_surat_id, arabic_ayat_number)`, `idx_hadees_number ON hadees(hadees_number)` + `idx_hadees_lang_rec (hadees_record_id, language_id)` (for the language JOINs).
+- Turns each ayah/surah lookup from a 6,236-row scan into ~1–300 reads.
+- Idempotent safety net in code: `ensureIndexes()` in `src/lib/db.ts` (module-level promise, once per process, errors swallowed), fired from `createQuranClient()`/`createHadithClient()` so fresh DBs self-index.
+
+**Step 3 — HTTP-cache immutable content (browsers stop re-querying):**
+- surah/ayah/tafseer/word-content never changes → cache bumped to `max-age=86400` (+ `s-maxage`, `stale-while-revalidate`): `/api/quran/surah/[id]`, `/api/quran/ayahs`, `/api/quran/parah/[id]`, `/api/quran/tafseer/[surah]/[ayah]`, `/api/quran/arabic_words`, `/api/quran/wordbyword`, `/api/hadith/book/[id]` (300→86400 or 0→86400).
+
+**Verification:** `npm run build` ✓ (bake + typecheck + 32 static pages), `npx tsc --noEmit` clean ✓, prod-server smoke test — all 11 baked routes 200 with `cache-control: public, s-maxage=86400, max-age=86400` ✓ (incl. mutradif 4 MB). DB-backed routes still 500 until reads unblock, but read usage per visitor drops from ~300k to near zero (≈ no future quota exhaustion). Bonus (not done): client-side search index would also kill the ~6k-read LIKE scans per keystroke.
+
+## Key Files Changed (Turso Quota Fix)
+| File | Change |
+|------|--------|
+| `scripts/bake-static-data.mjs` | NEW — bakes 11 static lists from local sql.js DBs (fallback Turso → keep committed JSON) into `src/data/static/*.json` |
+| `src/data/static/*.json` | NEW (committed) — surahs, parah_names, tafseer_types, translations, topics, amazing_topics, mutradif, subjects_english, subjects_urdu, fahmul_quran, hadith_books (~5 MB) |
+| `scripts/create-indexes.mjs` | NEW — one-time idempotent index creation for quran + all 17 hadith Turso DBs (`npm run db:indexes`) |
+| `src/lib/db.ts` | `ensureIndexes()` (once-per-process, fire-and-forget) wired into both client factories |
+| 11 static route files | Rewritten to serve baked JSON with 86400 cache — zero DB reads |
+| `/api/quran/tafseer/search/route.ts` | Empty-column skip now uses baked tafseer counts (was 20 full-table COUNT scans per search) |
+| 7 immutable routes (`surah/[id]`, `ayahs`, `parah/[id]`, `tafseer/[surah]/[ayah]`, `arabic_words`, `wordbyword`, `hadith/book/[id]`) | Cache 0/300s → 86400 |
+| `package.json` | `build` = books-sync + `bake-static-data.mjs` + `next build`; new `static:sync`, `db:indexes` scripts |
