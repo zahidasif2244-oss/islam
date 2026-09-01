@@ -8,28 +8,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const tarjma = url.searchParams.get('tarjma') || 'translation_urdu'
   const tafseer = url.searchParams.get('tafseer') || ''
 
-  const db = createQuranClient()
-  const rows = await query(db, `
-    SELECT id, surat_id, para_id, ayat_number, arabic, arabic_tajweed,
-           translation_urdu, translation_english, translation_roman_urdu, translation_mufti_taqi,
-           hindi_nazar
-    FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number
-  `, [paraId])
-
   const needsTarjma = tarjma && !['translation_urdu', 'translation_english', 'translation_roman_urdu'].includes(tarjma)
   const needsTafseer = !!tafseer
 
-  let tarjmaMap: Map<number, any> = new Map()
-  let tafseerMap: Map<number, any> = new Map()
+  const selectCols = [
+    'id', 'surat_id', 'para_id', 'ayat_number', 'arabic', 'arabic_tajweed',
+    'translation_urdu', 'translation_english', 'translation_roman_urdu', 'translation_mufti_taqi',
+    'hindi_nazar',
+  ]
+  if (needsTarjma) selectCols.push(`"${tarjma}"`)
+  if (needsTafseer) selectCols.push(`"${tafseer}"`)
 
-  if (needsTarjma) {
-    const tRows = await query(db, `SELECT id, "${tarjma}" FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number`, [paraId])
-    for (const tr of tRows) tarjmaMap.set(tr.id as number, tr)
-  }
-  if (needsTafseer) {
-    const tRows = await query(db, `SELECT id, "${tafseer}" FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number`, [paraId])
-    for (const tr of tRows) tafseerMap.set(tr.id as number, tr)
-  }
+  const db = createQuranClient()
+  const rows = await query(db, `
+    SELECT ${selectCols.join(', ')}
+    FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number
+  `, [paraId])
 
   const verses: any[] = []
   for (const r of rows) {
@@ -40,14 +34,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       english: getText(r.translation_english), roman_urdu: getText(r.translation_roman_urdu),
       hindi: getText(r.hindi_nazar)
     }
-    if (needsTarjma) {
-      const tv = tarjmaMap.get(r.id as number)
-      if (tv?.[tarjma]) v.tarjma_text = getColumnText(tarjma, tv[tarjma])
-    }
-    if (needsTafseer) {
-      const tv = tafseerMap.get(r.id as number)
-      if (tv?.[tafseer]) v.tafseer_text = getColumnText(tafseer, tv[tafseer])
-    }
+    if (needsTarjma && r[tarjma]) v.tarjma_text = getColumnText(tarjma, r[tarjma])
+    if (needsTafseer && r[tafseer]) v.tafseer_text = getColumnText(tafseer, r[tafseer])
     verses.push(v)
   }
   return json(verses, 200, 86400)
