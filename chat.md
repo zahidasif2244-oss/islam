@@ -450,3 +450,22 @@ Full audit of all 39 API routes. Identified which still hit Turso (18 public + 5
 | `src/app/api/quran/tafseer/search/route.ts` | Column queries parallelized via `Promise.all`; LIMIT 100 → 50 |
 | `scripts/bake-static-data.mjs` | Added `bakeDuas()` — reads 5 dua tables from local DB, outputs `duas.json` |
 | `src/data/static/duas.json` | NEW (committed) — 374 baked duas (0.37 MB) |
+
+### 30. Surah/Parah Routes — 1 Query Instead of 3 (67% read reduction)
+**Problem:** surah and parah routes ran 3 separate queries — main data + tarjma column + tafseer column. Each query scanned all 6,236 rows of `tbl_QuranComplete` (no composite index on tarjma/tafseer columns), so opening 1 surah cost ~18,700 reads.
+
+**Fix:** merged tarjma and tafseer columns into the main `SELECT` query. Now 1 query per surah/parah open (6,236 reads instead of 18,700).
+
+**Files:** `src/app/api/quran/surah/[id]/route.ts`, `src/app/api/quran/parah/[id]/route.ts`
+
+**Revised quota math (all fixes combined):**
+
+| Visitor type | Pattern | DB reads | 500M capacity |
+|---|---|---|---|
+| Light | 1 surah + 1 hadith page | ~6,256 | ~80,000/month |
+| Medium | 2 surahs + hadith + 1 search | ~18,750 | ~26,700/month |
+| Heavy | Multiple searches + browsing | ~50,000+ | ~10,000/month |
+
+Before fixes: ~1,700 visitors caused exhaustion (300k reads/visitor). After: ~10,000-80,000 depending on usage.
+
+**Remaining bottleneck:** `tbl_QuranComplete` full-table scans (6,236 rows per query). To scale further: Turso paid plan or full client-side search index.
