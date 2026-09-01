@@ -16,6 +16,21 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number
   `, [paraId])
 
+  const needsTarjma = tarjma && !['translation_urdu', 'translation_english', 'translation_roman_urdu'].includes(tarjma)
+  const needsTafseer = !!tafseer
+
+  let tarjmaMap: Map<number, any> = new Map()
+  let tafseerMap: Map<number, any> = new Map()
+
+  if (needsTarjma) {
+    const tRows = await query(db, `SELECT id, "${tarjma}" FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number`, [paraId])
+    for (const tr of tRows) tarjmaMap.set(tr.id as number, tr)
+  }
+  if (needsTafseer) {
+    const tRows = await query(db, `SELECT id, "${tafseer}" FROM tbl_QuranComplete WHERE para_id = ? ORDER BY surat_id, ayat_number`, [paraId])
+    for (const tr of tRows) tafseerMap.set(tr.id as number, tr)
+  }
+
   const verses: any[] = []
   for (const r of rows) {
     const v: any = {
@@ -25,12 +40,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       english: getText(r.translation_english), roman_urdu: getText(r.translation_roman_urdu),
       hindi: getText(r.hindi_nazar)
     }
-    if (tarjma && !['translation_urdu', 'translation_english', 'translation_roman_urdu'].includes(tarjma)) {
-      const [tv] = await query(db, `SELECT "${tarjma}" FROM tbl_QuranComplete WHERE id = ?`, [r.id])
+    if (needsTarjma) {
+      const tv = tarjmaMap.get(r.id as number)
       if (tv?.[tarjma]) v.tarjma_text = getColumnText(tarjma, tv[tarjma])
     }
-    if (tafseer) {
-      const [tv] = await query(db, `SELECT "${tafseer}" FROM tbl_QuranComplete WHERE id = ?`, [r.id])
+    if (needsTafseer) {
+      const tv = tafseerMap.get(r.id as number)
       if (tv?.[tafseer]) v.tafseer_text = getColumnText(tafseer, tv[tafseer])
     }
     verses.push(v)

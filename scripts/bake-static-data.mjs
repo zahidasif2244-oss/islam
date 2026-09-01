@@ -284,6 +284,37 @@ async function bakeQuran() {
   return wrote > 0
 }
 
+const DUA_TABLES = [
+  ['tbl_dua', 'Duas'],
+  ['tbl_dua_Urdu', 'More Duas'],
+  ['tbl_prayer', 'Prayers'],
+  ['tbl_namaz_e_janaza', 'Janaza'],
+  ['tbl_roza', 'Roza'],
+]
+
+async function bakeDuas() {
+  const src = await quranSource()
+  if (!src) return
+
+  const allDuas = []
+  for (const [table, label] of DUA_TABLES) {
+    try {
+      const rows = await src.query(`SELECT dua_ID, dua_title, dua_seq, dua_desc, dua_arabic, dua_urdu, dua_eng, dua_ref FROM ${table} ORDER BY dua_seq`)
+      for (const r of rows) {
+        allDuas.push({
+          id: r.dua_ID, title: getText(r.dua_title), seq: r.dua_seq,
+          desc: getText(r.dua_desc), arabic: getText(r.dua_arabic),
+          urdu: getText(r.dua_urdu), english: getText(r.dua_eng),
+          ref: getText(r.dua_ref), source: table
+        })
+      }
+      console.log(`  ${table} (${label}): ${rows.length} rows`)
+    } catch (e) { console.warn(`  ${table} failed:`, e.message) }
+  }
+  write('duas.json', allDuas)
+  console.log(`Duas total: ${allDuas.length} items`)
+}
+
 async function bakeHadithBooks() {
   const old = tryLoad('hadith_books.json') || []
   const map = new Map(old.map(b => [b.id, b]))
@@ -323,6 +354,7 @@ async function bakeHadithBooks() {
 loadEnv()
 const quranOk = await bakeQuran()
 await bakeHadithBooks()
+await bakeDuas()
 if (!quranOk) {
   console.warn('No quran static data produced — routes will fail to build if JSON files are missing')
   process.exit(1)

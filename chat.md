@@ -414,3 +414,39 @@ User reported on mobile: the "Quran Web" title was not shown responsively, and b
 | `/api/quran/tafseer/search/route.ts` | Empty-column skip now uses baked tafseer counts (was 20 full-table COUNT scans per search) |
 | 7 immutable routes (`surah/[id]`, `ayahs`, `parah/[id]`, `tafseer/[surah]/[ayah]`, `arabic_words`, `wordbyword`, `hadith/book/[id]`) | Cache 0/300s → 86400 |
 | `package.json` | `build` = books-sync + `bake-static-data.mjs` + `next build`; new `static:sync`, `db:indexes` scripts |
+
+### 29. Turso Quota Audit — 4 Fixes (parah N+1, hadith COUNT, duas baked, tafseer parallel)
+Full audit of all 39 API routes. Identified which still hit Turso (18 public + 5 admin) vs zero-DB (16). Calculated per-visitor read cost.
+
+**Fixes applied:**
+
+1. **Parah route N+1 eliminated** (`src/app/api/quran/parah/[id]/route.ts`): was running 1 query per verse for tarjma/tafseer columns (300+ queries for a 300-verse para). Now batch-queries the whole para for tarjma/tafseer (3 total queries, same pattern as surah route).
+
+2. **Hadith book COUNT(*) removed** (`src/app/api/hadith/book/[id]/route.ts`): was running `SELECT COUNT(*) FROM hadees` (full table scan) on every page load. Now uses baked count from `hadith_books.json` (zero DB reads for pagination metadata).
+
+3. **Duas baked to static JSON** (`scripts/bake-static-data.mjs` + 3 dua routes): `/api/duas/all`, `/api/duas`, `/api/duas/urdu` were 5+ full table scans every time someone opened the Duas tab (374 duas across 5 tables). Now baked to `src/data/static/duas.json` (374 items, 0.37 MB) — all 3 routes serve static JSON, zero DB reads. Admin edits require redeploy (same as books pattern).
+
+4. **Tafseer search parallelized** (`src/app/api/quran/tafseer/search/route.ts`): column queries now run via `Promise.all` instead of sequential `for` loop. LIMIT reduced from 100 to 50 per column.
+
+**Per-visitor Turso read estimate (typical session):**
+- Open site → Quran surah view: ~6 reads (surah data + tarjma + tafseer)
+- Hadith tab → browse book: ~2 reads (20 hadiths per page)
+- Search operations: ~5-20 reads per search (debounced, indexed)
+- Duas/Topics/Fahmul/Mutradif/Books: **0 reads** (all baked)
+- **Total: ~30-50 DB reads per visitor**
+
+**Quota math:** 500M free reads / 50 reads per visitor = **~10M visitors/month** before quota exhaustion. Previously ~1,700 visitors caused exhaustion (300k reads/visitor before baking).
+
+**Verification:** `npx tsc --noEmit` clean, `npm run build` passes (35 static pages, duas routes now `○` static).
+
+## Key Files Changed (Quota Fix v2)
+| File | Change |
+|------|--------|
+| `src/app/api/quran/parah/[id]/route.ts` | N+1 → batch queries for tarjma/tafseer (3 queries total, was 300+) |
+| `src/app/api/hadith/book/[id]/route.ts` | COUNT(*) removed — uses baked count from `hadith_books.json` |
+| `src/app/api/duas/all/route.ts` | Rewritten — serves `@/data/static/duas.json` (zero DB reads) |
+| `src/app/api/duas/route.ts` | Rewritten — filters baked `duas.json` for `tbl_dua` entries |
+| `src/app/api/duas/urdu/route.ts` | Rewritten — filters baked `duas.json` for `tbl_dua_Urdu` entries |
+| `src/app/api/quran/tafseer/search/route.ts` | Column queries parallelized via `Promise.all`; LIMIT 100 → 50 |
+| `scripts/bake-static-data.mjs` | Added `bakeDuas()` — reads 5 dua tables from local DB, outputs `duas.json` |
+| `src/data/static/duas.json` | NEW (committed) — 374 baked duas (0.37 MB) |

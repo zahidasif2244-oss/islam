@@ -46,7 +46,7 @@ export async function GET(req: Request) {
   const typedWords = q.trim().split(/\s+/).filter(Boolean).slice(0, 8)
   const phrase = typedWords.join(' ')
 
-  for (const [col, label] of colInfo) {
+  const columnResults = await Promise.all(colInfo.map(async ([col, label]) => {
     const isUrdu = COL_IS_URDU[col] || false
     const words = isUrdu ? typedWords.map(encodeUrdu) : typedWords
     const searchPhrase = isUrdu ? encodeUrdu(phrase) : phrase
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
     const countExpr = words.map(w => `(CASE WHEN "${col}" LIKE ? THEN 1 ELSE 0 END)`).join(' + ')
     const phraseCond = `"${col}" LIKE ?`
 
-    const sql = `SELECT surat_id, ayat_number, arabic, "${col}", (${countExpr}) AS match_count, (CASE WHEN ${phraseCond} THEN 1 ELSE 0 END) AS phrase_match FROM tbl_QuranComplete WHERE ${orConds.join(' OR ')} ORDER BY phrase_match DESC, match_count DESC, length("${col}") LIMIT 100`
+    const sql = `SELECT surat_id, ayat_number, arabic, "${col}", (${countExpr}) AS match_count, (CASE WHEN ${phraseCond} THEN 1 ELSE 0 END) AS phrase_match FROM tbl_QuranComplete WHERE ${orConds.join(' OR ')} ORDER BY phrase_match DESC, match_count DESC, length("${col}") LIMIT 50`
     const params = [
       ...words.map(w => `%${w}%`),
       `%${searchPhrase}%`,
@@ -63,23 +63,25 @@ export async function GET(req: Request) {
     ]
 
     const rows = await query(db, sql, params)
+    const colResults: any[] = []
     for (const r of rows) {
       const text = r[col]
       if (text === null || text === undefined) continue
-      results.push({
-        surah: r.surat_id,
-        ayah: r.ayat_number,
+      colResults.push({
+        surah: r.surat_id, ayah: r.ayat_number,
         arabic: getText(r.arabic || ''),
         tafseer: isUrdu ? decodeUrdu(text) : getText(text),
-        tafseer_type: col,
-        tafseer_label: label,
+        tafseer_type: col, tafseer_label: label,
         searchWords: typedWords,
         match_count: Number(r.match_count) || 1,
         total_words: typedWords.length,
         phrase_match: Number(r.phrase_match) || 0,
       })
     }
-  }
+    return colResults
+  }))
+
+  for (const colResults of columnResults) results.push(...colResults)
 
   return json(results)
 }

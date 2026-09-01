@@ -1,6 +1,7 @@
 import { createHadithClient, query, getText, decodeUrdu } from '@/lib/db'
 import { json, error } from '@/lib/api-utils'
 import { BOOK_NAMES } from '@/lib/constants'
+import hadithBooks from '@/data/static/hadith_books.json'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -11,7 +12,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   try {
     const db = createHadithClient(id)
-    const [{ cnt: total }] = await query(db, 'SELECT COUNT(*) as cnt FROM hadees')
+    const bakedEntry = (hadithBooks as any[]).find(b => b.id === id)
+    const total = bakedEntry?.count || 0
 
     const rows = await query(db, `
       SELECT h.hadees_number, h.arabic, h.international_number,
@@ -31,7 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     }))
 
     return json({
-      hadiths, total: Number(total), page, pages: Math.ceil(Number(total) / perPage),
+      hadiths, total, page, pages: Math.ceil(total / perPage),
       name: BOOK_NAMES[id] || id
     }, 200, 86400)
   } catch {
