@@ -1,6 +1,6 @@
 import { json, error } from '@/lib/api-utils'
 import { COL_IS_URDU } from '@/lib/constants'
-import { loadSurah } from '@/lib/baked'
+import { loadSurah, loadTafseer } from '@/lib/baked'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -15,6 +15,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const needsTarjma = tarjma && !['translation_urdu', 'translation_english', 'translation_roman_urdu'].includes(tarjma)
   const needsTafseer = !!tafseer
 
+  let tafseerData: Record<number, Record<string, string>> | null = null
+  if (needsTafseer) {
+    tafseerData = loadTafseer(surahId)
+  }
+
   const verses: any[] = []
   for (const a of ayahs) {
     const v: any = {
@@ -27,8 +32,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     if (needsTarjma && a[tarjma]) {
       v.tarjma_text = COL_IS_URDU[tarjma] ? a[tarjma] : String(a[tarjma])
     }
-    if (needsTafseer && a[tafseer]) {
-      v.tafseer_text = COL_IS_URDU[tafseer] ? a[tafseer] : String(a[tafseer])
+    if (needsTafseer && tafseerData) {
+      const t = tafseerData[a.ayat_number]
+      if (t && t[tafseer]) {
+        v.tafseer_text = t[tafseer]
+      }
     }
     verses.push(v)
   }

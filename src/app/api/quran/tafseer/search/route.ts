@@ -1,7 +1,19 @@
 import { json, error } from '@/lib/api-utils'
 import { TAFSEER_COLUMNS, COL_IS_URDU } from '@/lib/constants'
-import { loadSurah } from '@/lib/baked'
+import { loadSurah, loadTafseer } from '@/lib/baked'
 import tafseerTypes from '@/data/static/tafseer_types.json'
+
+let allTafseerData: Map<number, Record<number, Record<string, string>>> | null = null
+
+function loadAllTafseer(): Map<number, Record<number, Record<string, string>>> {
+  if (allTafseerData) return allTafseerData
+  allTafseerData = new Map()
+  for (let sid = 1; sid <= 114; sid++) {
+    const t = loadTafseer(sid)
+    if (t) allTafseerData!.set(sid, t)
+  }
+  return allTafseerData!
+}
 
 let allAyahs: any[] | null = null
 
@@ -45,6 +57,7 @@ export async function GET(req: Request) {
   if (!q.trim()) return error('Search query required', 400)
 
   const ayahs = loadAllAyahs()
+  const tafseerMap = loadAllTafseer()
   const results: any[] = []
 
   let colInfo = type
@@ -65,7 +78,8 @@ export async function GET(req: Request) {
 
     const colResults: any[] = []
     for (const a of ayahs) {
-      const text = a[col]
+      const surahTafseer = tafseerMap.get(a.surat_id)
+      const text = surahTafseer?.[a.ayat_number]?.[col] || ''
       if (!text) continue
 
       let matchCount = 0

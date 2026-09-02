@@ -22,6 +22,10 @@ export function loadSurah(id: number): any[] | null {
   return loadJson<any[]>(`quran/surah-${id}.json`)
 }
 
+export function loadTafseer(id: number): Record<number, Record<string, string>> | null {
+  return loadJson(`quran/tafseer-${id}.json`)
+}
+
 export function loadWbw(surah: number): Record<number, any[]> | null {
   return loadJson(`quran/wbw-${surah}.json`)
 }

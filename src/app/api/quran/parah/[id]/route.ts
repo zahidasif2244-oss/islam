@@ -1,6 +1,6 @@
 import { json, error } from '@/lib/api-utils'
 import { COL_IS_URDU } from '@/lib/constants'
-import { loadSurah } from '@/lib/baked'
+import { loadSurah, loadTafseer } from '@/lib/baked'
 import parahNames from '@/data/static/parah_names.json'
 
 const parahCache = new Map<number, any[]>()
@@ -49,8 +49,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     if (needsTarjma && a[tarjma]) {
       v.tarjma_text = COL_IS_URDU[tarjma] ? a[tarjma] : String(a[tarjma])
     }
-    if (needsTafseer && a[tafseer]) {
-      v.tafseer_text = COL_IS_URDU[tafseer] ? a[tafseer] : String(a[tafseer])
+    if (needsTafseer) {
+      const tafseerData = loadTafseer(a.surat_id)
+      if (tafseerData) {
+        const t = tafseerData[a.ayat_number]
+        if (t && t[tafseer]) v.tafseer_text = t[tafseer]
+      }
     }
     verses.push(v)
   }

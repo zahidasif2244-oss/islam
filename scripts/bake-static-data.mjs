@@ -410,6 +410,9 @@ const SURAH_COLUMNS = [
   'translation_french', 'translation_german', 'translation_turkish',
   'translation_indonesian', 'translation_malay', 'translation_nepali',
   'translation_marathi', 'translation_telugu',
+]
+
+const TAFSEER_COLUMNS_BAKE = [
   'tafseer_moudoodi', 'taqi_tafseer', 'k_iman',
   'tafseer_tibyan', 'tafseer_fizilal', 'tafseer_karam_shah',
   'tafseer_tadabbar_ul_quran', 'tafseer_ahsan_ul_bayan',
@@ -430,18 +433,22 @@ const URDU_COLS = new Set([
 async function bakeSurahs() {
   const src = await quranSource()
   if (!src) return false
-  console.log('Baking surahs...')
+  console.log('Baking surahs (core + tafseer separately)...')
 
-  const cols = SURAH_COLUMNS.map(c => `"${c}"`).join(', ')
+  const allCols = [...SURAH_COLUMNS, ...TAFSEER_COLUMNS_BAKE]
+  const cols = allCols.map(c => `"${c}"`).join(', ')
   const rows = await src.query(`SELECT ${cols} FROM tbl_QuranComplete ORDER BY surat_id, ayat_number`)
 
-  const bySurah = new Map()
+  const surahMap = new Map()
+  const tafseerMap = new Map()
+
   for (const r of rows) {
     const sid = r.surat_id
-    if (!bySurah.has(sid)) bySurah.set(sid, [])
-    const ayah = { n: r.ayat_number }
+    if (!surahMap.has(sid)) surahMap.set(sid, [])
+    if (!tafseerMap.has(sid)) tafseerMap.set(sid, {})
+
+    const ayah = {}
     for (const c of SURAH_COLUMNS) {
-      if (c === 'surat_id' || c === 'ayat_number') continue
       const val = r[c]
       if (val === null || val === undefined) { ayah[c] = ''; continue }
       if (URDU_COLS.has(c)) {
@@ -450,15 +457,32 @@ async function bakeSurahs() {
         ayah[c] = getText(val)
       }
     }
-    bySurah.get(sid).push(ayah)
+    surahMap.get(sid).push(ayah)
+
+    const tafseerObj = {}
+    for (const c of TAFSEER_COLUMNS_BAKE) {
+      const val = r[c]
+      if (val === null || val === undefined) { tafseerObj[c] = ''; continue }
+      if (URDU_COLS.has(c)) {
+        tafseerObj[c] = decodeUrduText(val)
+      } else {
+        tafseerObj[c] = getText(val)
+      }
+    }
+    tafseerMap.get(sid)[r.ayat_number] = tafseerObj
   }
 
-  let totalSize = 0
-  for (const [sid, ayahs] of bySurah) {
+  let coreSize = 0, tafseerSize = 0
+  for (const [sid, ayahs] of surahMap) {
     writeQuran(`surah-${sid}.json`, ayahs)
-    totalSize += fs.statSync(path.join(QURAN_OUT_DIR, `surah-${sid}.json`)).size
+    coreSize += fs.statSync(path.join(QURAN_OUT_DIR, `surah-${sid}.json`)).size
   }
-  console.log(`Surahs: ${bySurah.size} files, ${(totalSize / 1024 / 1024).toFixed(2)} MB total`)
+  for (const [sid, tafseer] of tafseerMap) {
+    writeQuran(`tafseer-${sid}.json`, tafseer)
+    tafseerSize += fs.statSync(path.join(QURAN_OUT_DIR, `tafseer-${sid}.json`)).size
+  }
+  console.log(`Surahs: ${surahMap.size} core files, ${(coreSize / 1024 / 1024).toFixed(2)} MB total`)
+  console.log(`Tafseer: ${tafseerMap.size} files, ${(tafseerSize / 1024 / 1024).toFixed(2)} MB total`)
   return true
 }
 
