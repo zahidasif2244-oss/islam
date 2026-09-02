@@ -1182,37 +1182,63 @@ function TafseerTab() {
   )
 }
 
+const LIST_PAGE_SIZE = 10
+
+function PaginationBar({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (p: number) => void }) {
+  if (totalPages <= 1) return null
+  return (
+    <div className="flex items-center justify-center gap-3 my-4">
+      <button disabled={page <= 0} onClick={() => onPage(page - 1)}
+        className={`px-4 py-1.5 text-sm border-none rounded cursor-pointer ${page <= 0 ? 'bg-[#ddd] text-[#999] cursor-not-allowed' : 'bg-[#1a5c3a] text-white'}`}>
+        &larr; Previous
+      </button>
+      <span className="text-sm text-[#666]">Page {page + 1} of {totalPages}</span>
+      <button disabled={page >= totalPages - 1} onClick={() => onPage(page + 1)}
+        className={`px-4 py-1.5 text-sm border-none rounded cursor-pointer ${page >= totalPages - 1 ? 'bg-[#ddd] text-[#999] cursor-not-allowed' : 'bg-[#1a5c3a] text-white'}`}>
+        Next &rarr;
+      </button>
+    </div>
+  )
+}
+
 // ============== DUAS ==============
 function DuasTab() {
   const [allDuas, setAllDuas] = useState<any[]>([])
   const [source, setSource] = useState('all')
+  const [page, setPage] = useState(0)
 
   useEffect(() => { api('/duas/all').then(setAllDuas) }, [])
 
   const filtered = source === 'all' ? allDuas : allDuas.filter(d => d.source === source)
+  const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
+  const pageItems = filtered.slice(page * LIST_PAGE_SIZE, (page + 1) * LIST_PAGE_SIZE)
 
   return (
     <div>
       <h2 className="text-[#1a5c3a] mb-2.5">Duas & Supplications</h2>
       <div className="flex gap-1.5 mb-3 flex-wrap">
         {['all', 'tbl_dua', 'tbl_dua_Urdu', 'tbl_prayer', 'tbl_namaz_e_janaza', 'tbl_roza'].map(s => (
-          <button key={s} onClick={() => setSource(s)}
+          <button key={s} onClick={() => { setSource(s); setPage(0) }}
             className={`px-3 py-1 text-sm border-none rounded cursor-pointer ${source === s ? 'bg-[#f5f5f5] text-[#1a5c3a]' : 'bg-[#2a7a4e] text-[#ddd]'}`}>
             {s === 'all' ? 'All' : s === 'tbl_dua' ? 'Duas' : s === 'tbl_dua_Urdu' ? 'More Duas' : s === 'tbl_prayer' ? 'Prayers' : s === 'tbl_namaz_e_janaza' ? 'Janaza' : 'Roza'}
           </button>
         ))}
       </div>
       <p className="text-xs text-[#999] mb-2.5">{filtered.length} supplications</p>
-      {filtered.map((d, i) => (
-        <div key={i} className="dua-card" onClick={() => openModal(d.title || 'Dua', <DuaDetail dua={d} idx={i} total={filtered.length} list={filtered} />)}>
-          <div className="dua-title">{d.title || 'Dua'} <span className="text-[10px] text-[#999]">[{d.source || ''}]</span></div>
-          {d.arabic && <div className="dua-arabic">{d.arabic}</div>}
-          {d.urdu && <div className="dua-urdu">{d.urdu}</div>}
-          {d.english && <div className="dua-english">{d.english}</div>}
-          {d.desc && !d.arabic && !d.urdu && <div className="dua-urdu">{d.desc}</div>}
-          {d.ref && <div className="dua-ref">{d.ref}</div>}
-        </div>
-      ))}
+      {pageItems.map((d, i) => {
+        const globalIdx = page * LIST_PAGE_SIZE + i
+        return (
+          <div key={globalIdx} className="dua-card" onClick={() => openModal(d.title || 'Dua', <DuaDetail dua={d} idx={globalIdx} total={filtered.length} list={filtered} />)}>
+            <div className="dua-title">{d.title || 'Dua'} <span className="text-[10px] text-[#999]">[{d.source || ''}]</span></div>
+            {d.arabic && <div className="dua-arabic">{d.arabic}</div>}
+            {d.urdu && <div className="dua-urdu">{d.urdu}</div>}
+            {d.english && <div className="dua-english">{d.english}</div>}
+            {d.desc && !d.arabic && !d.urdu && <div className="dua-urdu">{d.desc}</div>}
+            {d.ref && <div className="dua-ref">{d.ref}</div>}
+          </div>
+        )
+      })}
+      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
     </div>
   )
 }
@@ -1239,45 +1265,52 @@ function TopicsTab() {
   const [topics, setTopics] = useState<any[]>([])
   const [amazing, setAmazing] = useState<any[]>([])
   const [filter, setFilter] = useState('')
+  const [page, setPage] = useState(0)
 
   useEffect(() => { api('/quran/topics').then(setTopics); api('/quran/amazing_topics').then(setAmazing) }, [])
 
   if (view === 'amazing') {
     const filtered = amazing.filter(t => (t.urdu + ' ' + t.english).toLowerCase().includes(filter.toLowerCase()))
+    const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
+    const pageItems = filtered.slice(page * LIST_PAGE_SIZE, (page + 1) * LIST_PAGE_SIZE)
     return (
       <div>
         <div className="flex gap-1.5 mb-3 flex-wrap">
-          <button onClick={() => setView('topics')} className="bg-[#2a7a4e] text-[#ddd] px-4 py-1.5 text-sm border-none rounded cursor-pointer">Topics (2101)</button>
+          <button onClick={() => { setView('topics'); setPage(0) }} className="bg-[#2a7a4e] text-[#ddd] px-4 py-1.5 text-sm border-none rounded cursor-pointer">Topics (2101)</button>
           <button className="bg-[#f5f5f5] text-[#1a5c3a] px-4 py-1.5 text-sm border-none rounded cursor-pointer font-bold">Amazing (369)</button>
         </div>
         <p className="text-xs text-[#999] mb-2.5">{filtered.length} amazing facts</p>
-        {filtered.map((t, i) => (
+        {pageItems.map((t, i) => (
           <div key={i} className="topic-card" style={{ borderLeftColor: '#e8b840', cursor: 'pointer' }} onClick={() => openModal('Amazing Fact - Surah ' + t.surah + ':' + t.ayah, <AmazingDetail t={t} />)}>
             <div className="topic-ref">Surah {t.surah}:{t.ayah}</div>
             <div className="topic-urdu">{t.urdu}</div>
             {t.english && <div className="topic-eng">{t.english}</div>}
           </div>
         ))}
+        <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
       </div>
     )
   }
 
   const filtered = topics.filter(t => (t.urdu + ' ' + t.english + ' ' + t.surah).toLowerCase().includes(filter.toLowerCase()))
+  const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
+  const pageItems = filtered.slice(page * LIST_PAGE_SIZE, (page + 1) * LIST_PAGE_SIZE)
   return (
     <div>
       <div className="flex gap-1.5 mb-3 flex-wrap">
         <button className="bg-[#f5f5f5] text-[#1a5c3a] px-4 py-1.5 text-sm border-none rounded cursor-pointer font-bold">Topics (2101)</button>
-        <button onClick={() => setView('amazing')} className="bg-[#2a7a4e] text-[#ddd] px-4 py-1.5 text-sm border-none rounded cursor-pointer">Amazing (369)</button>
+        <button onClick={() => { setView('amazing'); setPage(0) }} className="bg-[#2a7a4e] text-[#ddd] px-4 py-1.5 text-sm border-none rounded cursor-pointer">Amazing (369)</button>
       </div>
-      <input type="text" placeholder="Search topics..." value={filter} onChange={e => setFilter(e.target.value)} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
+      <input type="text" placeholder="Search topics..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
       <p className="text-xs text-[#999] mb-2.5">{filtered.length} topics</p>
-      {filtered.map((t, i) => (
+      {pageItems.map((t, i) => (
         <div key={i} className="topic-card" style={{ cursor: 'pointer' }} onClick={() => openModal('Topic - ' + (t.urdu || t.english || ''), <TopicDetail t={t} />)}>
           <div className="topic-ref">Surah {t.surah}{t.surah_name ? ' (' + t.surah_name + ')' : ''}:{t.start_ayah + 1}-{t.end_ayah + 1} | Para {t.para}</div>
           <div className="topic-urdu">{t.urdu}</div>
           {t.english && <div className="topic-eng">{t.english}</div>}
         </div>
       ))}
+      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
     </div>
   )
 }
@@ -1332,17 +1365,20 @@ function AmazingDetail({ t }: { t: any }) {
 function FahmulTab() {
   const [items, setItems] = useState<any[]>([])
   const [filter, setFilter] = useState('')
+  const [page, setPage] = useState(0)
 
   useEffect(() => { api('/quran/fahmul_quran').then(setItems) }, [])
 
   const filtered = items.filter(item => (item.urdu + ' ' + item.english).toLowerCase().includes(filter.toLowerCase()))
+  const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
+  const pageItems = filtered.slice(page * LIST_PAGE_SIZE, (page + 1) * LIST_PAGE_SIZE)
 
   return (
     <div>
       <h2 className="text-[#1a5c3a] mb-2.5">Fahmul Quran (Understanding Quran)</h2>
-      <input type="text" placeholder="Search verses..." value={filter} onChange={e => setFilter(e.target.value)} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
+      <input type="text" placeholder="Search verses..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
       <p className="text-xs text-[#999] mb-2.5">{filtered.length} entries</p>
-      {filtered.map((item, i) => (
+      {pageItems.map((item, i) => (
         <div key={i} className="fahmul-card" style={{ cursor: 'pointer' }} onClick={() => openModal('Fahmul Quran #' + item.id, <FahmulDetail item={item} />)}>
           <div className="text-xs text-[#999]">#{item.id} | Count: {item.count}</div>
           <div className="fahmul-ayat">{item.ayat}</div>
@@ -1351,6 +1387,7 @@ function FahmulTab() {
           {item.english && <div style={{ fontSize: 13, color: '#444', marginTop: 4 }}>{item.english}</div>}
         </div>
       ))}
+      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
     </div>
   )
 }
@@ -1368,8 +1405,6 @@ function FahmulDetail({ item }: { item: any }) {
 }
 
 // ============== MUTRADIF ==============
-const PAGE_SIZE = 50
-
 function MutradifTab() {
   const [items, setItems] = useState<any[]>([])
   const [page, setPage] = useState(0)
@@ -1378,14 +1413,14 @@ function MutradifTab() {
   useEffect(() => { api('/quran/mutradif').then(setItems) }, [])
 
   const filtered = filter ? items.filter(m => (m.heading + ' ' + m.word + ' ' + m.urdu_head + ' ' + m.details + ' ' + m.summary).toLowerCase().includes(filter.toLowerCase())) : items
-  const end = Math.min((page + 1) * PAGE_SIZE, filtered.length)
-  const pageItems = filtered.slice(0, end)
+  const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
+  const pageItems = filtered.slice(page * LIST_PAGE_SIZE, (page + 1) * LIST_PAGE_SIZE)
 
   return (
     <div>
       <h2 className="text-[#1a5c3a] mb-2.5">Urdu Mutradif (Synonyms)</h2>
       <input type="text" placeholder="Search words..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
-      <p className="text-xs text-[#999] mb-2.5">{filtered.length} word groups &mdash; showing {end}</p>
+      <p className="text-xs text-[#999] mb-2.5">{filtered.length} word groups</p>
       {pageItems.map((m, i) => (
         <div key={i} className="mutradif-card" style={{ cursor: 'pointer' }} onClick={() => openModal(m.heading || 'Mutradif', <MutradifDetail m={m} />)}>
           <div className="m-heading">{m.heading}</div>
@@ -1395,11 +1430,7 @@ function MutradifTab() {
           <div className="m-meta">{m.total_ayat ? m.total_ayat + ' verses' : ''} {m.alphabet ? '| ' + m.alphabet : ''}</div>
         </div>
       ))}
-      {end < filtered.length && (
-        <div style={{ textAlign: 'center', margin: '15px 0' }}>
-          <button onClick={() => setPage(p => p + 1)} className="px-6 py-2 bg-[#1a5c3a] text-white border-none rounded cursor-pointer">Show More ({filtered.length - end} remaining)</button>
-        </div>
-      )}
+      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
     </div>
   )
 }
