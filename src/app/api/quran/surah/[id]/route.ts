@@ -1,5 +1,18 @@
-import { createQuranClient, query, getText, cleanUrdu } from '@/lib/db'
 import { json, error, getColumnText } from '@/lib/api-utils'
+import { COL_IS_URDU } from '@/lib/constants'
+
+const surahCache = new Map<number, any[]>()
+
+function loadSurah(id: number): any[] | null {
+  if (surahCache.has(id)) return surahCache.get(id)!
+  try {
+    const data = require(`@/data/quran/surah-${id}.json`)
+    surahCache.set(id, data)
+    return data
+  } catch {
+    return null
+  }
+}
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -8,37 +21,29 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const tarjma = url.searchParams.get('tarjma') || 'translation_urdu'
   const tafseer = url.searchParams.get('tafseer') || ''
 
+  const ayahs = loadSurah(surahId)
+  if (!ayahs) return error('Surah not found')
+
   const needsTarjma = tarjma && !['translation_urdu', 'translation_english', 'translation_roman_urdu'].includes(tarjma)
   const needsTafseer = !!tafseer
 
-  const selectCols = [
-    'id', 'surat_id', 'para_id', 'ayat_number',
-    'arabic', 'arabic_tajweed',
-    'translation_urdu', 'translation_english', 'translation_roman_urdu', 'translation_mufti_taqi',
-    'hindi_nazar',
-  ]
-  if (needsTarjma) selectCols.push(`"${tarjma}"`)
-  if (needsTafseer) selectCols.push(`"${tafseer}"`)
-
-  const db = createQuranClient()
-  const rows = await query(db, `
-    SELECT ${selectCols.join(', ')}
-    FROM tbl_QuranComplete WHERE surat_id = ? ORDER BY ayat_number
-  `, [surahId])
-
   const verses: any[] = []
-  for (const r of rows) {
-    const urduText = getText(r.translation_urdu)
-    const romanText = getText(r.translation_roman_urdu)
+  for (const a of ayahs) {
     const v: any = {
-      id: r.id, surah: r.surat_id, para: r.para_id, ayah: r.ayat_number,
-      arabic: getText(r.arabic), arabic_tajweed: getText(r.arabic_tajweed),
-      urdu: cleanUrdu(urduText, romanText),
-      english: getText(r.translation_english), roman_urdu: romanText,
-      hindi: getText(r.hindi_nazar)
+      id: a.id, surah: a.surat_id, para: a.para_id, ayah: a.ayat_number,
+      arabic: a.arabic || '', arabic_tajweed: a.arabic_tajweed || '',
+      urdu: a.translation_urdu || '',
+      english: a.translation_english || '', roman_urdu: a.translation_roman_urdu || '',
+      hindi: a.hindi_nazar || '',
     }
-    if (needsTarjma && r[tarjma]) v.tarjma_text = getColumnText(tarjma, r[tarjma])
-    if (needsTafseer && r[tafseer]) v.tafseer_text = getColumnText(tafseer, r[tafseer])
+    if (needsTarjma && a[tarjma]) {
+      const val = a[tarjma]
+      v.tarjma_text = COL_IS_URDU[tarjma] ? val : String(val)
+    }
+    if (needsTafseer && a[tafseer]) {
+      const val = a[tafseer]
+      v.tafseer_text = COL_IS_URDU[tafseer] ? val : String(val)
+    }
     verses.push(v)
   }
   return json(verses, 200, 86400)

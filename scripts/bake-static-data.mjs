@@ -351,10 +351,273 @@ async function bakeHadithBooks() {
   console.log(`Hadith books: ${fresh} refreshed from source`)
 }
 
+const QURAN_OUT_DIR = path.join(__dirname, '..', 'src', 'data', 'quran')
+
+function writeQuran(file, data) {
+  fs.mkdirSync(QURAN_OUT_DIR, { recursive: true })
+  const filePath = path.join(QURAN_OUT_DIR, file)
+  fs.writeFileSync(filePath, JSON.stringify(data))
+  const size = (fs.statSync(filePath).size / 1024 / 1024).toFixed(2)
+  console.log(`  quran/${file}: ${size} MB`)
+}
+
+function decodeUrduText(encrypted) {
+  const text = getText(encrypted)
+  if (!text) return ''
+  let result = ''
+  for (const c of text) {
+    const cp = c.charCodeAt(0)
+    if (cp === 0x0623 || cp === 13 || cp === 10) { result += ' '; continue }
+    if (cp === 0x00AE || cp === 0x00BE) continue
+    if (cp >= 33 && cp <= 126) { result += c; continue }
+    if (cp >= 0x600 && cp <= 0x6FF) {
+      let newCp = cp - 3
+      if (newCp < 0x600) newCp = 0x6FF - (0x600 - newCp) + 1
+      result += String.fromCharCode(newCp)
+    }
+  }
+  return result.replace(/\?d\s*\S+@\S+/g, '').replace(/\?2dA/g, '').replace(/\r/g, ' ').replace(/ +/g, ' ').trim()
+}
+
+function encodeUrduText(text) {
+  let result = ''
+  for (const c of text) {
+    const cp = c.charCodeAt(0)
+    if (cp >= 0x600 && cp <= 0x6FF) {
+      let newCp = cp + 3
+      if (newCp > 0x6FF) newCp = 0x600 + (newCp - 0x6FF - 1)
+      result += String.fromCharCode(newCp)
+    } else result += c
+  }
+  return result
+}
+
+function parseWbw(text) {
+  return getText(text).split('@').map(p => {
+    const idx = p.indexOf('&')
+    return idx >= 0 ? p.slice(idx + 1).trim() : p.trim()
+  }).filter(Boolean)
+}
+
+const SURAH_COLUMNS = [
+  'id', 'surat_id', 'para_id', 'ayat_number',
+  'arabic', 'arabic_tajweed',
+  'translation_urdu', 'translation_english', 'translation_roman_urdu', 'translation_mufti_taqi',
+  'hindi_nazar',
+  'aai', 'tq', 'najfi', 'botvi', 'moudoodi', 'k_iman',
+  'translation_saheeh_international', 'translation_yusuf_ali', 'translation_hilali_khan',
+  'translation_spanish_isa_garcia', 'translation_bengali', 'translation_tamil',
+  'translation_french', 'translation_german', 'translation_turkish',
+  'translation_indonesian', 'translation_malay', 'translation_nepali',
+  'translation_marathi', 'translation_telugu',
+  'tafseer_moudoodi', 'taqi_tafseer', 'k_iman',
+  'tafseer_tibyan', 'tafseer_fizilal', 'tafseer_karam_shah',
+  'tafseer_tadabbar_ul_quran', 'tafseer_ahsan_ul_bayan',
+  'tafseer_al_burhan_bil_quran', 'tafseer_wahiduddin_khan', 'tafseer_abdul_salam',
+  'tafseer_wahiduddin_khan_english', 'tafseer_tafheem_english',
+  'tafseer_zia_ul_quran', 'tafseer_irfan_ul_quran', 'tafseer_ul_hasanaat',
+  'tafseer_khazain', 'tafseer_noor', 'tafseer_sirat', 'tafseer_jalalain',
+]
+
+const URDU_COLS = new Set([
+  'translation_urdu', 'aai', 'tq', 'najfi', 'botvi', 'moudoodi', 'k_iman',
+  'translation_mufti_taqi', 'hindi_nazar',
+  'tafseer_moudoodi', 'taqi_tafseer', 'tafseer_fizilal', 'tafseer_karam_shah',
+  'tafseer_tadabbar_ul_quran', 'tafseer_ahsan_ul_bayan',
+  'tafseer_al_burhan_bil_quran', 'tafseer_wahiduddin_khan', 'tafseer_abdul_salam',
+])
+
+async function bakeSurahs() {
+  const src = await quranSource()
+  if (!src) return false
+  console.log('Baking surahs...')
+
+  const cols = SURAH_COLUMNS.map(c => `"${c}"`).join(', ')
+  const rows = await src.query(`SELECT ${cols} FROM tbl_QuranComplete ORDER BY surat_id, ayat_number`)
+
+  const bySurah = new Map()
+  for (const r of rows) {
+    const sid = r.surat_id
+    if (!bySurah.has(sid)) bySurah.set(sid, [])
+    const ayah = { n: r.ayat_number }
+    for (const c of SURAH_COLUMNS) {
+      if (c === 'surat_id' || c === 'ayat_number') continue
+      const val = r[c]
+      if (val === null || val === undefined) { ayah[c] = ''; continue }
+      if (URDU_COLS.has(c)) {
+        ayah[c] = decodeUrduText(val)
+      } else {
+        ayah[c] = getText(val)
+      }
+    }
+    bySurah.get(sid).push(ayah)
+  }
+
+  let totalSize = 0
+  for (const [sid, ayahs] of bySurah) {
+    writeQuran(`surah-${sid}.json`, ayahs)
+    totalSize += fs.statSync(path.join(QURAN_OUT_DIR, `surah-${sid}.json`)).size
+  }
+  console.log(`Surahs: ${bySurah.size} files, ${(totalSize / 1024 / 1024).toFixed(2)} MB total`)
+  return true
+}
+
+async function bakeWordByWord() {
+  const src = await quranSource()
+  if (!src) return false
+  console.log('Baking word-by-word...')
+
+  const [wbwUrdu, wbwEng, wbwHindi, arabicWords] = await Promise.all([
+    src.query('SELECT surat_id, ayat_number, translation FROM tbl_word_by_word_new ORDER BY surat_id, ayat_number, id'),
+    src.query('SELECT surat_id, ayat_number, translation FROM word_by_word_english ORDER BY surat_id, ayat_number, id'),
+    src.query('SELECT surat_id, ayat_number, translation FROM word_by_word_hindi ORDER BY surat_id, ayat_number, id'),
+    src.query('SELECT arabic_surat_id, arabic_ayat_number, arabic_word FROM tbl_arabic_words ORDER BY arabic_surat_id, arabic_ayat_number, word_id'),
+  ])
+
+  const urduMap = new Map()
+  for (const r of wbwUrdu) {
+    const key = `${r.surat_id}:${r.ayat_number}`
+    if (!urduMap.has(key)) urduMap.set(key, [])
+    urduMap.get(key).push(parseWbw(r.translation))
+  }
+
+  const engMap = new Map()
+  for (const r of wbwEng) {
+    const key = `${r.surat_id}:${r.ayat_number}`
+    if (!engMap.has(key)) engMap.set(key, [])
+    engMap.get(key).push(parseWbw(r.translation))
+  }
+
+  const hindiMap = new Map()
+  for (const r of wbwHindi) {
+    const key = `${r.surat_id}:${r.ayat_number}`
+    if (!hindiMap.has(key)) hindiMap.set(key, [])
+    hindiMap.get(key).push(parseWbw(r.translation))
+  }
+
+  const arMap = new Map()
+  for (const r of arabicWords) {
+    const key = `${r.arabic_surat_id}:${r.arabic_ayat_number}`
+    if (!arMap.has(key)) arMap.set(key, [])
+    arMap.get(key).push(getText(r.arabic_word).trim())
+  }
+
+  const allKeys = new Set([...urduMap.keys(), ...engMap.keys(), ...hindiMap.keys(), ...arMap.keys()])
+  const bySurah = new Map()
+  for (const key of allKeys) {
+    const [sid, ayah] = key.split(':').map(Number)
+    if (!bySurah.has(sid)) bySurah.set(sid, {})
+    const urdu = urduMap.get(key) || []
+    const eng = engMap.get(key) || []
+    const hindi = hindiMap.get(key) || []
+    const arabic = arMap.get(key) || []
+    const maxLen = Math.max(urdu.length, eng.length, hindi.length, arabic.length)
+    const words = []
+    for (let i = 0; i < maxLen; i++) {
+      words.push({
+        arabic: arabic[i] || '',
+        urdu: (urdu[i] || []).join(' '),
+        english: (eng[i] || []).join(' '),
+        hindi: (hindi[i] || []).join(' '),
+      })
+    }
+    bySurah.get(sid)[ayah] = words
+  }
+
+  let totalSize = 0
+  for (const [sid, ayahs] of bySurah) {
+    writeQuran(`wbw-${sid}.json`, ayahs)
+    totalSize += fs.statSync(path.join(QURAN_OUT_DIR, `wbw-${sid}.json`)).size
+  }
+  console.log(`Word-by-word: ${bySurah.size} files, ${(totalSize / 1024 / 1024).toFixed(2)} MB total`)
+  return true
+}
+
+async function bakeArabicWords() {
+  const src = await quranSource()
+  if (!src) return false
+  console.log('Baking arabic words...')
+
+  const rows = await src.query(`
+    SELECT arabic_surat_id, arabic_ayat_number, arabic_word, meaning, english_meaning,
+           urdu_meaning, root, word_id, arabic_without_aeraab_arabic
+    FROM tbl_arabic_words ORDER BY arabic_surat_id, arabic_ayat_number, word_id
+  `)
+
+  const bySurah = new Map()
+  for (const r of rows) {
+    const sid = r.arabic_surat_id
+    const ayah = r.arabic_ayat_number
+    if (!bySurah.has(sid)) bySurah.set(sid, {})
+    if (!bySurah.get(sid)[ayah]) bySurah.get(sid)[ayah] = []
+    bySurah.get(sid)[ayah].push({
+      word: getText(r.arabic_word),
+      meaning: getText(r.meaning),
+      english: getText(r.english_meaning),
+      urdu: getText(r.urdu_meaning),
+      root: getText(r.root),
+      word_id: r.word_id,
+      without_aeraab: getText(r.arabic_without_aeraab_arabic),
+    })
+  }
+
+  let totalSize = 0
+  for (const [sid, ayahs] of bySurah) {
+    writeQuran(`awords-${sid}.json`, ayahs)
+    totalSize += fs.statSync(path.join(QURAN_OUT_DIR, `awords-${sid}.json`)).size
+  }
+  console.log(`Arabic words: ${bySurah.size} files, ${(totalSize / 1024 / 1024).toFixed(2)} MB total`)
+  return true
+}
+
+async function bakeSearchIndex() {
+  const src = await quranSource()
+  if (!src) return false
+  console.log('Baking search index...')
+
+  const rows = await src.query(`
+    SELECT id, surat_id, ayat_number, arabic, translation_urdu, translation_english, translation_roman_urdu
+    FROM tbl_QuranComplete ORDER BY surat_id, ayat_number
+  `)
+
+  function normalizeArabic(text) {
+    return text
+      .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED\u0621]/g, '')
+      .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627')
+      .replace(/\u0629/g, '\u0647')
+      .replace(/[\u0649\u064A]/g, '\u064A')
+      .replace(/\u0643/g, '\u0643')
+      .replace(/\u0647/g, '\u0647')
+      .replace(/\u0624/g, '\u0648')
+  }
+
+  const index = rows.map(r => {
+    const arabic = getText(r.arabic)
+    const urduRaw = getText(r.translation_urdu)
+    return {
+      id: r.id, s: r.surat_id, a: r.ayat_number,
+      ar: arabic,
+      ur: urduRaw,
+      en: getText(r.translation_english),
+      ro: getText(r.translation_roman_urdu),
+      arN: normalizeArabic(arabic),
+      urE: encodeUrduText(decodeUrduText(urduRaw)),
+    }
+  })
+
+  write('search-index.json', index)
+  console.log(`Search index: ${index.length} ayahs`)
+  return true
+}
+
 loadEnv()
 const quranOk = await bakeQuran()
 await bakeHadithBooks()
 await bakeDuas()
+await bakeSurahs()
+await bakeWordByWord()
+await bakeArabicWords()
+await bakeSearchIndex()
 if (!quranOk) {
   console.warn('No quran static data produced — routes will fail to build if JSON files are missing')
   process.exit(1)

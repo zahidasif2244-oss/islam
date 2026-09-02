@@ -1,4 +1,4 @@
-import { createQuranClient, run, query } from '@/lib/db'
+import { createQuranClient, run } from '@/lib/db'
 
 const CREATE_BOOKS_SQL = `
 CREATE TABLE IF NOT EXISTS tbl_CustomBooks (

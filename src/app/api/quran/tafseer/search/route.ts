@@ -1,7 +1,20 @@
-import { createQuranClient, query, getText, decodeUrdu } from '@/lib/db'
 import { json, error } from '@/lib/api-utils'
 import { TAFSEER_COLUMNS, COL_IS_URDU } from '@/lib/constants'
 import tafseerTypes from '@/data/static/tafseer_types.json'
+
+let allAyahs: any[] | null = null
+
+function loadAllAyahs(): any[] {
+  if (allAyahs) return allAyahs
+  allAyahs = []
+  for (let sid = 1; sid <= 114; sid++) {
+    try {
+      const ayahs: any[] = require(`@/data/quran/surah-${sid}.json`)
+      allAyahs!.push(...ayahs)
+    } catch { continue }
+  }
+  return allAyahs!
+}
 
 function encodeUrdu(text: string): string {
   let result = ''
@@ -32,7 +45,7 @@ export async function GET(req: Request) {
 
   if (!q.trim()) return error('Search query required', 400)
 
-  const db = createQuranClient()
+  const ayahs = loadAllAyahs()
   const results: any[] = []
 
   let colInfo = type
@@ -46,42 +59,38 @@ export async function GET(req: Request) {
   const typedWords = q.trim().split(/\s+/).filter(Boolean).slice(0, 8)
   const phrase = typedWords.join(' ')
 
-  const columnResults = await Promise.all(colInfo.map(async ([col, label]) => {
+  for (const [col, label] of colInfo) {
     const isUrdu = COL_IS_URDU[col] || false
     const words = isUrdu ? typedWords.map(encodeUrdu) : typedWords
     const searchPhrase = isUrdu ? encodeUrdu(phrase) : phrase
 
-    const orConds = words.map(w => `"${col}" LIKE ?`)
-    const countExpr = words.map(w => `(CASE WHEN "${col}" LIKE ? THEN 1 ELSE 0 END)`).join(' + ')
-    const phraseCond = `"${col}" LIKE ?`
-
-    const sql = `SELECT surat_id, ayat_number, arabic, "${col}", (${countExpr}) AS match_count, (CASE WHEN ${phraseCond} THEN 1 ELSE 0 END) AS phrase_match FROM tbl_QuranComplete WHERE ${orConds.join(' OR ')} ORDER BY phrase_match DESC, match_count DESC, length("${col}") LIMIT 50`
-    const params = [
-      ...words.map(w => `%${w}%`),
-      `%${searchPhrase}%`,
-      ...words.map(w => `%${w}%`),
-    ]
-
-    const rows = await query(db, sql, params)
     const colResults: any[] = []
-    for (const r of rows) {
-      const text = r[col]
-      if (text === null || text === undefined) continue
+    for (const a of ayahs) {
+      const text = a[col]
+      if (!text) continue
+
+      let matchCount = 0
+      let phraseMatch = 0
+      for (const w of words) {
+        if (text.includes(w)) matchCount++
+      }
+      if (text.includes(searchPhrase)) phraseMatch = 1
+      if (!matchCount) continue
+
       colResults.push({
-        surah: r.surat_id, ayah: r.ayat_number,
-        arabic: getText(r.arabic || ''),
-        tafseer: isUrdu ? decodeUrdu(text) : getText(text),
+        surah: a.surat_id, ayah: a.ayat_number,
+        arabic: a.arabic || '',
+        tafseer: text,
         tafseer_type: col, tafseer_label: label,
         searchWords: typedWords,
-        match_count: Number(r.match_count) || 1,
+        match_count: matchCount,
         total_words: typedWords.length,
-        phrase_match: Number(r.phrase_match) || 0,
+        phrase_match: phraseMatch,
       })
     }
-    return colResults
-  }))
-
-  for (const colResults of columnResults) results.push(...colResults)
+    colResults.sort((a, b) => b.phrase_match - a.phrase_match || b.match_count - a.match_count || a.tafseer.length - b.tafseer.length)
+    results.push(...colResults.slice(0, 50))
+  }
 
   return json(results)
 }
