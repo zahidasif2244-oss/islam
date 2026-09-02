@@ -1,17 +1,5 @@
 import { json } from '@/lib/api-utils'
-
-const awordsCache = new Map<number, Record<number, any[]>>()
-
-function loadAWords(surah: number): Record<number, any[]> | null {
-  if (awordsCache.has(surah)) return awordsCache.get(surah)!
-  try {
-    const data = require(`@/data/quran/awords-${surah}.json`)
-    awordsCache.set(surah, data)
-    return data
-  } catch {
-    return null
-  }
-}
+import { loadAWords } from '@/lib/baked'
 
 export async function GET(req: Request) {
   const url = new URL(req.url)

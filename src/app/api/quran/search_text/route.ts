@@ -1,18 +1,7 @@
-import { normalizeArabicVariants } from '@/lib/arabic'
 import { json, error } from '@/lib/api-utils'
+import { loadSearchIndex } from '@/lib/baked'
+import { normalizeArabicVariants } from '@/lib/arabic'
 import { quranWords, arabicQuranMatches, encodeUrduPhrase } from '@/lib/quran-search'
-
-let searchIndex: any[] | null = null
-
-function loadSearchIndex(): any[] {
-  if (searchIndex) return searchIndex
-  try {
-    searchIndex = require('@/data/static/search-index.json')
-  } catch {
-    searchIndex = []
-  }
-  return searchIndex!
-}
 
 function decodeUrdu(text: string): string {
   if (!text) return ''

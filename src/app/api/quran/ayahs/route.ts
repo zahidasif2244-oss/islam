@@ -1,17 +1,5 @@
 import { json, error } from '@/lib/api-utils'
-
-const surahCache = new Map<number, any[]>()
-
-function loadSurah(id: number): any[] | null {
-  if (surahCache.has(id)) return surahCache.get(id)!
-  try {
-    const data = require(`@/data/quran/surah-${id}.json`)
-    surahCache.set(id, data)
-    return data
-  } catch {
-    return null
-  }
-}
+import { loadSurah } from '@/lib/baked'
 
 export async function GET(req: Request) {
   const url = new URL(req.url)

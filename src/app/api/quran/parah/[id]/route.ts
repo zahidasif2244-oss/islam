@@ -1,5 +1,6 @@
 import { json, error } from '@/lib/api-utils'
 import { COL_IS_URDU } from '@/lib/constants'
+import { loadSurah } from '@/lib/baked'
 import parahNames from '@/data/static/parah_names.json'
 
 const parahCache = new Map<number, any[]>()
@@ -11,14 +12,13 @@ function loadParahVerses(paraId: number): any[] | null {
 
   const verses: any[] = []
   for (let sid = info.start_surah; sid <= info.end_surah; sid++) {
-    try {
-      const ayahs: any[] = require(`@/data/quran/surah-${sid}.json`)
-      for (const a of ayahs) {
-        if (sid === info.start_surah && a.ayat_number < info.start_ayah) continue
-        if (sid === info.end_surah && a.ayat_number > info.end_ayah) continue
-        verses.push(a)
-      }
-    } catch { continue }
+    const ayahs = loadSurah(sid)
+    if (!ayahs) continue
+    for (const a of ayahs) {
+      if (sid === info.start_surah && a.ayat_number < info.start_ayah) continue
+      if (sid === info.end_surah && a.ayat_number > info.end_ayah) continue
+      verses.push(a)
+    }
   }
   parahCache.set(paraId, verses)
   return verses

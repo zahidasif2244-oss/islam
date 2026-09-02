@@ -1,18 +1,6 @@
-import { json, error, getColumnText } from '@/lib/api-utils'
+import { json, error } from '@/lib/api-utils'
 import { COL_IS_URDU } from '@/lib/constants'
-
-const surahCache = new Map<number, any[]>()
-
-function loadSurah(id: number): any[] | null {
-  if (surahCache.has(id)) return surahCache.get(id)!
-  try {
-    const data = require(`@/data/quran/surah-${id}.json`)
-    surahCache.set(id, data)
-    return data
-  } catch {
-    return null
-  }
-}
+import { loadSurah } from '@/lib/baked'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -37,12 +25,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       hindi: a.hindi_nazar || '',
     }
     if (needsTarjma && a[tarjma]) {
-      const val = a[tarjma]
-      v.tarjma_text = COL_IS_URDU[tarjma] ? val : String(val)
+      v.tarjma_text = COL_IS_URDU[tarjma] ? a[tarjma] : String(a[tarjma])
     }
     if (needsTafseer && a[tafseer]) {
-      const val = a[tafseer]
-      v.tafseer_text = COL_IS_URDU[tafseer] ? val : String(val)
+      v.tafseer_text = COL_IS_URDU[tafseer] ? a[tafseer] : String(a[tafseer])
     }
     verses.push(v)
   }

@@ -580,15 +580,29 @@ async function bakeSearchIndex() {
     FROM tbl_QuranComplete ORDER BY surat_id, ayat_number
   `)
 
+  const SKIP_RE = /[\u0610-\u061A\u0621\u0640\u064B-\u0670\u06D6-\u06ED\u0660-\u0669\u06F0-\u06F9\uFD3E\uFD3F\u06E5\u06E6]/
+  const CHAR_MAP = {
+    '\u0671': '\u0627', '\u0622': '\u0627', '\u0623': '\u0627', '\u0625': '\u0627',
+    '\u0624': '\u0648', '\u0626': '\u064A', '\u0649': '\u064A',
+    '\u0629': '\u0647', '\u06C3': '\u0647', '\u06C1': '\u0647', '\u06BE': '\u0647',
+    '\u06AA': '\u0643', '\u06A9': '\u0643', '\u06CC': '\u064A', '\u06D2': '\u064A',
+    '\u06BA': '\u0646', '\uFDF2': '\u0627\u0644\u0644\u0647',
+  }
+  const TA_MARBUTA = new Set(['\u0629', '\u06C3'])
+
   function normalizeArabic(text) {
-    return text
-      .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED\u0621]/g, '')
-      .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627')
-      .replace(/\u0629/g, '\u0647')
-      .replace(/[\u0649\u064A]/g, '\u064A')
-      .replace(/\u0643/g, '\u0643')
-      .replace(/\u0647/g, '\u0647')
-      .replace(/\u0624/g, '\u0648')
+    let norm = ''
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i]
+      if (SKIP_RE.test(ch)) {
+        if (ch === '\u0670') norm += '\u0627'
+        continue
+      }
+      if (ch === '\u0648' && TA_MARBUTA.has(text[i + 1] || '')) { norm += '\u0627'; continue }
+      const mapped = CHAR_MAP[ch] || ch
+      norm += mapped
+    }
+    return norm
   }
 
   const index = rows.map(r => {

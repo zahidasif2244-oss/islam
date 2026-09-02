@@ -1,18 +1,7 @@
+import { json, error } from '@/lib/api-utils'
+import { loadSearchIndex } from '@/lib/baked'
 import { normalizeArabicVariants } from '@/lib/arabic'
-import { json } from '@/lib/api-utils'
 import { quranWords, arabicQuranMatches, mergeQuranHits, encodeUrduPhrase } from '@/lib/quran-search'
-
-let searchIndex: any[] | null = null
-
-function loadSearchIndex(): any[] {
-  if (searchIndex) return searchIndex
-  try {
-    searchIndex = require('@/data/static/search-index.json')
-  } catch {
-    searchIndex = []
-  }
-  return searchIndex!
-}
 
 function decodeUrdu(text: string): string {
   if (!text) return ''
@@ -52,7 +41,6 @@ export async function GET(req: Request) {
   if (words.length === 0) return json([])
 
   const normPhrases = normalizeArabicVariants(phrase).map(v => v.text).filter(Boolean)
-
   const arabicRows = arabicQuranMatches(index, words, normPhrases)
 
   const phraseEnc = encodeUrduPhrase(phrase)

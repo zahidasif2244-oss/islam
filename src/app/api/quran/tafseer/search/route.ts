@@ -1,5 +1,6 @@
 import { json, error } from '@/lib/api-utils'
 import { TAFSEER_COLUMNS, COL_IS_URDU } from '@/lib/constants'
+import { loadSurah } from '@/lib/baked'
 import tafseerTypes from '@/data/static/tafseer_types.json'
 
 let allAyahs: any[] | null = null
@@ -8,10 +9,8 @@ function loadAllAyahs(): any[] {
   if (allAyahs) return allAyahs
   allAyahs = []
   for (let sid = 1; sid <= 114; sid++) {
-    try {
-      const ayahs: any[] = require(`@/data/quran/surah-${sid}.json`)
-      allAyahs!.push(...ayahs)
-    } catch { continue }
+    const ayahs = loadSurah(sid)
+    if (ayahs) allAyahs!.push(...ayahs)
   }
   return allAyahs!
 }
