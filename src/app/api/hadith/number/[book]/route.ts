@@ -1,36 +1,46 @@
-import { createHadithClient, query, getText, decodeUrdu } from '@/lib/db'
 import { json, error } from '@/lib/api-utils'
+import fs from 'fs'
+import path from 'path'
+
+const hadithCache = new Map<string, any>()
+
+function loadHadithBook(bookId: string): any | null {
+  if (hadithCache.has(bookId)) return hadithCache.get(bookId)
+  try {
+    const raw = fs.readFileSync(path.join(process.cwd(), 'src', 'data', 'hadith', `${bookId}.json`), 'utf-8')
+    const data = JSON.parse(raw)
+    hadithCache.set(bookId, data)
+    return data
+  } catch { return null }
+}
 
 export async function GET(req: Request, { params }: { params: Promise<{ book: string }> }) {
   const { book } = await params
   const q = new URL(req.url).searchParams.get('q') || ''
+  const qn = q.trim()
 
-  try {
-    const db = createHadithClient(book)
-    const qn = q.trim()
+  if (!qn) return json([])
 
-    if (!qn) return json([])
+  const bookData = loadHadithBook(book)
+  if (!bookData) return error('Book not found')
 
-    const rows = await query(db, `
-      SELECT h.hadees_number, h.arabic, h.international_number,
-             hl_ur.hadees as urdu_text, hl_en.hadees as english_text
-      FROM hadees h
-      LEFT JOIN hadees_languages hl_ur ON h.record_id = hl_ur.hadees_record_id AND hl_ur.language_id = 1
-      LEFT JOIN hadees_languages hl_en ON h.record_id = hl_en.hadees_record_id AND hl_en.language_id = 2
-      WHERE CAST(h.hadees_number AS TEXT) LIKE ? OR CAST(h.international_number AS TEXT) LIKE ?
-      ORDER BY (CASE WHEN CAST(h.hadees_number AS TEXT) = ? THEN 0 ELSE 1 END),
-               (CASE WHEN CAST(h.hadees_number AS TEXT) LIKE ? THEN 0 ELSE 1 END),
-               (CASE WHEN CAST(h.international_number AS TEXT) = ? THEN 0 ELSE 1 END),
-               CAST(h.hadees_number AS TEXT)
-      LIMIT 30
-    `, [`%${qn}%`, `%${qn}%`, qn, `${qn}%`, qn])
-
-    return json(rows.map(r => ({
-      number: r.hadees_number, international_number: r.international_number,
-      arabic: getText(r.arabic), urdu: decodeUrdu(r.urdu_text),
-      english: getText(r.english_text)
-    })), 200, 300)
-  } catch {
-    return error('Book not found')
+  const results: any[] = []
+  for (const h of bookData.hadiths) {
+    const numStr = String(h.number || '')
+    const intlStr = String(h.international_number || '')
+    if (numStr.includes(qn) || intlStr.includes(qn)) {
+      results.push({
+        number: h.number, international_number: h.international_number,
+        arabic: h.arabic, urdu: h.urdu, english: h.english,
+      })
+    }
   }
+
+  results.sort((a, b) => {
+    const aExact = String(a.number) === qn ? 0 : String(a.number).startsWith(qn) ? 1 : 2
+    const bExact = String(b.number) === qn ? 0 : String(b.number).startsWith(qn) ? 1 : 2
+    return aExact - bExact || a.number - b.number
+  })
+
+  return json(results.slice(0, 30), 200, 300)
 }

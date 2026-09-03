@@ -1,7 +1,19 @@
-import { createHadithClient, query, getText, decodeUrdu } from '@/lib/db'
 import { json, error } from '@/lib/api-utils'
 import { BOOK_NAMES } from '@/lib/constants'
-import hadithBooks from '@/data/static/hadith_books.json'
+import fs from 'fs'
+import path from 'path'
+
+const hadithCache = new Map<string, any>()
+
+function loadHadithBook(bookId: string): any | null {
+  if (hadithCache.has(bookId)) return hadithCache.get(bookId)
+  try {
+    const raw = fs.readFileSync(path.join(process.cwd(), 'src', 'data', 'hadith', `${bookId}.json`), 'utf-8')
+    const data = JSON.parse(raw)
+    hadithCache.set(bookId, data)
+    return data
+  } catch { return null }
+}
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -10,33 +22,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const perPage = 20
   const offset = (page - 1) * perPage
 
-  try {
-    const db = createHadithClient(id)
-    const bakedEntry = (hadithBooks as any[]).find(b => b.id === id)
-    const total = bakedEntry?.count || 0
+  const book = loadHadithBook(id)
+  if (!book) return error('Book not found')
 
-    const rows = await query(db, `
-      SELECT h.hadees_number, h.arabic, h.international_number,
-             hl_ur.hadees as urdu_text, hl_ur.ravi as urdu_ravi,
-             hl_en.hadees as english_text, hl_en.ravi as english_ravi
-      FROM hadees h
-      LEFT JOIN hadees_languages hl_ur ON h.record_id = hl_ur.hadees_record_id AND hl_ur.language_id = 1
-      LEFT JOIN hadees_languages hl_en ON h.record_id = hl_en.hadees_record_id AND hl_en.language_id = 2
-      ORDER BY h.hadees_number LIMIT ? OFFSET ?
-    `, [perPage, offset])
-
-    const hadiths = rows.map(r => ({
-      number: r.hadees_number, international_number: r.international_number,
-      arabic: getText(r.arabic), urdu: decodeUrdu(r.urdu_text),
-      urdu_ravi: decodeUrdu(r.urdu_ravi), english: getText(r.english_text),
-      english_ravi: getText(r.english_ravi)
-    }))
-
-    return json({
-      hadiths, total, page, pages: Math.ceil(total / perPage),
-      name: BOOK_NAMES[id] || id
-    }, 200, 86400)
-  } catch {
-    return error('Book not found')
-  }
+  const hadiths = book.hadiths.slice(offset, offset + perPage)
+  return json({
+    hadiths, total: book.total, page, pages: Math.ceil(book.total / perPage),
+    name: BOOK_NAMES[id] || id
+  }, 200, 86400)
 }

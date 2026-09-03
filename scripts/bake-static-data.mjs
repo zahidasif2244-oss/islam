@@ -648,9 +648,74 @@ async function bakeSearchIndex() {
   return true
 }
 
+const HADITH_OUT_DIR = path.join(__dirname, '..', 'src', 'data', 'hadith')
+
+function writeHadithBook(bookId, data) {
+  fs.mkdirSync(HADITH_OUT_DIR, { recursive: true })
+  const filePath = path.join(HADITH_OUT_DIR, `${bookId}.json`)
+  fs.writeFileSync(filePath, JSON.stringify(data))
+  const size = (fs.statSync(filePath).size / 1024 / 1024).toFixed(2)
+  console.log(`  hadith/${bookId}.json: ${size} MB (${data.hadiths?.length || 0} hadiths)`)
+}
+
+async function bakeHadithContent() {
+  console.log('Baking hadith content...')
+  let totalHadiths = 0
+
+  for (const [key, name] of Object.entries(BOOK_NAMES)) {
+    const dbUrl = process.env[`TURSO_HADITH_${key.toUpperCase()}_DB_URL`]
+    const dbToken = process.env[`TURSO_HADITH_${key.toUpperCase()}_DB_TOKEN`]
+
+    let src = await openLocal(path.join(LOCAL_HADITH_DIR, `${key}.db`))
+    if (!src) src = await openTurso(dbUrl, dbToken)
+    if (!src) { console.warn(`  ${key}: no source available, skipping`); continue }
+
+    try {
+      const countRows = await src.query('SELECT COUNT(*) as cnt FROM hadees')
+      const total = countRows.length ? Number(countRows[0].cnt) : 0
+
+      const perPage = 50
+      const totalPages = Math.ceil(total / perPage)
+      const hadiths = []
+
+      for (let page = 0; page < totalPages; page++) {
+        const rows = await src.query(`
+          SELECT h.hadees_number, h.arabic, h.international_number,
+                 hl_ur.hadees as urdu_text, hl_ur.ravi as urdu_ravi,
+                 hl_en.hadees as english_text, hl_en.ravi as english_ravi
+          FROM hadees h
+          LEFT JOIN hadees_languages hl_ur ON h.record_id = hl_ur.hadees_record_id AND hl_ur.language_id = 1
+          LEFT JOIN hadees_languages hl_en ON h.record_id = hl_en.hadees_record_id AND hl_en.language_id = 2
+          ORDER BY h.hadees_number LIMIT ${perPage} OFFSET ${page * perPage}
+        `)
+
+        for (const r of rows) {
+          hadiths.push({
+            number: r.hadees_number,
+            international_number: r.international_number,
+            arabic: getText(r.arabic),
+            urdu: decodeUrduText(r.urdu_text),
+            urdu_ravi: decodeUrduText(r.urdu_ravi),
+            english: getText(r.english_text),
+            english_ravi: getText(r.english_ravi),
+          })
+        }
+      }
+
+      writeHadithBook(key, { id: key, name, total, hadiths })
+      totalHadiths += hadiths.length
+    } catch (e) {
+      console.warn(`  ${key} bake failed:`, e.message)
+    }
+  }
+
+  console.log(`Hadith content: ${totalHadiths} total hadiths baked`)
+}
+
 loadEnv()
 const quranOk = await bakeQuran()
 await bakeHadithBooks()
+await bakeHadithContent()
 await bakeDuas()
 await bakeSurahs()
 await bakeWordByWord()

@@ -4,6 +4,10 @@ import { listCustomBooks, bookKey, listHiddenKeys } from '@/lib/custom-books'
 
 export const dynamic = 'force-dynamic'
 
+let cachedResult: any[] | null = null
+let cacheTime = 0
+const CACHE_TTL = 60_000
+
 export interface BookItem {
   title: string
   author: string
@@ -19,9 +23,21 @@ export interface BookItem {
 }
 
 export async function GET() {
+  if (cachedResult && Date.now() - cacheTime < CACHE_TTL) {
+    return NextResponse.json(cachedResult, {
+      headers: { 'content-type': 'application/json', 'cache-control': 'public, s-maxage=60, max-age=60' },
+    })
+  }
+
   const baked: any[] = (booksData as any[]).map(b => ({ ...b, source: b.source || 'Dawaateislami' }))
-  const custom = await listCustomBooks()
-  const hidden = await listHiddenKeys()
+  let custom: any[] = []
+  let hidden = new Map<string, string>()
+  try {
+    custom = await listCustomBooks()
+  } catch {}
+  try {
+    hidden = await listHiddenKeys()
+  } catch {}
 
   const bakedByKey = new Map<string, any>()
   for (const b of baked) {
@@ -53,7 +69,10 @@ export async function GET() {
     merged.push({ ...c, source: 'Custom' })
   }
 
+  cachedResult = merged
+  cacheTime = Date.now()
+
   return NextResponse.json(merged, {
-    headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+    headers: { 'content-type': 'application/json', 'cache-control': 'public, s-maxage=60, max-age=60' },
   })
 }
