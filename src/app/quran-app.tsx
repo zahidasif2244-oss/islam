@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, createContext, useContext } from 'react'
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react'
 import { arabicSnippet } from '@/lib/arabic'
 
 type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about' | 'books'
@@ -24,6 +24,19 @@ async function api(path: string, init?: RequestInit) {
   const res = await fetch(`${API}/api${path}`, init)
   if (!res.ok) throw new Error('API error')
   return res.json()
+}
+
+// Whole-surah tafseer cache (module-level, survives tab switches/remounts).
+// Keyed by `${surah}:${tafseerColumn}`. Fetch happens ONCE per key.
+const tafseerFetchCache = new Map<string, Promise<Record<string, string>>>()
+function fetchSurahTafseer(sid: number, col: string): Promise<Record<string, string>> {
+  const key = sid + ':' + col
+  let p = tafseerFetchCache.get(key)
+  if (!p) {
+    p = api(`/quran/tafseer/surah/${sid}?type=${encodeURIComponent(col)}`).catch(() => ({}))
+    tafseerFetchCache.set(key, p)
+  }
+  return p
 }
 
 const SettingsCtx = createContext<any>(null)
@@ -330,6 +343,8 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
   const [showEnglish, setShowEnglish] = useState(false)
   const [showHindi, setShowHindi] = useState(false)
   const [showTafseer, setShowTafseer] = useState(false)
+  const [tafseerMap, setTafseerMap] = useState<Record<string, string> | null>(null)
+  const prefetched = useRef<Set<string>>(new Set())
   const { tarjma, tafseer, tarjmaList, tafseerList, showTab } = useSettings()
 
   const [surahBms, setSurahBms] = useState<number[]>([])
@@ -369,7 +384,7 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
     setView('browse')
     setBrowseId(id)
     setBrowseKind('surah')
-    const url = `/quran/surah/${id}?tarjma=${encodeURIComponent(tarjma)}${tafseer ? `&tafseer=${encodeURIComponent(tafseer)}` : ''}`
+    const url = `/quran/surah/${id}?tarjma=${encodeURIComponent(tarjma)}`
     api(url).then(data => {
       setVerses(data)
       if (scrollAyah !== undefined) {
@@ -377,6 +392,9 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
           document.getElementById(`ayah-${scrollAyah}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }, 200)
       }
+      // Prefetch the next surah so back/forward navigation is instant.
+
+      preloadSurah(id + 1)
     })
   }
 
@@ -384,8 +402,17 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
     setView('browse')
     setBrowseId(id)
     setBrowseKind('parah')
-    const url = `/quran/parah/${id}?tarjma=${encodeURIComponent(tarjma)}${tafseer ? `&tafseer=${encodeURIComponent(tafseer)}` : ''}`
+    const url = `/quran/parah/${id}?tarjma=${encodeURIComponent(tarjma)}`
     api(url).then(data => { setVerses(data); setView('browse') })
+  }
+
+  // Warm the browser/edge cache for a surah in the background (no parse, fire-and-forget) .
+  function preloadSurah(id: number) {
+    if (id < 1 || id > 114 || !tarjma) return
+    const url = `/api/quran/surah/${id}?tarjma=${encodeURIComponent(tarjma)}`
+    if (prefetched.current.has(url)) return
+    prefetched.current.add(url)
+    fetch(url, { priority: 'low' }).catch(() => {})
   }
 
   const tarjmaLabel = tarjmaList.find((t: any) => t.key === tarjma)?.label || 'Tarjma'
@@ -396,7 +423,42 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
     if (browseKind === 'parah') loadParah(browseId)
     else loadVerses(browseId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tarjma, tafseer])
+  }, [tarjma])
+
+  // Prefetch the most likely first surahs during idle so the very first click is a cache HIT.
+  useEffect(() => {
+    if (!tarjma) return
+    const t = setTimeout(() => {
+      preloadSurah(1)
+      preloadSurah(2)
+    }, 1800)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tarjma])
+
+  // Lazy whole-surah tafseer for the browse view — fetched only when the user
+  // turns the "Tafseer" toggle on (and cached forever in-memory afterward).
+  useEffect(() => {
+    if (view !== 'browse' || !showTafseer || !tafseer) { setTafseerMap(null); return }
+    let cancelled = false
+    setTafseerMap(null)
+    const surahIds: number[] = []
+    if (browseKind === 'parah') {
+      const info = parahNames.find((p: any) => p.id === browseId)
+      if (info) { for (let sid = info.start_surah; sid <= info.end_surah; sid++) surahIds.push(sid) }
+    } else {
+      surahIds.push(browseId)
+    }
+    if (!surahIds.length) return
+    Promise.all(surahIds.map(sid => fetchSurahTafseer(sid, tafseer))).then(parts => {
+      if (cancelled) return
+      const merged: Record<string, string> = {}
+      for (const part of parts) Object.assign(merged, part)
+      setTafseerMap(merged)
+    }).catch(() => { if (!cancelled) setTafseerMap({}) })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, browseKind, browseId, showTafseer, tafseer])
 
   if (view === 'browse') {
     return (
@@ -431,6 +493,7 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
           </div>
         </div>
         <div id="quranVerses">
+          {showTafseer && tafseer && !tafseerMap && <div className="text-xs text-[#b8860b] mb-2">Loading {tafseerLabel}…</div>}
           {verses.map(v => (
             <div key={v.id} className="quran-ayah" id={`ayah-${v.ayah}`}>
               <div className="flex flex-wrap items-center gap-1.5 mb-2">
@@ -449,7 +512,7 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
               {showTarjma && <div className="translation urdu">{v.tarjma_text || v.urdu || v.english}</div>}
               {showEnglish && v.english && <div className="translation english">{v.english}</div>}
               {showHindi && v.hindi && <div className="translation hindi">{v.hindi}</div>}
-              {showTafseer && v.tafseer_text && <div className="translation urdu" style={{ background: '#fffde7', padding: '6px 8px', borderRadius: 6, marginTop: 6, borderLeft: '3px solid #e8b840', whiteSpace: 'pre-wrap' }}>{v.tafseer_text}</div>}
+              {showTafseer && tafseerMap && tafseerMap[v.ayah] && <div className="translation urdu" style={{ background: '#fffde7', padding: '6px 8px', borderRadius: 6, marginTop: 6, borderLeft: '3px solid #e8b840', whiteSpace: 'pre-wrap' }}>{tafseerMap[v.ayah]}</div>}
             </div>
           ))}
         </div>
@@ -470,7 +533,10 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
       {view === 'surahs' && (
         <div className="grid gap-1">
           {surahNames.map((s: any) => (
-            <div key={s.id} className="list-card flex items-center">
+            <div key={s.id} className="list-card flex items-center"
+              onMouseEnter={() => preloadSurah(s.id)}
+              onFocus={() => preloadSurah(s.id)}
+              onTouchStart={() => preloadSurah(s.id)}>
               <div className="flex-1 cursor-pointer" onClick={() => loadVerses(s.id)}>
                 <div className="list-name flex items-center gap-2 sm:gap-3">
                   <span className="bg-[#1a5c3a] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shrink-0">{s.id}</span>
@@ -506,8 +572,11 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
             const s = surahNames.find((n: any) => n.id === id)
             if (!s) return null
             return (
-              <div key={id} className="list-card flex items-center">
-                <div className="flex-1 cursor-pointer" onClick={() => loadVerses(s.id)}>
+              <div key={id} className="list-card flex items-center"
+              onMouseEnter={() => preloadSurah(s.id)}
+              onFocus={() => preloadSurah(s.id)}
+              onTouchStart={() => preloadSurah(s.id)}>
+              <div className="flex-1 cursor-pointer" onClick={() => loadVerses(s.id)}>
                   <div className="list-name flex items-center gap-2 sm:gap-3">
                     <span className="bg-[#1a5c3a] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs shrink-0">{s.id}</span>
                     <span className="font-arabic text-lg sm:text-[22px] text-[#1a3a1a]">{s.arabic}</span>
