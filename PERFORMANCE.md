@@ -132,27 +132,50 @@ Resulting bundle sizes:
 
 ---
 
-## 3. Results (local production build, headless Chrome, 390×844 viewport)
+## 3. Results — measured on the **live** site (headless Chrome, 390×844, from Karachi)
 
-| Interaction | Before | After |
+| Interaction | Before (live, old deployment) | After (live, current deployment) |
 |---|---|---|
-| First load (HTML + JS + font) | 30–60 s on mobile data | **9.3 KB HTML + 213 KB JS/CSS + 70 KB font** |
-| Open Surah 1 | 4.6 – 25 s | **163 ms** |
-| Open Al-Baqarah (287 ayahs) | 24 s – 166 s | **351 – 625 ms** |
-| Duas tab | 0.4 – 0.6 s | **146 ms** |
-| Books tab (2,471 books) | 45 s timeout | **642 ms** |
-| Hadith tab | 2 – 20 s | **229 ms** |
-| Word-by-word | 11 – 90 s | **539 ms** |
-| Quran search (first / next) | 54 s / timeout | **1.4 s / instant** |
-| Tafseer search (first / next) | 20 s + | **1.5 s / instant** |
+| Page load (HTML + JS + font) | 30–60 s on mobile data | **3.4 s** cold, instant on repeat |
+| Open Surah 1 | 4.6 – 25 s | **0.53 s** |
+| Open Al-Baqarah (287 ayahs) | 24 s – 166 s, often no response | **0.34 s** |
+| Books tab (2,471 books) | **60 s+ / timeout** | **0.55 s** |
+| Duas tab | 0.4 – 0.6 s | **0.42 s** |
+| Hadith tab | 2 – 20 s | **1.34 s** (cold function) |
+| Word-by-word | 11 – 90 s | **0.79 s** |
+| Quran search (first / next) | 54 s / timeout | **2.2 s / instant** |
+| Tafseer search (first / next) | 20 s + | **2.2 s / instant** |
 
-Verified with `node scripts/smoke-test.mjs` — it clicks through every tab and
-reports **0 console errors, 0 failed requests**.
+Verified with `node scripts/smoke-test.mjs https://islam-pearl-zeta.vercel.app`
+— it clicks through every tab on the real deployment and reports **0 console
+errors, 0 failed requests**.
 
-> The numbers above are from a local server, so they exclude Vercel cold start
-> and the ~250 ms Karachi→Mumbai RTT. What matters for the deployed site is the
-> bundle table in §2.3: an 11–55 MB function starts in a few hundred ms, a
-> 475 MB one does not start at all.
+Earlier local-build numbers (before the deploy/tafseer/books fixes) were
+163 ms for a surah and 642 ms for Books; the live numbers above are the ones
+that matter and include real cold starts and the Karachi→Mumbai RTT.
+
+---
+
+## 3.1 Why the first push did not change the live site
+
+The rewrite was committed and pushed at 10:53, yet the site kept serving the old
+(60-second) build. A failed Vercel build **does not take the site down** — it
+keeps the previous deployment serving traffic, so everything looks normal.
+
+The build was failing on `scripts/bake-static-data.mjs`: that step talks to
+Turso, and when the database is unreachable it called `process.exit(1)`.
+Deployment builds no longer touch the database at all:
+
+```
+build       = build-books-data -> export-static-data -> next build   (no DB, no network)
+build:full  = static:sync -> export-static-data -> next build        (local refresh)
+```
+
+Always confirm a deploy actually shipped before believing a fix:
+
+```bash
+curl -sI https://islam-pearl-zeta.vercel.app/data/quran/2/ar.json | head -1   # 200 = live
+```
 
 ---
 

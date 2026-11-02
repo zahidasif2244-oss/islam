@@ -494,3 +494,22 @@ Before fixes: ~1,700 visitors caused exhaustion (300k reads/visitor). After: ~10
 **Verified** (`node scripts/smoke-test.mjs`, headless Chrome, prod build): home 436 ms; Surah 1 **163 ms**; Al-Baqarah 287 ayahs **351–625 ms**; Duas 146 ms; Books 642 ms; Hadith 229 ms; word-by-word 539 ms; Quran search 1.4 s first / instant after; Tafseer search 1.5 s first / instant after; **0 console errors, 0 failed requests**. `npx tsc --noEmit` clean; `npm run build` clean.
 
 **Files:** `PERFORMANCE.md` (full write-up), `scripts/{export-static-data,gen-hadith-routes,build-font-charset,smoke-test}.mjs`, `src/lib/{quran-static,hadith-handler}.ts`, `src/lib/hadith-data/*`, `public/fonts/noto-nastaliq-urdu.woff2`, `vercel.json`, `next.config.js`, `package.json`, `.gitignore` (`public/data/` is generated), `src/app/{layout,globals.css,quran-app.tsx}`.
+### 32. Live Still Slow After the Rewrite — The Deploy Was Failing, Not the Code
+
+**Symptom (user, after #31):** clicking any surah still took ~60 s, Books tab 60 s+.
+
+**Diagnosis:** the rewrite was committed (cc2b4fd) but the live site still served the old build — `/data/quran/2/ar.json` returned **404** and `alvi_nastaleeq.woff2` (5.2 MB) was still being served. Vercel keeps the last successful deployment live when a build fails, so nothing looked broken.
+
+**Root cause:** `scripts/bake-static-data.mjs` (part of `npm run build`) needs the Turso database and called `process.exit(1)` when it could not reach it — so the deployment build failed every time.
+
+**Fixes:**
+- `build` no longer touches the database: `build-books-data -> export-static-data -> next build`; `build:full` (local only) runs the DB bake.
+- `bake-static-data.mjs` falls back to the committed `src/data` corpus instead of exiting non-zero; `export-static-data.mjs` fails loudly only if `src/data` is missing.
+- Verified with a **clean-room** copy (no `.env.local`, no database, no `public/data`): `npm ci && npm run build` → exit 0, 2,768 static files generated.
+- `vercel.json` `regions: ["bom1"]` now active — `x-vercel-id: bom1::bom1` (functions were in US-East).
+- Tafseer search: fetch all 114 per-surah files in parallel, share one in-flight load, and pre-warm the column when the Tafseer tab opens (cold search 6.0 s → 2.2 s).
+- Books: catalogue + admin overlay fetched in parallel, overlay prefetched on app load (1.3 s → 0.55 s).
+
+**Verified live (headless Chrome):** Surah 1 **0.53 s**, Al-Baqarah **0.34 s**, Books **0.55 s**, Duas **0.42 s**, Hadith **1.34 s**, word-by-word **0.79 s**, Quran search 2.2 s first, tafseer search 2.2 s first — 0 console errors, 0 failed requests.
+
+**Lesson:** after every deploy, check that it actually shipped — `curl -sI <site>/data/quran/2/ar.json` must return 200. A failed build silently keeps the old site.
