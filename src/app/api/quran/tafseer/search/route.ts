@@ -13,6 +13,7 @@ import { TAFSEER_COLUMNS } from '@/lib/constants'
 type SurahTafseer = Record<string, string>
 
 let cache: { type: string; data: Map<number, SurahTafseer> } | null = null
+let inFlight: { type: string; promise: Promise<Map<number, SurahTafseer>> } | null = null
 
 async function fetchJson<T>(req: Request, path: string): Promise<T | null> {
   try {
@@ -24,8 +25,7 @@ async function fetchJson<T>(req: Request, path: string): Promise<T | null> {
   }
 }
 
-async function loadColumn(req: Request, type: string): Promise<Map<number, SurahTafseer>> {
-  if (cache && cache.type === type) return cache.data
+async function fetchColumn(req: Request, type: string): Promise<Map<number, SurahTafseer>> {
   const data = new Map<number, SurahTafseer>()
   // Fetch all 114 surah files in parallel: they are small, edge-cached JSON
   // files and the whole column is only ~7 MB. Batching them serially cost ~6 s
@@ -41,6 +41,18 @@ async function loadColumn(req: Request, type: string): Promise<Map<number, Surah
   return data
 }
 
+function loadColumn(req: Request, type: string): Promise<Map<number, SurahTafseer>> {
+  if (cache && cache.type === type) return Promise.resolve(cache.data)
+  // The tab warm-up and the first keystroke can arrive together — share one
+  // download instead of fetching the 114 files twice.
+  if (inFlight && inFlight.type === type) return inFlight.promise
+  const promise = fetchColumn(req, type).finally(() => {
+    if (inFlight && inFlight.promise === promise) inFlight = null
+  })
+  inFlight = { type, promise }
+  return promise
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const q = url.searchParams.get('q') || ''
@@ -53,10 +65,11 @@ export async function GET(req: Request) {
   const label = colInfo[1]
 
   // Warm-up: the Tafseer tab calls this as soon as it opens so the corpus is
-  // already in memory by the time the user finishes typing.
+  // already in memory by the time the user finishes typing. It must never be
+  // edge-cached — a cached "ready" would leave the next instance cold.
   if (warm) {
     const warmed = await loadColumn(req, type)
-    return json({ ready: warmed.size }, 200, 60)
+    return json({ ready: warmed.size }, 200, 0)
   }
 
   if (!q.trim()) return error('Search query required', 400)
