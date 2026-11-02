@@ -29,3 +29,6 @@ tsconfig.tsbuildinfo
 
 # generated static corpus (npm run data:export / build)
 public/data/
+
+# local test artifacts
+screenshots/

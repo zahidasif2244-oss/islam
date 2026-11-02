@@ -159,11 +159,22 @@ reports **0 console errors, 0 failed requests**.
 ## 4. Maintaining it
 
 ```bash
-npm run data:export     # regenerate public/data from src/data (also runs in build)
-npm run static:sync     # re-bake src/data/static/* from the database
+npm run data:export     # regenerate public/data from src/data (part of build)
+npm run static:sync     # refresh src/data from the database (developer machine only)
+npm run build:full      # static:sync + data:export + next build (local refresh)
 npm run hadith:routes   # regenerate the 17 per-book hadith loaders + routes
-npm run build           # books sync -> static bake -> data export -> next build
+npm run build           # what Vercel runs: books sync -> data export -> next build
 ```
+
+**The deployment build never touches the database.** `src/data/**` is committed
+and is the source of truth for Vercel; `npm run build` only reshapes it into
+`public/data`. Refreshing the corpus from Turso is a separate, deliberate step
+(`npm run static:sync` / `npm run build:full`) that you run locally and commit.
+
+This matters: the build used to run the database bake in CI, and when the
+database was unreachable that step exited non-zero. Vercel then **kept the
+previous deployment live**, so the site silently stayed on old code even though
+the commit was on GitHub.
 
 * `public/data/` is **generated and git-ignored** — never commit it.
 * `public/fonts/noto-nastaliq-urdu.woff2` **must be committed** (it is the app font).
@@ -171,22 +182,36 @@ npm run build           # books sync -> static bake -> data export -> next build
   `BOOK_NAMES` in `src/lib/constants.ts`, run `npm run hadith:routes`.
 * When adding a translation/tafseer column: add it to the list at the top of
   `scripts/export-static-data.mjs` (and `src/lib/constants.ts`), then rebuild.
-* Deployment is unchanged: push to GitHub → Vercel builds → the static corpus is
-  produced during the build and uploaded to the CDN.
+* Deployment: push to GitHub → Vercel builds → `public/data` is produced during
+  the build and uploaded to the CDN. **Verify the deploy actually shipped** —
+  see §5; a failed build leaves the old deployment serving traffic.
 
 ---
 
 ## 5. Verify the deployment
 
+### 5.1 Did the new code actually ship?
+
+A failed Vercel build keeps the **previous** deployment serving traffic, so the
+site looks unchanged and nobody notices. One request settles it:
+
 ```bash
-# functions now run in Mumbai (bom1::bom1, not bom1::iad1)
+curl -sI https://islam-pearl-zeta.vercel.app/data/quran/2/ar.json | head -1
+# 200 → new build is live
+# 404 → Vercel is still serving the old deployment (rebuild required)
+```
+
+### 5.2 Then check region + caching
+
+```bash
+# functions run in Mumbai now (bom1::bom1, not bom1::iad1)
 curl -sI https://islam-pearl-zeta.vercel.app/api/hadith/bukhari?action=page | grep -i x-vercel-id
 
 # corpus is immutable and CDN-cached
 curl -sI https://islam-pearl-zeta.vercel.app/data/quran/2/ar.json | grep -iE 'cache-control|x-vercel-cache'
 # → cache-control: public, max-age=31536000, immutable
 
-# a surah is now ~47 KB gzipped and served without a function
+# Al-Baqarah Arabic is ~25 KB gzipped and served with no function
 curl -s --compressed -o /dev/null -w '%{size_download} bytes\n' \
   https://islam-pearl-zeta.vercel.app/data/quran/2/ar.json
 ```

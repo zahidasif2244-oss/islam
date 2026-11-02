@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/export-static-data.mjs --if-missing && next dev",
-    "build": "node scripts/build-books-data.mjs && node scripts/bake-static-data.mjs && node scripts/export-static-data.mjs && next build",
+    "build": "node scripts/build-books-data.mjs && node scripts/export-static-data.mjs && next build",
+    "build:full": "node scripts/build-books-data.mjs && node scripts/bake-static-data.mjs && node scripts/export-static-data.mjs && next build",
     "books:sync": "node scripts/build-books-data.mjs",
     "static:sync": "node scripts/bake-static-data.mjs",
     "data:export": "node scripts/export-static-data.mjs",

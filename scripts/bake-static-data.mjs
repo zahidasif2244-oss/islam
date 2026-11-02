@@ -722,6 +722,14 @@ await bakeWordByWord()
 await bakeArabicWords()
 await bakeSearchIndex()
 if (!quranOk) {
-  console.warn('No quran static data produced — routes will fail to build if JSON files are missing')
+  // A deployment must never fail because a database is unreachable. The
+  // committed src/data corpus is the source of truth for CI/Vercel; the DB
+  // bake is a developer-machine refresh step (`npm run static:sync`).
+  const committed = path.join(__dirname, '..', 'src', 'data', 'quran', 'surah-1.json')
+  if (fs.existsSync(committed)) {
+    console.warn('[bake] no database available — keeping the committed src/data corpus')
+    process.exit(0)
+  }
+  console.error('[bake] no database and no committed corpus found')
   process.exit(1)
 }

@@ -70,6 +70,14 @@ function readJson(rel) {
 
 const isFilled = v => typeof v === 'string' && v.length > 0
 
+/* Fail early with a clear message if the committed corpus is missing — a
+ * deployment that silently ships an empty /data folder is worse than a
+ * failed build. */
+if (!fs.existsSync(path.join(SRC, 'quran', 'surah-1.json'))) {
+  console.error('[static-data] src/data/quran/surah-*.json is missing — cannot build the static corpus')
+  process.exit(1)
+}
+
 /* ------------------------------------------------------------------ */
 /* Quran: one folder per surah                                         */
 /*   {id}/ar.json          { p: para[], y: ayah[], s: surah[], a: arabic[] }
