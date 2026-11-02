@@ -32,3 +32,6 @@ public/data/
 
 # local test artifacts
 screenshots/
+
+# smoke-test output
+*-smoke.json
