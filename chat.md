@@ -513,3 +513,22 @@ Before fixes: ~1,700 visitors caused exhaustion (300k reads/visitor). After: ~10
 **Verified live (headless Chrome):** Surah 1 **0.53 s**, Al-Baqarah **0.34 s**, Books **0.55 s**, Duas **0.42 s**, Hadith **1.34 s**, word-by-word **0.79 s**, Quran search 2.2 s first, tafseer search 2.2 s first — 0 console errors, 0 failed requests.
 
 **Lesson:** after every deploy, check that it actually shipped — `curl -sI <site>/data/quran/2/ar.json` must return 200. A failed build silently keeps the old site.
+### 33. Translation / Tafseer Selection Did Nothing + English & Hindi Toggles Empty
+
+**Symptom (user):** changing the Tarjma in Settings had no effect on the reading view; ticking **English** or **Hindi** in the surah toolbar showed nothing.
+
+**Three separate bugs:**
+
+1. **English / Hindi toggles** — `getVerses()` only fetched the selected translation, so `v.english` and `v.hindi` were always `''` (the toolbars rendered nothing). Both columns are now fetched in the same parallel round trip.
+
+2. **Most translations were empty in the corpus.** 12 of the 23 translations and 4 of the 11 tafseers had no text in the committed `src/data/quran` (it was baked before those editions were imported in #27), so choosing one silently fell back to Urdu — which looks exactly like "the tarjma does not change". Refreshed `src/data/quran` from the database (`BAKE_ONLY=surahs`, ~+27 MB) and `export-static-data.mjs` now recomputes each edition's `count` as the number of ayahs that actually have text, so the dropdowns only offer what exists (23/23 translations, 11/11 tafseers).
+
+3. **Hindi was being destroyed by the Urdu decoder.** `hindi_nazar` was in the bake's `URDU_COLS` set, so `decodeUrdu()` stripped every Devanagari character and the line rendered as `[1][2][3],`. It is plain text and is no longer decoded.
+
+**Data corrections found while verifying:**
+- The 14 editions imported from api.quran.com count the basmalah as verse 1, so **Al-Fatiha** showed every verse one row late. The bake now shifts those columns for surah 1.
+- The bake's Turso client was closed after every query (`UNKNOWN: Client is closed`), and a single 6,349-row × 45-column response exceeded Turso's memory limit (`Resource exhausted: mem_hrana_response`). The client now stays open for the whole bake and rows are fetched in 6-surah chunks. New `BAKE_ONLY=surahs` refreshes only the Quran corpus (`BAKE_ONLY=surahs LOCAL_QURAN_DB=<missing> npm run static:sync` forces the remote source).
+
+**Verified live** (`scripts/check-translations.mjs`): 23 translation options, selecting *Tahir-ul-Qadri* changes the text, *Bengali* renders Bengali, English toggle shows the English line, Hindi toggle shows Devanagari — 0 console errors. Full smoke test unchanged: home 0.6 s, Al-Fatiha 0.16 s, Al-Baqarah 0.61 s, Books 0.64 s.
+
+**Note:** the generated corpus grew from 161 MB to ~245 MB because 12 translations and 4 tafseers of real text are now shipped.

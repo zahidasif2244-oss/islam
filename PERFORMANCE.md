@@ -81,8 +81,16 @@ public/data/quran/awords/<surah>.json      arabic word analysis
 public/data/static/*.json                  surahs, parahs, topics, duas, books, search index…
 ```
 
-2,768 files / ~160 MB on disk — served by Vercel's CDN, **zero function invocations**,
-`max-age=31536000, immutable` for the Quran corpus.
+`translations.json` / `tafseer_types.json` are rewritten with a real `count` =
+number of ayahs that actually carry text. The database count is a row count
+(6,349 for every edition), so the settings dropdown used to offer editions that
+were never imported; those silently fell back to Urdu. Anything with `count = 0`
+is now hidden, which is why the lists read 23/23 translations and 11/11
+tafseers rather than 23 options of which 12 do nothing.
+
+5,240 files / ~245 MB on disk — served by Vercel's CDN, **zero function invocations**,
+`max-age=31536000, immutable` for the Quran corpus. (It was ~160 MB until the
+missing translations and tafseers were re-baked into `src/data`.)
 
 The client reads them through `src/lib/quran-static.ts`, whose return shapes are
 identical to the old API, so almost no component code had to change. The
