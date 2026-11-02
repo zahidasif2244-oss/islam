@@ -144,12 +144,14 @@ async function openTurso(url, token) {
   const { createClient } = await import('@libsql/client')
   const client = createClient({ url, authToken: token })
   return {
-    query: async (sql) => {
+    remote: true,
+    // The client must stay open for the whole bake: closing it after every
+    // query broke multi-query bakes ("UNKNOWN: Client is closed").
+    query: async (sql) => (await client.execute(sql)).rows,
+    close: async () => {
       try {
-        return (await client.execute(sql)).rows
-      } finally {
         await client.close()
-      }
+      } catch {}
     },
   }
 }
@@ -423,8 +425,11 @@ const TAFSEER_COLUMNS_BAKE = [
 ]
 
 const URDU_COLS = new Set([
+  // These columns are stored SHIFTED by 3 codepoints in the database and must
+  // be decoded. hindi_nazar is plain Devanagari and must NOT go through
+  // decodeUrduText — it silently stripped every Hindi character.
   'translation_urdu', 'aai', 'tq', 'najfi', 'botvi', 'moudoodi', 'k_iman',
-  'translation_mufti_taqi', 'hindi_nazar',
+  'translation_mufti_taqi',
   'tafseer_moudoodi', 'taqi_tafseer', 'tafseer_fizilal', 'tafseer_karam_shah',
   'tafseer_tadabbar_ul_quran', 'tafseer_ahsan_ul_bayan',
   'tafseer_al_burhan_bil_quran', 'tafseer_wahiduddin_khan', 'tafseer_abdul_salam',
@@ -437,7 +442,25 @@ async function bakeSurahs() {
 
   const allCols = [...SURAH_COLUMNS, ...TAFSEER_COLUMNS_BAKE]
   const cols = allCols.map(c => `"${c}"`).join(', ')
-  const rows = await src.query(`SELECT ${cols} FROM tbl_QuranComplete ORDER BY surat_id, ayat_number`)
+
+  // A remote (Turso) response for all 6,349 ayahs x ~45 text columns is ~90 MB
+  // and Turso rejects it with "Resource exhausted: mem_hrana_response".
+  // Fetch a few surahs at a time instead; a local DB is fine in one query.
+  let rows
+  if (src.remote) {
+    rows = []
+    const CHUNK = 6
+    for (let start = 1; start <= 114; start += CHUNK) {
+      const end = Math.min(start + CHUNK - 1, 114)
+      const part = await src.query(
+        `SELECT ${cols} FROM tbl_QuranComplete WHERE surat_id BETWEEN ${start} AND ${end} ORDER BY surat_id, ayat_number`
+      )
+      rows.push(...part)
+      if (end % 30 === 0 || end === 114) console.log(`  fetched surahs ${start}-${end} (${rows.length} ayahs)`)
+    }
+  } else {
+    rows = await src.query(`SELECT ${cols} FROM tbl_QuranComplete ORDER BY surat_id, ayat_number`)
+  }
 
   const surahMap = new Map()
   const tafseerMap = new Map()
@@ -470,6 +493,30 @@ async function bakeSurahs() {
       }
     }
     tafseerMap.get(sid)[r.ayat_number] = tafseerObj
+  }
+
+  // Al-Fatiha alignment -------------------------------------------------
+  // api.quran.com counts the basmalah as verse 1, so the 14 editions imported
+  // from it land one row late in our 0-based fatiha table (row 0 = basmalah,
+  // 1 = alhamd, ...). Without this shift every verse of the most-read surah
+  // showed the previous verse's translation.
+  const IMPORTED_EDITIONS = [
+    'translation_saheeh_international', 'translation_yusuf_ali', 'translation_hilali_khan',
+    'translation_spanish_isa_garcia', 'translation_bengali', 'translation_tamil',
+    'translation_french', 'translation_german', 'translation_turkish',
+    'translation_indonesian', 'translation_malay', 'translation_nepali',
+    'translation_marathi', 'translation_telugu',
+  ]
+  const fatihaKey = [...surahMap.keys()].find(k => Number(k) === 1)
+  const fatiha = fatihaKey !== undefined ? surahMap.get(fatihaKey) : null
+  if (Array.isArray(fatiha) && fatiha.length > 1) {
+    for (const col of IMPORTED_EDITIONS) {
+      const values = fatiha.map(r => r[col] || '')
+      if (!values.some(Boolean)) continue
+      const shifted = values.slice(1)
+      while (shifted.length < values.length) shifted.push(values[values.length - 1] || '')
+      fatiha.forEach((row, i) => { row[col] = shifted[i] })
+    }
   }
 
   let coreSize = 0, tafseerSize = 0
@@ -713,6 +760,16 @@ async function bakeHadithContent() {
 }
 
 loadEnv()
+// BAKE_ONLY=text refreshes just one part of the corpus, e.g. after importing
+// new translations into tbl_QuranComplete:
+//   BAKE_ONLY=surahs npm run static:sync
+const only = process.env.BAKE_ONLY || ''
+if (only === 'surahs') {
+  const ok = await bakeSurahs()
+  console.error(ok ? '[bake] surahs + tafseer refreshed' : '[bake] surahs bake failed')
+  process.exit(ok ? 0 : 1)
+}
+
 const quranOk = await bakeQuran()
 await bakeHadithBooks()
 await bakeHadithContent()

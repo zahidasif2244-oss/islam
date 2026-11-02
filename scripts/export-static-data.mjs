@@ -97,10 +97,17 @@ function verseArrays(rows) {
   return out
 }
 
-function writeTranslations(rows, prefix) {
+/** How many ayahs actually carry text, per column — used to hide empty
+ *  languages from the settings dropdowns instead of silently falling back. */
+const translationAyahs = {}
+const tafseerAyahs = {}
+
+function writeTranslations(rows, prefix, countInto) {
   for (const col of TRANSLATIONS) {
     const values = rows.map(r => (isFilled(r[col]) ? r[col] : ''))
-    if (!values.some(Boolean)) continue
+    const filled = values.reduce((n, v) => n + (v ? 1 : 0), 0)
+    if (!filled) continue
+    if (countInto) translationAyahs[col] = (translationAyahs[col] || 0) + filled
     write(path.join(prefix, `tr-${col}.json`), values)
   }
 }
@@ -110,7 +117,7 @@ for (let id = 1; id <= 114; id++) {
   const rows = readJson(path.join('quran', `surah-${id}.json`))
   if (!rows || !rows.length) continue
   write(path.join('quran', String(id), 'ar.json'), verseArrays(rows))
-  writeTranslations(rows, path.join('quran', String(id)))
+  writeTranslations(rows, path.join('quran', String(id)), true)
   surahCount++
 }
 
@@ -155,6 +162,7 @@ for (let id = 1; id <= 114; id++) {
       }
     }
     if (!filled) continue
+    tafseerAyahs[col] = (tafseerAyahs[col] || 0) + filled
     write(path.join('quran', 'tafseer', String(id), `${col}.json`), map)
     tafseerFiles++
   }
@@ -184,6 +192,25 @@ for (const file of fs.readdirSync(staticDir)) {
   staticFiles++
 }
 
+/* Availability ---------------------------------------------------------
+ * translations.json / tafseer_types.json carry a `count` from the database
+ * that counts rows, not text: 14 of the 23 translations were never imported
+ * and are empty in every ayah. That made the settings dropdown offer languages
+ * which silently fell back to Urdu ("I change the tarjma and nothing happens").
+ * Replace `count` with the number of ayahs that actually have text (0 = hide).
+ */
+function writeAvailability(file, counts) {
+  const entries = readJson(path.join('static', file)) || []
+  const out = entries.map(entry => ({ ...entry, count: counts[entry.key] || 0 }))
+  write(path.join('static', file), out)
+  return out
+}
+
+const translationsOut = writeAvailability('translations.json', translationAyahs)
+const tafseerOut = writeAvailability('tafseer_types.json', tafseerAyahs)
+const availableTranslations = translationsOut.filter(t => t.count > 0).length
+const availableTafseers = tafseerOut.filter(t => t.count > 0).length
+
 /* Books ------------------------------------------------------------- */
 const books = readJson('books.json')
 if (books) write('books.json', books)
@@ -202,4 +229,5 @@ write(path.join('static', 'sites.json'), sites)
 
 const mb = (written.bytes / 1024 / 1024).toFixed(1)
 console.log(`[static-data] surahs=${surahCount} parahs=${parahCount} tafseer=${tafseerFiles} static=${staticFiles}`)
+console.log(`[static-data] available: ${availableTranslations}/${translationsOut.length} translations, ${availableTafseers}/${tafseerOut.length} tafseers`)
 console.log(`[static-data] wrote ${written.files} files, ${mb} MB into public/data`)

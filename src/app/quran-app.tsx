@@ -197,6 +197,30 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
   // already resolved by the time the tab is opened.
   useEffect(() => { prefetchBookOverrides() }, [])
 
+  // Only offer translations / tafseers that actually contain text. The baked
+  // lists carry a database row count (all 6,349 for every entry) even for the
+  // languages that were never imported — choosing one of those silently showed
+  // the Urdu text instead, which looked like "the tarjma does not change".
+  useEffect(() => {
+    Promise.all([
+      api('/quran/translations').catch(() => null),
+      api('/quran/tafseer_types').catch(() => null),
+    ]).then(([translations, tafseerTypes]) => {
+      if (Array.isArray(translations)) {
+        const available = translations.filter((t: any) => Number(t.count) > 0)
+        if (available.length) {
+          setTarjmaList(available)
+          setTarjma(prev => (available.some((t: any) => t.key === prev) ? prev : available[0].key))
+        }
+      }
+      if (Array.isArray(tafseerTypes)) {
+        const available = tafseerTypes.filter((t: any) => Number(t.count) > 0)
+        setTafseerList(available)
+        setTafseer(prev => (prev && !available.some((t: any) => t.key === prev) ? '' : prev))
+      }
+    }).catch(() => {})
+  }, [])
+
   useEffect(() => {
     const onCtx = (e: MouseEvent) => { e.preventDefault() }
     const onKey = (e: KeyboardEvent) => {
@@ -1199,10 +1223,13 @@ function TafseerTab() {
   const [searched, setSearched] = useState(false)
 
   useEffect(() => {
-    api('/quran/tafseer_types').then(t => {
-      setTypes(t)
+    api('/quran/tafseer_types').then((all: any[]) => {
+      // Hide tafseer editions that were never imported (count 0).
+      const available = Array.isArray(all) ? all.filter((t: any) => Number(t.count) > 0) : []
+      setTypes(available)
       const saved = localStorage.getItem('islam360_tafseer') || 'tafseer_tibyan'
-      if (saved && t.find((x: any) => x.key === saved)) setTfType(saved)
+      if (saved && available.find((x: any) => x.key === saved)) setTfType(saved)
+      else if (available.length) setTfType(available[0].key)
     }).catch(() => {})
   }, [])
 

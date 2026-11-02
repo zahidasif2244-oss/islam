@@ -63,18 +63,25 @@ function loadTr(kind: 'surah' | 'parah', id: number, col: string): Promise<strin
 
 /** Whole surah / parah, with the selected translation resolved to `tarjma_text`. */
 export async function getVerses(kind: 'surah' | 'parah', id: number, tarjma = 'k_iman'): Promise<Verse[]> {
-  const [ar, tr] = await Promise.all([loadAr(kind, id), loadTr(kind, id, tarjma)])
+  // Arabic + the selected translation are shown by default; translation_urdu is
+  // the fallback for verses an edition does not cover (e.g. the basmalah row of
+  // the imported 6,236-ayah translations). English and Hindi are toolbar
+  // toggles, so they come along in the same round trip.
+  const [ar, urdu, tr, english, hindi] = await Promise.all([
+    loadAr(kind, id),
+    loadTr(kind, id, 'translation_urdu'),
+    tarjma === 'translation_urdu' ? Promise.resolve(null) : loadTr(kind, id, tarjma),
+    loadTr(kind, id, 'translation_english'),
+    loadTr(kind, id, 'hindi_nazar'),
+  ])
   if (!ar) return []
-  // Columns that were never imported have no file: fall back to the canonical
-  // Urdu translation instead of showing an empty line.
-  let fallback: string[] | null = null
-  if (!tr && tarjma !== 'translation_urdu') fallback = await loadTr(kind, id, 'translation_urdu')
   const out: Verse[] = []
   const n = ar.a.length
   for (let i = 0; i < n; i++) {
     const surah = Number(ar.s[i])
     const ayah = Number(ar.y[i])
-    const tarjmaText = (tr && tr[i]) || (fallback && fallback[i]) || ''
+    const urduText = (urdu && urdu[i]) || ''
+    const tarjmaText = (tr && tr[i]) || urduText
     out.push({
       id: surah * 1000 + ayah,
       surah,
@@ -82,10 +89,10 @@ export async function getVerses(kind: 'surah' | 'parah', id: number, tarjma = 'k
       ayah,
       arabic: ar.a[i] || '',
       arabic_tajweed: '',
-      urdu: tarjmaText,
-      english: '',
+      urdu: urduText,
+      english: english?.[i] || '',
       roman_urdu: '',
-      hindi: '',
+      hindi: hindi?.[i] || '',
       tarjma_text: tarjmaText,
     })
   }
