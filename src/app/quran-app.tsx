@@ -2,6 +2,18 @@
 
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react'
 import { arabicSnippet } from '@/lib/arabic'
+import {
+  statJson,
+  getVerses,
+  getAyahs,
+  getSurahTafseer,
+  getAyahTafseer,
+  getWbw,
+  getArabicWords,
+  searchQuranText,
+  prefetchSearchIndex,
+  getBooks,
+} from '@/lib/quran-static'
 
 type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about' | 'books'
 
@@ -20,7 +32,80 @@ function playAyah(surah: number, ayah: number) {
   audioRef.play().catch(() => {})
 }
 
-async function api(path: string, init?: RequestInit) {
+/**
+ * Data access.
+ *
+ * Everything that is identical for every visitor (Quran text, tafseer,
+ * word-by-word, duas, topics, books, …) is read from the immutable files under
+ * `/data/**` — the CDN answers those in ~20 ms with no serverless invocation.
+ *
+ * The old implementation called a Vercel function for each of these, and those
+ * functions carried a ~475 MB data bundle, so every cold request took 20-25 s.
+ * Only genuinely dynamic endpoints (hadith search, admin) still hit `/api`.
+ */
+async function api(path: string, init?: RequestInit): Promise<any> {
+  const qi = path.indexOf('?')
+  const route = qi === -1 ? path : path.slice(0, qi)
+  const qs = new URLSearchParams(qi === -1 ? '' : path.slice(qi + 1))
+  const tarjma = qs.get('tarjma') || 'k_iman'
+
+  /* ---- Quran: immutable content served as static JSON ---- */
+  if (route.startsWith('/quran/surah/')) return getVerses('surah', Number(route.slice(13)), tarjma)
+  if (route.startsWith('/quran/parah/')) return getVerses('parah', Number(route.slice(13)), tarjma)
+  if (route === '/quran/ayahs') {
+    return getAyahs(Number(qs.get('surah')), Number(qs.get('start')), qs.get('end') ? Number(qs.get('end')) : undefined)
+  }
+  if (route.startsWith('/quran/tafseer/surah/')) {
+    return getSurahTafseer(Number(route.slice(21)), qs.get('type') || '')
+  }
+  if (route === '/quran/wordbyword') return getWbw(Number(qs.get('surah')), Number(qs.get('ayah')))
+  if (route === '/quran/arabic_words') return getArabicWords(Number(qs.get('surah')), Number(qs.get('ayah')))
+  if (route === '/quran/search_text') return searchQuranText(qs.get('q') || '', (qs.get('lang') as any) || 'urdu')
+
+  /* ---- Baked static lists ---- */
+  if (route === '/quran/topics') return statJson('/static/topics.json')
+  if (route === '/quran/amazing_topics') return statJson('/static/amazing_topics.json')
+  if (route === '/quran/fahmul_quran') return statJson('/static/fahmul_quran.json')
+  if (route === '/quran/mutradif') return statJson('/static/mutradif.json')
+  if (route === '/quran/subjects') return statJson('/static/subjects_english.json')
+  if (route === '/quran/subjects/urdu') return statJson('/static/subjects_urdu.json')
+  if (route === '/quran/tafseer_types') return statJson('/static/tafseer_types.json')
+  if (route === '/quran/surahs') return statJson('/static/surahs.json')
+  if (route === '/quran/parah_names') return statJson('/static/parah_names.json')
+  if (route === '/quran/translations') return statJson('/static/translations.json')
+  if (route === '/duas/all') return statJson('/static/duas.json')
+  if (route === '/hadith/books') return statJson('/static/hadith_books.json')
+  if (route === '/websites') return statJson('/static/sites.json')
+  if (route === '/books') return getBooks()
+  if (route === '/quran/search') {
+    const q = (qs.get('q') || '').trim()
+    const ref = q.match(/^(\d{1,3}):(\d{1,3})$/)
+    if (ref) return getAyahs(Number(ref[1]), Number(ref[2]), Number(ref[2]))
+    return searchQuranText(q, 'urdu')
+  }
+
+  /* ---- Hadith: one serverless function per book (small cold start) ---- */
+  if (route.startsWith('/hadith/book/')) {
+    const id = route.slice('/hadith/book/'.length)
+    return serverJson(`/hadith/${id}?action=page&page=${qs.get('page') || 1}`)
+  }
+  if (route.startsWith('/hadith/number/')) {
+    const id = route.slice('/hadith/number/'.length)
+    return serverJson(`/hadith/${id}?action=number&q=${encodeURIComponent(qs.get('q') || '')}`)
+  }
+  if (route.startsWith('/hadith/search/')) {
+    const id = route.slice('/hadith/search/'.length)
+    return serverJson(`/hadith/${id}?action=search&q=${encodeURIComponent(qs.get('q') || '')}`)
+  }
+  if (route.startsWith('/hadith/hadith/')) {
+    const [bookId, hadithNumber] = route.slice('/hadith/hadith/'.length).split('/')
+    return serverJson(`/hadith/${bookId}?action=one&number=${hadithNumber}`)
+  }
+
+  return serverJson(path)
+}
+
+async function serverJson(path: string, init?: RequestInit): Promise<any> {
   const res = await fetch(`${API}/api${path}`, init)
   if (!res.ok) throw new Error('API error')
   return res.json()
@@ -33,7 +118,7 @@ function fetchSurahTafseer(sid: number, col: string): Promise<Record<string, str
   const key = sid + ':' + col
   let p = tafseerFetchCache.get(key)
   if (!p) {
-    p = api(`/quran/tafseer/surah/${sid}?type=${encodeURIComponent(col)}`).catch(() => ({}))
+    p = getSurahTafseer(sid, col).catch(() => ({} as Record<string, string>))
     tafseerFetchCache.set(key, p)
   }
   return p
@@ -344,7 +429,6 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
   const [showHindi, setShowHindi] = useState(false)
   const [showTafseer, setShowTafseer] = useState(false)
   const [tafseerMap, setTafseerMap] = useState<Record<string, string> | null>(null)
-  const prefetched = useRef<Set<string>>(new Set())
   const { tarjma, tafseer, tarjmaList, tafseerList, showTab } = useSettings()
 
   const [surahBms, setSurahBms] = useState<number[]>([])
@@ -384,35 +468,29 @@ function QuranTab({ initialSurahNames, initialParahNames }: { initialSurahNames:
     setView('browse')
     setBrowseId(id)
     setBrowseKind('surah')
-    const url = `/quran/surah/${id}?tarjma=${encodeURIComponent(tarjma)}`
-    api(url).then(data => {
+    getVerses('surah', id, tarjma).then(data => {
       setVerses(data)
       if (scrollAyah !== undefined) {
         setTimeout(() => {
           document.getElementById(`ayah-${scrollAyah}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }, 200)
       }
-      // Prefetch the next surah so back/forward navigation is instant.
-
+      // Warm the cache for the next surah so back/forward navigation is instant.
       preloadSurah(id + 1)
-    })
+    }).catch(() => setVerses([]))
   }
 
   function loadParah(id: number) {
     setView('browse')
     setBrowseId(id)
     setBrowseKind('parah')
-    const url = `/quran/parah/${id}?tarjma=${encodeURIComponent(tarjma)}`
-    api(url).then(data => { setVerses(data); setView('browse') })
+    getVerses('parah', id, tarjma).then(data => { setVerses(data); setView('browse') }).catch(() => setVerses([]))
   }
 
-  // Warm the browser/edge cache for a surah in the background (no parse, fire-and-forget) .
+  // Warm the browser cache for a surah in the background (CDN file, no function).
   function preloadSurah(id: number) {
     if (id < 1 || id > 114 || !tarjma) return
-    const url = `/api/quran/surah/${id}?tarjma=${encodeURIComponent(tarjma)}`
-    if (prefetched.current.has(url)) return
-    prefetched.current.add(url)
-    fetch(url, { priority: 'low' }).catch(() => {})
+    getVerses('surah', id, tarjma).catch(() => {})
   }
 
   const tarjmaLabel = tarjmaList.find((t: any) => t.key === tarjma)?.label || 'Tarjma'
@@ -623,6 +701,10 @@ function QuranSearch() {
   const [arabicResults, setArabicResults] = useState<any[]>([])
   const [arabicSearching, setArabicSearching] = useState(false)
 
+  // Download the 6,349-ayah search index once, in the background, the moment
+  // the search view opens — so the first keystroke already has data to match.
+  useEffect(() => { prefetchSearchIndex().catch(() => {}) }, [])
+
   useEffect(() => {
     const q = refQuery.trim()
     const match = q.match(/^(\d{1,3}):(\d{1,3})$/)
@@ -815,7 +897,11 @@ function TafseerBody({ surah, ayah }: { surah: number; ayah: number }) {
   const { tafseer } = useSettings()
   const [data, setData] = useState<any>(null)
   useEffect(() => {
-    if (tafseer) api(`/quran/tafseer/${surah}/${ayah}`).then(setData)
+    if (!tafseer) return
+    let cancelled = false
+    setData(null)
+    getAyahTafseer(surah, ayah, tafseer).then(d => { if (!cancelled) setData(d) }).catch(() => {})
+    return () => { cancelled = true }
   }, [surah, ayah, tafseer])
   if (!tafseer) return <div>Please select a tafseer in settings.</div>
   if (!data) return <div className="loading">Loading...</div>
@@ -1034,8 +1120,8 @@ function HadithDetailBody({ h, bookId, bookName }: { h: any; bookId: string; boo
         <div style={{ fontSize: 14, color: '#999' }}>Hadith #{detail.number}{bookName ? ` — ${bookName}` : ''}</div>
         <BookmarkBtn item={bmItem(detail, bookId, bookName || detail.bookName || '')} showText />
       </div>
-      <div style={{ fontFamily: "'NooreHuda','AlviNastaleeq','Traditional Arabic',serif", fontSize: 22, lineHeight: 2, textAlign: 'right', direction: 'rtl', color: '#1a3a1a', marginBottom: 10 }}>{detail.arabic}</div>
-      {detail.urdu && <div style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq',serif", fontSize: 20, textAlign: 'right', direction: 'rtl', color: '#2d2d2d', marginBottom: 5, fontWeight: 500, lineHeight: 1.8 }}>{detail.urdu}</div>}
+      <div style={{ fontFamily: "'NooreHuda','Nastaliq','Traditional Arabic',serif", fontSize: 22, lineHeight: 2, textAlign: 'right', direction: 'rtl', color: '#1a3a1a', marginBottom: 10 }}>{detail.arabic}</div>
+      {detail.urdu && <div style={{ fontFamily: "'Nastaliq',serif", fontSize: 20, textAlign: 'right', direction: 'rtl', color: '#2d2d2d', marginBottom: 5, fontWeight: 500, lineHeight: 1.8 }}>{detail.urdu}</div>}
       {detail.urdu_ravi && <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 5 }}>{detail.urdu_ravi}</div>}
       {detail.english && <div style={{ fontSize: 14, lineHeight: 1.6, color: '#444', marginBottom: 5 }}>{detail.english}</div>}
       {detail.english_ravi && <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>{detail.english_ravi}</div>}
@@ -1080,7 +1166,7 @@ function WordByWordTab() {
                   <tr key={i} className="border-b border-[#e0e0e0]">
                     <td className="p-1 sm:p-1.5 text-center text-[10px] sm:text-xs text-[#888]">{i + 1}</td>
                     <td className="p-1 sm:p-1.5 text-right font-arabic text-base sm:text-[22px] text-[#1a3a1a]" style={{ direction: 'rtl' }}>{data.arabic[i] || ''}</td>
-                    <td className="p-1 sm:p-1.5 text-right text-sm sm:text-lg text-[#1a5c3a]" style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq','Noto Nastaliq Urdu',serif", direction: 'rtl' }}>{data.urdu[i] || ''}</td>
+                    <td className="p-1 sm:p-1.5 text-right text-sm sm:text-lg text-[#1a5c3a]" style={{ fontFamily: "'Nastaliq',serif", direction: 'rtl' }}>{data.urdu[i] || ''}</td>
                     <td className="p-1 sm:p-1.5 text-left text-[11px] sm:text-sm text-[#555]">{data.english[i] || ''}</td>
                     <td className="p-1 sm:p-1.5 text-left text-[11px] sm:text-sm text-[#555]" style={{ fontFamily: "'Nirmala UI','Noto Sans Devanagari',sans-serif" }}>{data.hindi[i] || ''}</td>
                   </tr>
@@ -1121,7 +1207,7 @@ function TafseerTab() {
     setSearched(false)
     if (!tfType) return
     Promise.all([
-      api(`/quran/tafseer/${surah}/${ayah}`),
+      getAyahTafseer(surah, ayah, tfType).catch(() => ({} as Record<string, string>)),
       api(`/quran/surah/${surah}?tarjma=${encodeURIComponent(localStorage.getItem('islam360_tarjma') || 'translation_urdu')}`)
     ]).then(([tafseerData, surahData]) => {
       setData({ tafseerData, ayahData: (surahData as any[]).find((v: any) => v.ayah == ayah) })
@@ -1159,7 +1245,7 @@ function TafseerTab() {
     setSearched(false)
     setData(null)
     Promise.all([
-      api(`/quran/tafseer/${surahNum}/${ayahNum}`),
+      getAyahTafseer(surahNum, ayahNum, tfType).catch(() => ({} as Record<string, string>)),
       api(`/quran/surah/${surahNum}?tarjma=${encodeURIComponent(localStorage.getItem('islam360_tarjma') || 'translation_urdu')}`)
     ]).then(([tafseerData, surahData]) => {
       setData({ tafseerData, ayahData: (surahData as any[]).find((v: any) => v.ayah == ayahNum) })
@@ -1315,9 +1401,9 @@ function DuasTab() {
 function DuaDetail({ dua, idx, total, list }: { dua: any; idx: number; total: number; list: any[] }) {
   return (
     <div>
-      {dua.arabic && <div style={{ fontFamily: "'NooreHuda','AlviNastaleeq',serif", fontSize: 28, textAlign: 'right', direction: 'rtl', color: '#1a3a1a', lineHeight: 2, marginBottom: 15 }}>{dua.arabic}</div>}
-      {dua.urdu && <div style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq',serif", fontSize: 24, textAlign: 'right', direction: 'rtl', color: '#2d2d2d', lineHeight: 2, marginBottom: 10 }}>{dua.urdu}</div>}
-      {dua.desc && !dua.arabic && !dua.urdu && <div style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq',serif", fontSize: 20, textAlign: 'right', direction: 'rtl', color: '#2d2d2d', lineHeight: 2, marginBottom: 10 }}>{dua.desc}</div>}
+      {dua.arabic && <div style={{ fontFamily: "'NooreHuda','Nastaliq',serif", fontSize: 28, textAlign: 'right', direction: 'rtl', color: '#1a3a1a', lineHeight: 2, marginBottom: 15 }}>{dua.arabic}</div>}
+      {dua.urdu && <div style={{ fontFamily: "'Nastaliq',serif", fontSize: 24, textAlign: 'right', direction: 'rtl', color: '#2d2d2d', lineHeight: 2, marginBottom: 10 }}>{dua.urdu}</div>}
+      {dua.desc && !dua.arabic && !dua.urdu && <div style={{ fontFamily: "'Nastaliq',serif", fontSize: 20, textAlign: 'right', direction: 'rtl', color: '#2d2d2d', lineHeight: 2, marginBottom: 10 }}>{dua.desc}</div>}
       {dua.english && <div style={{ fontSize: 16, color: '#444', lineHeight: 1.8, marginBottom: 10 }}>{dua.english}</div>}
       {dua.ref && <div style={{ fontSize: 12, color: '#999', marginTop: 10, paddingTop: 10, borderTop: '1px solid #eee' }}>{dua.ref}</div>}
       <div style={{ marginTop: 15, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1702,7 +1788,7 @@ function SubjectsUrduView({ items }: { items: any[] }) {
       <div id="subjUrduList">
         {filtered.map((s: any, i: number) => (
           <div key={i} className="list-card" style={{ cursor: 'pointer' }} onClick={() => openModal(s.topic, <SubjectUrduDetail s={s} />)}>
-            <div className="list-name" style={{ fontFamily: "'AlviNastaleeq','JameelNastaleeq',serif", fontSize: 18, textAlign: 'right', direction: 'rtl' }}>{s.topic}</div>
+            <div className="list-name" style={{ fontFamily: "'Nastaliq',serif", fontSize: 18, textAlign: 'right', direction: 'rtl' }}>{s.topic}</div>
             <div style={{ fontSize: 11, color: '#999' }}>Surah {s.surah}:{s.ayah} | {s.surah_name}</div>
           </div>
         ))}

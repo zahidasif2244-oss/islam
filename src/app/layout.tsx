@@ -68,19 +68,17 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" dir="ltr">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
+        {/* Self-hosted fonts only — the old render-blocking Google Fonts
+            stylesheet cost ~2 s before first paint. Arabic (NooreHuda, 71 KB)
+            is used above the fold, so it is preloaded; the Urdu Nastaliq face
+            (159 KB) is pulled in by CSS only when Urdu text actually renders. */}
+        <link rel="preload" href="/fonts/noorehuda.woff2" as="font" type="font/woff2" crossOrigin="" />
       </head>
       <body className="bg-[#f5f5f5] text-[#333] font-sans">{children}</body>
     </html>

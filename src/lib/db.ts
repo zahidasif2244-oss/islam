@@ -19,9 +19,18 @@ const HADITH_INDEX_SQL = [
   'CREATE INDEX IF NOT EXISTS idx_hadees_lang_rec ON hadees_languages(hadees_record_id, language_id)',
 ]
 
+/**
+ * Index bootstrap.
+ *
+ * The indexes below were created once on every database (scripts/create-indexes.mjs)
+ * and are idempotent, but running 90 DDL statements against 18 databases on
+ * every cold start burns write quota and delays the first request. It is now
+ * opt-in: set ENSURE_INDEXES=1 after pointing the app at a brand-new database.
+ */
 let indexPromise: Promise<void> | null = null
 
 export function ensureIndexes(): Promise<void> {
+  if (process.env.ENSURE_INDEXES !== '1') return Promise.resolve()
   if (!indexPromise) {
     indexPromise = (async () => {
       const runIndexes = async (client: Client, sqls: string[]) => {

@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "node scripts/build-books-data.mjs && node scripts/bake-static-data.mjs && next build",
+    "dev": "node scripts/export-static-data.mjs --if-missing && next dev",
+    "build": "node scripts/build-books-data.mjs && node scripts/bake-static-data.mjs && node scripts/export-static-data.mjs && next build",
     "books:sync": "node scripts/build-books-data.mjs",
     "static:sync": "node scripts/bake-static-data.mjs",
+    "data:export": "node scripts/export-static-data.mjs",
+    "fonts:charset": "node scripts/build-font-charset.mjs",
+    "hadith:routes": "node scripts/gen-hadith-routes.mjs",
     "db:indexes": "node scripts/create-indexes.mjs",
     "start": "next start",
     "lint": "next lint"

@@ -50,7 +50,7 @@ export function arabicQuranMatches(index: any[], words: QuranSearchWord[], normP
   return out
 }
 
-function decodeUrduInline(text: string): string {
+export function decodeUrduInline(text: string): string {
   if (!text) return ''
   let result = ''
   for (const c of text) {

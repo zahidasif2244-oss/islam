@@ -469,3 +469,28 @@ Full audit of all 39 API routes. Identified which still hit Turso (18 public + 5
 Before fixes: ~1,700 visitors caused exhaustion (300k reads/visitor). After: ~10,000-80,000 depending on usage.
 
 **Remaining bottleneck:** `tbl_QuranComplete` full-table scans (6,236 rows per query). To scale further: Turso paid plan or full client-side search index.
+
+### 31. Zero-Second Load — Font, Function-Bundle & Static-First Overhaul
+**Symptom (user):** "loading time of everything is 30 seconds to 60 seconds".
+
+**Measured live (before):** `/api/quran/surah/114` → **22.9 s** TTFB for a 4.3 KB answer; `/surah/3` → 24.7 s; `/surah/2`, `/surah/18`, `/surah/55`, `/parah/1` → **never responded** (90 s timeout); `/api/books` → **>45 s**; `/api/quran/wordbyword` → 11 s. Fonts: `alvi_nastaleeq.woff2` 5.23 MB + `jameel_noori_nastaleeq.woff2` 5.55 MB + render-blocking Google Fonts. `x-vercel-id: bom1::iad1` → functions ran in US-East.
+
+**Root cause #1 — function bundles.** Next traces every file a route reads. `src/lib/baked.ts` used a *dynamic* `path.join(cwd,'src','data', <variable>)`, so the tracer globbed the whole directory into each function: `/api/quran/surah/[id]` = **475.7 MB**, `/api/hadith/*` = **330.2 MB** (all 17 books), `/api/websites` = **210.8 MB** (fs.readdir on `public/`). Every cold start downloaded that archive before running a handler that needed a few KB.
+
+**Root cause #2 — fonts.** 10.8 MB of Nastaliq woff2 + 2 s render-blocking Google Fonts = 45–90 s on mobile.
+
+**Fixes:**
+- **Fonts 10.8 MB → 159 KB**: self-hosted **Noto Nastaliq Urdu** replaces Alvi + Jameel; Google Fonts removed; NooreHuda (70 KB) preloaded, Nastaliq loads only when Urdu renders. (Alvi subsetting was tried — 16,982 glyphs, layout closure keeps them all, 5.1 MB even for a 365-char subset → abandoned.)
+- **`scripts/export-static-data.mjs`** (runs in `build`) emits **2,768 files / ~160 MB** into `public/data`: per-surah `ar.json` + `tr-<column>.json`, per-parah, per-(surah,tafseer) files, wbw, awords, static lists, books, sites. Served by the CDN with `immutable` caching — zero functions.
+- **`src/lib/quran-static.ts`** — client data layer with the *same shapes* as the old API; `api()` in `quran-app.tsx` now routes Quran/baked paths to static files and only genuinely dynamic paths to `/api`.
+- **Deleted** the ~25 content routes; **hadith split into one function per book** (`scripts/gen-hadith-routes.mjs` → 17 loaders + 17 routes, client URLs unchanged via `?action=page|number|search|one`); **tafseer search** reads static files from the CDN + memoises; **`/api/websites`** baked to `sites.json`.
+- **`vercel.json` → `regions: ["bom1"]`**; immutable cache headers for `/data/quran/*` + `/fonts/*`.
+- **Quran search runs in the browser** over `/data/static/search-index.json` (2.6 MB gzip, cached 1 yr) — no per-keystroke round trip.
+- **Books tab** paints from `/data/books.json`, waits ≤450 ms for the Turso overlay (`/api/books/overrides`) — a slow DB can no longer block it.
+- `ensureIndexes()` (90 DDL across 18 DBs per cold start) is now opt-in via `ENSURE_INDEXES=1`.
+
+**Bundle sizes after:** max hadith 54.8 MB (beyhaqi), most routes **10.6 MB**; tafseer search 10.6 MB; quran routes gone (static).
+
+**Verified** (`node scripts/smoke-test.mjs`, headless Chrome, prod build): home 436 ms; Surah 1 **163 ms**; Al-Baqarah 287 ayahs **351–625 ms**; Duas 146 ms; Books 642 ms; Hadith 229 ms; word-by-word 539 ms; Quran search 1.4 s first / instant after; Tafseer search 1.5 s first / instant after; **0 console errors, 0 failed requests**. `npx tsc --noEmit` clean; `npm run build` clean.
+
+**Files:** `PERFORMANCE.md` (full write-up), `scripts/{export-static-data,gen-hadith-routes,build-font-charset,smoke-test}.mjs`, `src/lib/{quran-static,hadith-handler}.ts`, `src/lib/hadith-data/*`, `public/fonts/noto-nastaliq-urdu.woff2`, `vercel.json`, `next.config.js`, `package.json`, `.gitignore` (`public/data/` is generated), `src/app/{layout,globals.css,quran-app.tsx}`.

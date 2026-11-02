@@ -26,3 +26,6 @@ Thumbs.db
 *.log
 npm-debug.log*
 tsconfig.tsbuildinfo
+
+# generated static corpus (npm run data:export / build)
+public/data/

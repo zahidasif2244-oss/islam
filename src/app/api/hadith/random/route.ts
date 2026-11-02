@@ -12,7 +12,11 @@ export async function GET() {
 
   try {
     const db = createQuranClient()
-    const rows = await query(db, 'SELECT hadees_number, BookUR, Baab_Eng, Kitab_Eng, Baab, Kitab, Arabic, Ravi, Urdu, English, Volume FROM tbl_random_hadees ORDER BY RANDOM() LIMIT 1')
+    // Never let a slow/blocked database hang the client for half a minute.
+    const rows = (await Promise.race([
+      query(db, 'SELECT hadees_number, BookUR, Baab_Eng, Kitab_Eng, Baab, Kitab, Arabic, Ravi, Urdu, English, Volume FROM tbl_random_hadees ORDER BY RANDOM() LIMIT 1'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000)),
+    ])) as any[]
     if (!rows.length) return error('No hadith found')
     const r = rows[0]
     const result = {
