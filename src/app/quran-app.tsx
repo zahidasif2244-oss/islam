@@ -13,6 +13,7 @@ import {
   searchQuranText,
   prefetchSearchIndex,
   getBooks,
+  prefetchBookOverrides,
 } from '@/lib/quran-static'
 
 type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about' | 'books'
@@ -191,6 +192,10 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
   useEffect(() => {
     try { setBookmarks(JSON.parse(localStorage.getItem('islam360_hadith_bookmarks') || '[]')) } catch { }
   }, [])
+
+  // Tiny background request so the Books tab's optional admin overlay is
+  // already resolved by the time the tab is opened.
+  useEffect(() => { prefetchBookOverrides() }, [])
 
   useEffect(() => {
     const onCtx = (e: MouseEvent) => { e.preventDefault() }

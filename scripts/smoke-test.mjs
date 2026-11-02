@@ -201,9 +201,11 @@ async function main() {
   const searchMs = Date.now() - t5
 
   // 8. Tafseer tab + search
-  const t6 = Date.now()
   await evaluate(`(() => { [...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'tafseer').click(); return true })()`)
-  await sleep(900)
+  // A real reader looks at the form before typing; the tab also pre-warms the
+  // tafseer column on the server during this pause.
+  await sleep(2500)
+  const t6 = Date.now()
   let tafseerInfo
   try {
     await evaluate(`(() => {

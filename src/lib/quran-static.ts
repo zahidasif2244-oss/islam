@@ -228,17 +228,25 @@ function loadOverrides(): Promise<BookOverrides> {
   return overridesPromise
 }
 
+/** Start the (tiny, optional) overlay request before the Books tab is opened. */
+export function prefetchBookOverrides(): void {
+  loadOverrides().catch(() => {})
+}
+
 export async function getBooks(): Promise<any[]> {
   // 1. The catalogue itself — a static, edge-cached file.
-  const baked = await statJson<any[]>('/books.json')
+  // 2. Optional admin overlay — at most 450 ms, otherwise show the baked list.
+  // Both start together so the overlay does not add latency on top of the file.
+  const [baked, overrides] = await Promise.all([
+    statJson<any[]>('/books.json'),
+    Promise.race([
+      loadOverrides(),
+      new Promise<BookOverrides>(resolve => setTimeout(() => resolve(null), 450)),
+    ]).catch(() => null),
+  ])
+
   const list: any[] = Array.isArray(baked) ? baked : []
   if (!list.length) return []
-
-  // 2. Optional admin overlay — at most 450 ms, otherwise show the baked list.
-  const overrides = await Promise.race([
-    loadOverrides(),
-    new Promise<BookOverrides>(resolve => setTimeout(() => resolve(null), 450)),
-  ]).catch(() => null)
 
   const custom: any[] = overrides?.custom || []
   const hidden: string[] = overrides?.hidden || []
