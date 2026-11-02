@@ -27,18 +27,16 @@ async function fetchJson<T>(req: Request, path: string): Promise<T | null> {
 async function loadColumn(req: Request, type: string): Promise<Map<number, SurahTafseer>> {
   if (cache && cache.type === type) return cache.data
   const data = new Map<number, SurahTafseer>()
-  // 114 surahs, a handful in flight at a time.
+  // Fetch all 114 surah files in parallel: they are small, edge-cached JSON
+  // files and the whole column is only ~7 MB. Batching them serially cost ~6 s
+  // on a cold function instance.
   const ids = Array.from({ length: 114 }, (_, i) => i + 1)
-  const CONCURRENCY = 12
-  for (let i = 0; i < ids.length; i += CONCURRENCY) {
-    const batch = ids.slice(i, i + CONCURRENCY)
-    const results = await Promise.all(
-      batch.map(id => fetchJson<SurahTafseer>(req, `/data/quran/tafseer/${id}/${type}.json`))
-    )
-    results.forEach((map, index) => {
-      if (map) data.set(batch[index], map)
-    })
-  }
+  const results = await Promise.all(
+    ids.map(id => fetchJson<SurahTafseer>(req, `/data/quran/tafseer/${id}/${type}.json`))
+  )
+  results.forEach((map, index) => {
+    if (map) data.set(ids[index], map)
+  })
   cache = { type, data }
   return data
 }
@@ -47,12 +45,21 @@ export async function GET(req: Request) {
   const url = new URL(req.url)
   const q = url.searchParams.get('q') || ''
   const type = url.searchParams.get('type') || ''
-  if (!q.trim()) return error('Search query required', 400)
+  const warm = url.searchParams.get('warm') === '1'
   if (!type) return error('Tafseer type required', 400)
 
   const colInfo = TAFSEER_COLUMNS.find(([c]) => c === type)
   if (!colInfo) return error('Unknown tafseer type', 400)
   const label = colInfo[1]
+
+  // Warm-up: the Tafseer tab calls this as soon as it opens so the corpus is
+  // already in memory by the time the user finishes typing.
+  if (warm) {
+    const warmed = await loadColumn(req, type)
+    return json({ ready: warmed.size }, 200, 60)
+  }
+
+  if (!q.trim()) return error('Search query required', 400)
 
   const typedWords = q.trim().split(/\s+/).filter(Boolean).slice(0, 8)
   const phrase = typedWords.join(' ')

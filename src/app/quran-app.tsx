@@ -1201,6 +1201,13 @@ function TafseerTab() {
     }).catch(() => {})
   }, [])
 
+  // Pre-load the selected tafseer column on the server while the user reads,
+  // so the first keystroke in the search box does not pay the cold-start cost.
+  useEffect(() => {
+    if (!tfType) return
+    serverJson(`/quran/tafseer/search?warm=1&type=${encodeURIComponent(tfType)}`).catch(() => {})
+  }, [tfType])
+
   function load() {
     setData(null)
     setSearchResults([])
