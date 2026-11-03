@@ -10,6 +10,7 @@
  */
 import { quranWords, arabicQuranMatches, encodeUrduPhrase, decodeUrduInline } from './quran-search'
 import { normalizeArabicVariants } from './arabic'
+import { duaRowKey, normalizeDuaTitles } from './dua-titles'
 
 const BASE = '/data'
 
@@ -210,6 +211,119 @@ export async function searchQuranText(q: string, lang: 'urdu' | 'arabic' = 'urdu
     total_words: typedWords.length,
     phrase_match: r.urduPhrase,
   }))
+}
+
+/* ------------------------------------------------------------------ */
+/* Duas — baked list from the CDN, admin edits applied when available  */
+/* ------------------------------------------------------------------ */
+
+const DUA_SOURCE_ORDER = ['tbl_dua', 'tbl_dua_Urdu', 'tbl_prayer', 'tbl_namaz_e_janaza', 'tbl_roza']
+
+function duaSourceRank(source: unknown): number {
+  const i = DUA_SOURCE_ORDER.indexOf(String(source || ''))
+  return i === -1 ? DUA_SOURCE_ORDER.length : i
+}
+
+/** Keep the baked order (category, then dua_seq), but apply edited sequences. */
+function sortDuaRows(rows: any[]): any[] {
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const bySource = duaSourceRank(a.row?.source) - duaSourceRank(b.row?.source)
+      if (bySource) return bySource
+      const bySeq = Number(a.row?.seq ?? 0) - Number(b.row?.seq ?? 0)
+      if (bySeq) return bySeq
+      return a.index - b.index
+    })
+    .map(x => x.row)
+}
+
+function applyDuaOverride(base: any | null, override: any): any {
+  const out = { ...(base || {}) }
+  const source = override.source || override.table || override.table_name
+  if (source) out.source = String(source)
+  if (override.id !== undefined && override.id !== null) out.id = Number(override.id)
+  if (override.seq !== undefined && override.seq !== null) out.seq = Number(override.seq)
+  for (const field of ['title', 'desc', 'arabic', 'urdu', 'english', 'ref'] as const) {
+    if (override[field] !== undefined && override[field] !== null) {
+      out[field] = String(override[field])
+    }
+  }
+  return out
+}
+
+type DuaOverrides = any[] | null
+
+let duaOverridesPromise: Promise<DuaOverrides> | null = null
+
+/**
+ * Admin edits live in Turso; they are optional and must never block the tab.
+ * The static list paints first, then this small delta arrives and is merged.
+ */
+function loadDuaOverrides(): Promise<DuaOverrides> {
+  if (!duaOverridesPromise) {
+    duaOverridesPromise = Promise.race([
+      fetch('/api/duas/overrides', { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : null))
+        .catch(() => null),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 4000)),
+    ]).then((data: any) => (Array.isArray(data?.rows) ? data.rows : null)) as Promise<DuaOverrides>
+  }
+  return duaOverridesPromise
+}
+
+/** Start the tiny overlay request before the Duas tab is opened. */
+export function prefetchDuaOverrides(): void {
+  loadDuaOverrides().catch(() => {})
+}
+
+/** The baked list, with every title normalised to Urdu. */
+export async function getDuaBase(): Promise<any[]> {
+  const baked = await statJson<any[]>('/static/duas.json')
+  const list = Array.isArray(baked) ? baked : []
+  return normalizeDuaTitles(list)
+}
+
+export async function getDuaOverrides(): Promise<any[]> {
+  const rows = await loadDuaOverrides()
+  return rows || []
+}
+
+/** Apply admin edits/tombstones/new rows to the baked list. */
+export function mergeDuaOverrides(base: any[], overrides: any[]): any[] {
+  const list = Array.isArray(base) ? base : []
+  const rows = Array.isArray(overrides) ? overrides : []
+  if (!rows.length) {
+    return sortDuaRows(normalizeDuaTitles(list))
+  }
+
+  const byKey = new Map<string, any>()
+  for (const override of rows) {
+    const key = duaRowKey(override)
+    if (key) byKey.set(key, override)
+  }
+
+  const out: any[] = []
+  const seen = new Set<string>()
+
+  for (const row of list) {
+    const key = duaRowKey(row)
+    if (key) seen.add(key)
+    const override = key ? byKey.get(key) : null
+    if (override?.deleted) continue
+    const merged = override ? applyDuaOverride(row, override) : { ...row }
+    out.push({ ...merged, key: key || duaRowKey(merged) })
+  }
+
+  for (const override of rows) {
+    if (override?.deleted) continue
+    const key = duaRowKey(override)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push({ ...applyDuaOverride(null, override), key })
+  }
+
+  return sortDuaRows(normalizeDuaTitles(out))
 }
 
 /* ------------------------------------------------------------------ */

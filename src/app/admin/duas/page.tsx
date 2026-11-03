@@ -15,8 +15,9 @@ const CATEGORIES = [
 
 async function api(path: string, init?: RequestInit) {
   const res = await fetch(`${API}${path}`, init)
-  if (!res.ok) throw new Error('API error')
-  return res.json()
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.error || `API error (${res.status})`)
+  return data
 }
 
 export default function AdminDuasPage() {
@@ -45,6 +46,7 @@ function DuasManager() {
 
   async function load() {
     setLoading(true)
+    setErr(null)
     try {
       const res = await api('/api/admin/duas')
       setCategories(res.categories || [])
@@ -84,6 +86,7 @@ function DuasManager() {
       const payload = {
         table: active,
         dua: {
+          ...(editing?.key ? { key: editing.key } : {}),
           ...(editing?.id ? { id: editing.id } : {}),
           title: f.title.trim(),
           seq: f.seq === '' || f.seq === undefined || f.seq === null ? null : Number(f.seq),
@@ -99,28 +102,28 @@ function DuasManager() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      setMsg(res.action === 'updated' ? `Updated "${f.title}"` : `Added "${f.title}"`)
+      setMsg(res.action === 'updated' ? `Updated "${f.title}" — the website will show this on reload` : `Added "${f.title}" — the website will show this on reload`)
       setShowForm(false)
       setEditing(null)
       await load()
-    } catch {
-      setErr('Save failed — server error')
+    } catch (e: any) {
+      setErr(e?.message || 'Save failed — server error')
     } finally { setSaving(false) }
   }
 
   async function remove(d: any) {
-    if (!confirm(`Delete "${d.title}"? This cannot be undone.`)) return
+    if (!confirm(`Delete this entry (seq ${d.seq ?? '-'}) of "${d.title}"? This cannot be undone.`)) return
     setMsg(null); setErr(null)
     try {
       await api('/api/admin/duas', {
         method: 'DELETE',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ table: active, id: d.id }),
+        body: JSON.stringify({ table: active, id: d.id, seq: d.seq, key: d.key }),
       })
-      setMsg(`Deleted "${d.title}"`)
+      setMsg(`Deleted "${d.title}" — the website will show this on reload`)
       await load()
-    } catch {
-      setErr('Delete failed — server error')
+    } catch (e: any) {
+      setErr(e?.message || 'Delete failed — server error')
     }
   }
 
@@ -293,7 +296,7 @@ function DuasManager() {
           ) : (
             <div className="divide-y divide-[#f0f0f0] max-h-[60vh] overflow-y-auto">
               {activeCat.duas.map((d: any) => (
-                <div key={d.id} className="flex items-start gap-2 p-2.5 hover:bg-[#f8fbf8]">
+                <div key={d.key || `${d.id}-${d.seq}`} className="flex items-start gap-2 p-2.5 hover:bg-[#f8fbf8]">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#e8f5e9] text-[#1a5c3a]">#{d.id}</span>
@@ -324,8 +327,9 @@ function DuasManager() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                 <label className="block col-span-full">
-                  <span className="text-xs text-[#666] block mb-0.5">Title *</span>
+                  <span className="text-xs text-[#666] block mb-0.5">Title (Urdu) *</span>
                   <input type="text" value={f.title || ''} onChange={e => setF((x: any) => ({ ...x, title: e.target.value }))}
+                    placeholder="اردو میں عنوان لکھیں"
                     className="font-urdu w-full p-2 border border-[#ccc] rounded text-sm" style={{ direction: 'rtl' }} />
                 </label>
                 <label className="block">

@@ -14,6 +14,10 @@ import {
   prefetchSearchIndex,
   getBooks,
   prefetchBookOverrides,
+  getDuaBase,
+  getDuaOverrides,
+  mergeDuaOverrides,
+  prefetchDuaOverrides,
 } from '@/lib/quran-static'
 
 type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about' | 'books'
@@ -74,7 +78,7 @@ async function api(path: string, init?: RequestInit): Promise<any> {
   if (route === '/quran/surahs') return statJson('/static/surahs.json')
   if (route === '/quran/parah_names') return statJson('/static/parah_names.json')
   if (route === '/quran/translations') return statJson('/static/translations.json')
-  if (route === '/duas/all') return statJson('/static/duas.json')
+  if (route === '/duas/all') return getDuaBase()
   if (route === '/hadith/books') return statJson('/static/hadith_books.json')
   if (route === '/websites') return statJson('/static/sites.json')
   if (route === '/books') return getBooks()
@@ -196,6 +200,10 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
   // Tiny background request so the Books tab's optional admin overlay is
   // already resolved by the time the tab is opened.
   useEffect(() => { prefetchBookOverrides() }, [])
+
+  // Same for the Duas tab: fetch the small admin overlay in the background so
+  // edited titles are ready before the tab is opened.
+  useEffect(() => { prefetchDuaOverrides() }, [])
 
   // Only offer translations / tafseers that actually contain text. The baked
   // lists carry a database row count (all 6,349 for every entry) even for the
@@ -1401,7 +1409,23 @@ function DuasTab() {
   const [source, setSource] = useState('all')
   const [page, setPage] = useState(0)
 
-  useEffect(() => { api('/duas/all').then(setAllDuas) }, [])
+  useEffect(() => {
+    let alive = true
+    let base: any[] | null = null
+    let overrides: any[] | null = null
+
+    // Paint the static list immediately, then apply the small admin overlay
+    // when it arrives. Saves in the admin must show up on a normal reload.
+    const paint = () => {
+      if (!alive || !base) return
+      setAllDuas(mergeDuaOverrides(base, overrides || []))
+    }
+
+    getDuaBase().then(rows => { base = rows; paint() }).catch(() => {})
+    getDuaOverrides().then(rows => { overrides = rows; paint() }).catch(() => {})
+
+    return () => { alive = false }
+  }, [])
 
   const filtered = source === 'all' ? allDuas : allDuas.filter(d => d.source === source)
   const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)

@@ -298,7 +298,7 @@ async function bakeDuas() {
   const src = await quranSource()
   if (!src) return
 
-  const allDuas = []
+  let allDuas = []
   for (const [table, label] of DUA_TABLES) {
     try {
       const rows = await src.query(`SELECT dua_ID, dua_title, dua_seq, dua_desc, dua_arabic, dua_urdu, dua_eng, dua_ref FROM ${table} ORDER BY dua_seq`)
@@ -313,6 +313,34 @@ async function bakeDuas() {
       console.log(`  ${table} (${label}): ${rows.length} rows`)
     } catch (e) { console.warn(`  ${table} failed:`, e.message) }
   }
+
+  // The website must show every title in Urdu. `tbl_dua` stores English
+  // topic titles, while `tbl_dua_Urdu` carries the Urdu title for the same
+  // dua_ID; repeated content rows also leave the title blank after row 1.
+  // Apply the same rule the admin/client use so a future static:sync does not
+  // reintroduce English titles.
+  const hasUrdu = (text) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(String(text || ''))
+  const hasLatin = (text) => /[A-Za-z]/.test(String(text || ''))
+  const urduById = new Map()
+  for (const row of allDuas) {
+    if (row.source !== 'tbl_dua_Urdu') continue
+    const id = String(row.id)
+    const title = String(row.title || '').trim()
+    if (title && hasUrdu(title) && !hasLatin(title) && !urduById.has(id)) urduById.set(id, title)
+  }
+  const groupTitle = new Map()
+  for (const row of allDuas) {
+    const title = String(row.title || '').trim()
+    const key = `${row.source}:${row.id}`
+    if (title && hasUrdu(title) && !hasLatin(title) && !groupTitle.has(key)) groupTitle.set(key, title)
+  }
+  allDuas = allDuas.map(row => {
+    const title = String(row.title || '').trim()
+    if (title && hasUrdu(title) && !hasLatin(title)) return row
+    const fallback = urduById.get(String(row.id)) || groupTitle.get(`${row.source}:${row.id}`) || ''
+    return fallback ? { ...row, title: fallback } : row
+  })
+
   write('duas.json', allDuas)
   console.log(`Duas total: ${allDuas.length} items`)
 }
