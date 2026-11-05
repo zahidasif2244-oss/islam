@@ -1,13 +1,17 @@
-﻿import { createQuranClient, run, query, queryOne, getText } from '@/lib/db'
+﻿import type { InStatement } from '@libsql/client'
+import { createQuranClient, query, getText } from '@/lib/db'
 import { json, error } from '@/lib/api-utils'
 import { verifyAdminRequest } from '@/lib/admin-auth'
 import { DUA_TABLES, DUA_COLS, isDuaTable, resolveDuaTable } from '@/lib/dua-tables'
 import { duaKey, normalizeDuaTitles, parseDuaKey } from '@/lib/dua-titles'
 import {
-  deleteDuaOverride,
+  duaDeleteOverrideStatement,
+  duaOverrideStatement,
+  duaTitleOverrideStatement,
+  ensureDuaOverrides,
   getDuaOverrideMap,
+  invalidateDuaOverrides,
   saveDuaOverride,
-  saveDuaTitleOverride,
 } from '@/lib/dua-overrides'
 
 export const dynamic = 'force-dynamic'
@@ -35,23 +39,19 @@ export async function GET(req: Request) {
   try {
     const db = createQuranClient()
 
-    // Fetch every category first so title normalisation can borrow the Urdu
-    // title from tbl_dua_Urdu for the English-titled tbl_dua rows.
-    const raw: Record<string, any[]> = {}
-    await Promise.all(
-      DUA_TABLES.map(async ([table]) => {
-        raw[table] = await query(
-          db,
-          `SELECT ${DUA_COLS.join(',')} FROM ${resolveDuaTable(table)} ORDER BY dua_ID, dua_seq`
-        )
-      })
-    )
+    // One UNION ALL read instead of one query per category. The admin list
+    // needs every row anyway, so this only removes round trips.
+    const union = DUA_TABLES.map(
+      ([table]) => `SELECT '${table}' AS source, ${DUA_COLS.join(',')} FROM ${resolveDuaTable(table)}`
+    ).join('\nUNION ALL\n')
+    const raw = await query(db, `${union}\nORDER BY dua_ID, dua_seq`)
 
     const overrideMap = await getDuaOverrideMap()
     const all: any[] = []
 
     for (const [table] of DUA_TABLES) {
-      for (const r of raw[table] || []) {
+      for (const r of raw) {
+        if (String(r.source) !== table) continue
         const id = Number(r.dua_ID)
         const seq = Number(r.dua_seq)
         const key = duaKey(table, id, seq)
@@ -111,102 +111,158 @@ export async function POST(req: Request) {
     const db = createQuranClient()
 
     if (editId !== null) {
-      // Find the exact content row. The old code updated `WHERE dua_ID = ?`,
-      // which rewrote *every* content row in the topic with one row's fields.
-      let row: any = null
+      const twin = counterpartTable(table)
+
+      // One round trip for the topic group and its parallel table.
+      const selects: InStatement[] = [
+        {
+          sql: `SELECT dua_seq, dua_title, dua_desc, dua_arabic, dua_urdu, dua_eng, dua_ref
+                  FROM ${real} WHERE dua_ID = ? ORDER BY dua_seq`,
+          args: [editId],
+        },
+      ]
+      if (twin) {
+        selects.push({
+          sql: `SELECT dua_seq, dua_title FROM ${twin} WHERE dua_ID = ? ORDER BY dua_seq`,
+          args: [editId],
+        })
+      }
+      const selected = await db.batch(selects, 'read')
+      const groupRows = selected[0].rows as any[]
+      const twinRows = twin ? (selected[1].rows as any[]) : []
+
       const keySeq = parsedKey?.seq ?? null
-      if (keySeq !== null) {
-        row = await queryOne(
-          db,
-          `SELECT dua_ID, dua_seq FROM ${real} WHERE dua_ID = ? AND dua_seq = ? LIMIT 1`,
-          [editId, keySeq]
-        )
-      }
-      if (!row) {
-        row = await queryOne(
-          db,
-          `SELECT dua_ID, dua_seq FROM ${real} WHERE dua_ID = ? ORDER BY dua_seq LIMIT 1`,
-          [editId]
-        )
-      }
+      // The old code fell back to the first row when the exact key was gone.
+      const row =
+        (keySeq !== null ? groupRows.find(r => Number(r.dua_seq) === keySeq) : undefined) ||
+        groupRows[0]
       if (!row) return error('Dua not found', 404)
 
       const oldSeq = Number(row.dua_seq)
       const newSeq = requestedSeq === null ? oldSeq : requestedSeq
-      const oldKey = duaKey(table, editId, oldSeq)
       const newKey = duaKey(table, editId, newSeq)
+      const seqChanged = oldSeq !== newSeq
 
-      // Titles belong to the whole topic (dua_ID), so update every row in the
-      // group — and in the parallel English/Urdu table when one exists.
-      await run(db, `UPDATE ${real} SET dua_title = ? WHERE dua_ID = ?`, [title, editId])
-      const twin = counterpartTable(table)
-      if (twin) {
-        await run(db, `UPDATE ${twin} SET dua_title = ? WHERE dua_ID = ?`, [title, editId])
+      const titleChanged = groupRows.some(r => getText(r.dua_title) !== title)
+      const twinTitleChanged = twinRows.some(r => getText(r.dua_title) !== title)
+      const contentChanged =
+        seqChanged ||
+        getText(row.dua_desc) !== desc ||
+        getText(row.dua_arabic) !== arabic ||
+        getText(row.dua_urdu) !== urdu ||
+        getText(row.dua_eng) !== english ||
+        getText(row.dua_ref) !== ref
+
+      const overrideMap = await getDuaOverrideMap()
+      const existing = overrideMap.get(newKey)
+      const needsFullOverride =
+        seqChanged ||
+        contentChanged ||
+        titleChanged ||
+        !existing ||
+        existing.deleted ||
+        existing.title !== title ||
+        (existing.desc ?? getText(row.dua_desc)) !== desc ||
+        (existing.arabic ?? getText(row.dua_arabic)) !== arabic ||
+        (existing.urdu ?? getText(row.dua_urdu)) !== urdu ||
+        (existing.english ?? getText(row.dua_eng)) !== english ||
+        (existing.ref ?? getText(row.dua_ref)) !== ref
+
+      const writes: InStatement[] = []
+      const overlayWrites: InStatement[] = []
+
+      // Only touch columns that actually differ.
+      if (titleChanged) {
+        writes.push({ sql: `UPDATE ${real} SET dua_title = ? WHERE dua_ID = ?`, args: [title, editId] })
+      }
+      if (twin && twinTitleChanged) {
+        writes.push({ sql: `UPDATE ${twin} SET dua_title = ? WHERE dua_ID = ?`, args: [title, editId] })
+      }
+      if (contentChanged) {
+        writes.push({
+          sql: `UPDATE ${real}
+                   SET dua_seq = ?, dua_desc = ?, dua_arabic = ?, dua_urdu = ?, dua_eng = ?, dua_ref = ?
+                 WHERE dua_ID = ? AND dua_seq = ?`,
+          args: [newSeq, desc, arabic, urdu, english, ref, editId, oldSeq],
+        })
       }
 
-      // Everything else belongs to this one content row only.
-      await run(
-        db,
-        `UPDATE ${real}
-            SET dua_seq = ?, dua_desc = ?, dua_arabic = ?, dua_urdu = ?, dua_eng = ?, dua_ref = ?
-          WHERE dua_ID = ? AND dua_seq = ?`,
-        [newSeq, desc, arabic, urdu, english, ref, editId, oldSeq]
-      )
-
-      // Keep the CDN/static overlay in sync with the database write.
-      if (oldSeq !== newSeq) await deleteDuaOverride(table, editId, oldSeq)
-      await saveDuaOverride({
-        key: newKey,
-        table,
-        id: editId,
-        seq: newSeq,
-        title,
-        desc,
-        arabic,
-        urdu,
-        english,
-        ref,
-        deleted: false,
-      })
-
-      // Title-only overrides for the remaining rows in this topic group.
-      const groupRows = await query(
-        db,
-        `SELECT dua_seq FROM ${real} WHERE dua_ID = ? ORDER BY dua_seq`,
-        [editId]
-      )
-      for (const gr of groupRows) {
-        const s = Number(gr.dua_seq)
-        if (s === newSeq) continue
-        await saveDuaTitleOverride(table, editId, s, title)
+      // Keep the static-file overlay in sync only where it would differ.
+      if (seqChanged) {
+        overlayWrites.push(duaDeleteOverrideStatement(table, editId, oldSeq))
       }
-
-      // Mirror the topic title on the parallel table too.
-      if (twin) {
-        const twinRows = await query(
-          db,
-          `SELECT dua_seq FROM ${twin} WHERE dua_ID = ? ORDER BY dua_seq`,
-          [editId]
+      if (needsFullOverride) {
+        overlayWrites.push(
+          duaOverrideStatement({
+            key: newKey,
+            table,
+            id: editId,
+            seq: newSeq,
+            title,
+            desc,
+            arabic,
+            urdu,
+            english,
+            ref,
+            deleted: false,
+          })
         )
-        for (const gr of twinRows) {
-          await saveDuaTitleOverride(twin, editId, Number(gr.dua_seq), title)
+      }
+
+      // Title-only overrides for the rest of the topic group.
+      const titleOverridesNeeded =
+        titleChanged ||
+        groupRows.some(r => {
+          const seq = Number(r.dua_seq)
+          return seq !== newSeq && overrideMap.get(duaKey(table, editId, seq))?.title !== title
+        })
+      if (titleOverridesNeeded) {
+        for (const r of groupRows) {
+          const seq = Number(r.dua_seq)
+          // `groupRows` was read before the seq update, so the row that moved
+          // still appears under its old sequence. Its tombstone must win.
+          if (seq === newSeq || (seqChanged && seq === oldSeq)) continue
+          const current = overrideMap.get(duaKey(table, editId, seq))
+          if (current && !current.deleted && current.title === title) continue
+          overlayWrites.push(duaTitleOverrideStatement(table, editId, seq, title))
         }
+      }
+
+      if (twin) {
+        const twinOverridesNeeded =
+          twinTitleChanged ||
+          twinRows.some(r => overrideMap.get(duaKey(twin, editId, Number(r.dua_seq)))?.title !== title)
+        if (twinOverridesNeeded) {
+          for (const r of twinRows) {
+            const seq = Number(r.dua_seq)
+            const current = overrideMap.get(duaKey(twin, editId, seq))
+            if (current && !current.deleted && current.title === title) continue
+            overlayWrites.push(duaTitleOverrideStatement(twin, editId, seq, title))
+          }
+        }
+      }
+
+      if (writes.length || overlayWrites.length) {
+        if (overlayWrites.length) await ensureDuaOverrides()
+        const batch = [...writes, ...overlayWrites]
+        await db.batch(batch, 'write')
+        if (overlayWrites.length) invalidateDuaOverrides()
       }
 
       return json({ success: true, action: 'updated', id: editId, seq: newSeq, key: newKey, table })
     }
 
-    // New topic/content row.
-    const maxRows = await query(db, `SELECT COALESCE(MAX(dua_ID),0) AS m FROM ${real}`)
-    const newId = Number((maxRows[0] as any).m) + 1
+    // New topic/content row. MAX() + INSERT + RETURNING is one round trip.
     const newSeq = requestedSeq ?? 1
+    const inserted = await db.execute({
+      sql: `INSERT INTO ${real} (dua_ID, dua_title, dua_seq, dua_desc, dua_arabic, dua_urdu, dua_eng, dua_ref)
+            SELECT COALESCE(MAX(dua_ID),0) + 1, ?, ?, ?, ?, ?, ?, ? FROM ${real}
+            RETURNING dua_ID`,
+      args: [title, newSeq, desc, arabic, urdu, english, ref],
+    })
+    const newId = Number(inserted.rows[0]?.dua_ID)
+    if (!newId) return error('Failed to create dua', 500)
 
-    await run(
-      db,
-      `INSERT INTO ${real} (dua_ID, dua_title, dua_seq, dua_desc, dua_arabic, dua_urdu, dua_eng, dua_ref)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [newId, title, newSeq, desc, arabic, urdu, english, ref]
-    )
     await saveDuaOverride({
       key: duaKey(table, newId, newSeq),
       table,
@@ -244,18 +300,27 @@ export async function DELETE(req: Request) {
     const rows = seq === null
       ? await query(db, `SELECT dua_seq FROM ${real} WHERE dua_ID = ?`, [id])
       : await query(db, `SELECT dua_seq FROM ${real} WHERE dua_ID = ? AND dua_seq = ?`, [id, seq])
-
     if (!rows.length) return error('Dua not found', 404)
 
+    // Tombstones and the row delete are committed in one transaction.
+    const overrideMap = await getDuaOverrideMap()
+    const statements: InStatement[] = []
     for (const r of rows) {
-      await deleteDuaOverride(table, id, Number(r.dua_seq))
+      const rowSeq = Number(r.dua_seq)
+      const current = overrideMap.get(duaKey(table, id, rowSeq))
+      if (!current || !current.deleted) {
+        statements.push(duaDeleteOverrideStatement(table, id, rowSeq))
+      }
     }
+    statements.push(
+      seq === null
+        ? { sql: `DELETE FROM ${real} WHERE dua_ID = ?`, args: [id] }
+        : { sql: `DELETE FROM ${real} WHERE dua_ID = ? AND dua_seq = ?`, args: [id, seq] }
+    )
 
-    if (seq === null) {
-      await run(db, `DELETE FROM ${real} WHERE dua_ID = ?`, [id])
-    } else {
-      await run(db, `DELETE FROM ${real} WHERE dua_ID = ? AND dua_seq = ?`, [id, seq])
-    }
+    if (statements.length > 1) await ensureDuaOverrides()
+    await db.batch(statements, 'write')
+    invalidateDuaOverrides()
 
     return json({ success: true, deleted: rows.length })
   } catch (e: any) {

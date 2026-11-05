@@ -12,6 +12,12 @@ const QURAN_INDEX_SQL = [
   'CREATE INDEX IF NOT EXISTS idx_quran_surat_ayah ON tbl_QuranComplete(surat_id, ayat_number)',
   'CREATE INDEX IF NOT EXISTS idx_quran_para ON tbl_QuranComplete(para_id)',
   'CREATE INDEX IF NOT EXISTS idx_arabic_words_surat_ayah ON tbl_arabic_words(arabic_surat_id, arabic_ayat_number)',
+  // Admin dua edits read one topic group (dua_ID) and delete by dua_ID/dua_seq.
+  'CREATE INDEX IF NOT EXISTS idx_dua_id_seq ON tbl_dua(dua_ID, dua_seq)',
+  'CREATE INDEX IF NOT EXISTS idx_dua_urdu_id_seq ON tbl_dua_Urdu(dua_ID, dua_seq)',
+  'CREATE INDEX IF NOT EXISTS idx_prayer_id_seq ON tbl_prayer(dua_ID, dua_seq)',
+  'CREATE INDEX IF NOT EXISTS idx_namaz_e_janaza_id_seq ON tbl_namaz_e_janaza(dua_ID, dua_seq)',
+  'CREATE INDEX IF NOT EXISTS idx_roza_id_seq ON tbl_roza(dua_ID, dua_seq)',
 ]
 
 const HADITH_INDEX_SQL = [
@@ -41,11 +47,11 @@ export function ensureIndexes(): Promise<void> {
         }
       }
       try {
-        await runIndexes(createQuranClient(), QURAN_INDEX_SQL)
+        await runIndexes(getQuranClient(), QURAN_INDEX_SQL)
       } catch {}
       for (const key of Object.keys(BOOK_NAMES)) {
         try {
-          await runIndexes(createHadithClient(key), HADITH_INDEX_SQL)
+          await runIndexes(getHadithClient(key), HADITH_INDEX_SQL)
         } catch {}
       }
     })().catch(() => {})
@@ -55,8 +61,8 @@ export function ensureIndexes(): Promise<void> {
 
 const quranClientCache = new Map<string, Client>()
 
-export function createQuranClient(): Client {
-  ensureIndexes()
+/** Raw client getter; used by the index bootstrap so it cannot re-enter itself. */
+function getQuranClient(): Client {
   const key = 'quran'
   let c = quranClientCache.get(key)
   if (!c) {
@@ -66,10 +72,15 @@ export function createQuranClient(): Client {
   return c
 }
 
+export function createQuranClient(): Client {
+  ensureIndexes()
+  return getQuranClient()
+}
+
 const hadithClientCache = new Map<string, Client>()
 
-export function createHadithClient(bookId: string): Client {
-  ensureIndexes()
+/** Raw client getter; used by the index bootstrap so it cannot re-enter itself. */
+function getHadithClient(bookId: string): Client {
   const key = `TURSO_HADITH_${bookId.toUpperCase()}_DB_URL`
   let c = hadithClientCache.get(key)
   if (!c) {
@@ -78,6 +89,11 @@ export function createHadithClient(bookId: string): Client {
     hadithClientCache.set(key, c)
   }
   return c
+}
+
+export function createHadithClient(bookId: string): Client {
+  ensureIndexes()
+  return getHadithClient(bookId)
 }
 
 export async function query(client: Client, sql: string, args?: any[]): Promise<Record<string, any>[]> {

@@ -14,6 +14,12 @@ const QURAN_INDEX_SQL = [
   'CREATE INDEX IF NOT EXISTS idx_quran_surat_ayah ON tbl_QuranComplete(surat_id, ayat_number)',
   'CREATE INDEX IF NOT EXISTS idx_quran_para ON tbl_QuranComplete(para_id)',
   'CREATE INDEX IF NOT EXISTS idx_arabic_words_surat_ayah ON tbl_arabic_words(arabic_surat_id, arabic_ayat_number)',
+  // Admin dua edits read one topic group (dua_ID) and delete by dua_ID/dua_seq.
+  'CREATE INDEX IF NOT EXISTS idx_dua_id_seq ON tbl_dua(dua_ID, dua_seq)',
+  'CREATE INDEX IF NOT EXISTS idx_dua_urdu_id_seq ON tbl_dua_Urdu(dua_ID, dua_seq)',
+  'CREATE INDEX IF NOT EXISTS idx_prayer_id_seq ON tbl_prayer(dua_ID, dua_seq)',
+  'CREATE INDEX IF NOT EXISTS idx_namaz_e_janaza_id_seq ON tbl_namaz_e_janaza(dua_ID, dua_seq)',
+  'CREATE INDEX IF NOT EXISTS idx_roza_id_seq ON tbl_roza(dua_ID, dua_seq)',
 ]
 
 const HADITH_INDEX_SQL = [

@@ -1,33 +1,20 @@
+import type { InStatement } from '@libsql/client'
 import { json, error } from '@/lib/api-utils'
 import booksData from '@/data/books.json'
 import {
+  BOOK_COLS,
   cleanStr,
   bookKey,
-  listCustomBooks,
-  listHiddenKeys,
+  ensureTables,
+  listBookOverrides,
   addHidden,
   removeHidden,
+  invalidateBookOverrides,
 } from '@/lib/custom-books'
-import { createQuranClient, run } from '@/lib/db'
+import { createQuranClient, query, run } from '@/lib/db'
 import { verifyAdminRequest } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
-
-const CREATE_BOOKS_SQL = `
-CREATE TABLE IF NOT EXISTS tbl_CustomBooks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT,
-  author TEXT,
-  pages TEXT,
-  cover TEXT,
-  thumbnail TEXT,
-  url TEXT,
-  pdf TEXT,
-  audioUrl TEXT,
-  audioPlay TEXT,
-  audioDownload TEXT,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP
-)`
 
 export interface AdminBook {
   id: number | null
@@ -47,6 +34,19 @@ export interface AdminBook {
   deleted: boolean
 }
 
+/** Keep each HTTP batch comfortably below request-size limits. */
+const WRITES_PER_BATCH = 200
+
+const IMPORT_COLS = [
+  'title', 'author', 'pages', 'cover', 'thumbnail', 'url',
+  'pdf', 'audioUrl', 'audioPlay', 'audioDownload', 'bakedKey',
+] as const
+
+/** Treat NULL and '' as the same empty value so unchanged rows are not rewritten. */
+function sameBook(existing: any, args: unknown[]): boolean {
+  return IMPORT_COLS.every((col, i) => String(existing[col] ?? '') === String(args[i] ?? ''))
+}
+
 export async function GET(req: Request) {
   if (!verifyAdminRequest(req)) return error('Unauthorized', 401)
   try {
@@ -56,8 +56,8 @@ export async function GET(req: Request) {
       custom: false,
       id: null,
     }))
-    const custom = await listCustomBooks()
-    const hidden = await listHiddenKeys()
+    // One cached/batched read for both overlay tables.
+    const { custom, hidden } = await listBookOverrides()
     const customByKey = new Map<string, any>()
     for (const c of custom) {
       const k = bookKey(c)
@@ -146,8 +146,32 @@ export async function POST(req: Request) {
     if (!Array.isArray(books) || books.length === 0) return error('books array required')
 
     const db = createQuranClient()
-    await run(db, CREATE_BOOKS_SQL)
+    await ensureTables(db)
 
+    // One read for all existing rows, then one batched write. The old loop did
+    // a SELECT and an UPDATE/INSERT per imported book (2,471 rows = up to
+    // ~5,000 round trips).
+    const existing = await query(
+      db,
+      `SELECT id, ${BOOK_COLS} FROM tbl_CustomBooks ORDER BY id`
+    )
+    const byId = new Map<number, any>()
+    const byKey = new Map<string, number>()
+    for (const r of existing) {
+      const id = Number(r.id)
+      if (!Number.isFinite(id)) continue
+      byId.set(id, r)
+      for (const v of [r.bakedKey, r.url, r.cover]) {
+        const k = String(v || '').toLowerCase()
+        if (k && !byKey.has(k)) byKey.set(k, id)
+      }
+    }
+
+    const updateSql = `UPDATE tbl_CustomBooks SET title=?, author=?, pages=?, cover=?, thumbnail=?, url=?, pdf=?, audioUrl=?, audioPlay=?, audioDownload=?, bakedKey=? WHERE id=?`
+    const insertSql = `INSERT INTO tbl_CustomBooks (title, author, pages, cover, thumbnail, url, pdf, audioUrl, audioPlay, audioDownload, bakedKey) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+    const statements: InStatement[] = []
+    const pendingByKey = new Map<string, number>()
     let inserted = 0
     let updated = 0
     let skipped = 0
@@ -167,43 +191,53 @@ export async function POST(req: Request) {
       }
       const key = bookKey(b)
       const bakedKey = cleanStr(b.bakedKey).toLowerCase() || null
+      const args = [
+        row.title, row.author, row.pages, row.cover, row.thumbnail, row.url,
+        row.pdf, row.audioUrl, row.audioPlay, row.audioDownload, bakedKey,
+      ]
 
       if (b.id) {
-        const existing: any = (
-          await db.execute({ sql: `SELECT url, cover FROM tbl_CustomBooks WHERE id = ?`, args: [Number(b.id)] })
-        ).rows[0]
-        if (!existing) { skipped++; continue }
-        await db.execute({
-          sql: `UPDATE tbl_CustomBooks SET title=?, author=?, pages=?, cover=?, thumbnail=?, url=?, pdf=?, audioUrl=?, audioPlay=?, audioDownload=?, bakedKey=? WHERE id=?`,
-          args: [row.title, row.author, row.pages, row.cover, row.thumbnail, row.url, row.pdf, row.audioUrl, row.audioPlay, row.audioDownload, bakedKey, Number(b.id)],
-        })
+        const targetId = Number(b.id)
+        const current = byId.get(targetId)
+        if (!current) { skipped++; continue }
+        if (!sameBook(current, args)) {
+          statements.push({ sql: updateSql, args: [...args, targetId] })
+        }
         updated++
         continue
       }
 
-      const existIdx = key
-        ? await db.execute({
-            sql: `SELECT id FROM tbl_CustomBooks WHERE lower(bakedKey) = ? OR lower(url) = ? OR lower(cover) = ?`,
-            args: [key, key, key],
-          })
-        : { rows: [] }
-      if (key && (existIdx.rows as any[]).length > 0) {
-        const eid = (existIdx.rows[0] as any).id
-        await db.execute({
-          sql: `UPDATE tbl_CustomBooks SET title=?, author=?, pages=?, cover=?, thumbnail=?, url=?, pdf=?, audioUrl=?, audioPlay=?, audioDownload=?, bakedKey=? WHERE id=?`,
-          args: [row.title, row.author, row.pages, row.cover, row.thumbnail, row.url, row.pdf, row.audioUrl, row.audioPlay, row.audioDownload, bakedKey, eid],
-        })
+      if (key && byKey.has(key)) {
+        const targetId = byKey.get(key)!
+        const current = byId.get(targetId)
+        if (current && sameBook(current, args)) {
+          updated++
+          continue
+        }
+        statements.push({ sql: updateSql, args: [...args, targetId] })
+        updated++
+        continue
+      }
+
+      // A duplicate key inside the same import used to update the row that the
+      // previous loop iteration inserted. Merge it into that pending INSERT.
+      if (key && pendingByKey.has(key)) {
+        statements[pendingByKey.get(key)!] = { sql: insertSql, args }
         updated++
         continue
       }
 
       if (!row.title || (!row.url && !row.cover)) { skipped++; continue }
-      await db.execute({
-        sql: `INSERT INTO tbl_CustomBooks (title, author, pages, cover, thumbnail, url, pdf, audioUrl, audioPlay, audioDownload, bakedKey) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [row.title, row.author, row.pages, row.cover, row.thumbnail, row.url, row.pdf, row.audioUrl, row.audioPlay, row.audioDownload, bakedKey],
-      })
+      const index = statements.length
+      statements.push({ sql: insertSql, args })
+      if (key) pendingByKey.set(key, index)
       inserted++
     }
+
+    for (let i = 0; i < statements.length; i += WRITES_PER_BATCH) {
+      await db.batch(statements.slice(i, i + WRITES_PER_BATCH), 'write')
+    }
+    if (statements.length) invalidateBookOverrides()
 
     return json({ success: true, inserted, updated, skipped })
   } catch (e: any) {
@@ -218,6 +252,7 @@ export async function DELETE(req: Request) {
 
     if (body.id) {
       await run(createQuranClient(), `DELETE FROM tbl_CustomBooks WHERE id = ?`, [Number(body.id)])
+      invalidateBookOverrides()
       return json({ success: true, removed: 'custom' })
     }
     if (body.key) {
