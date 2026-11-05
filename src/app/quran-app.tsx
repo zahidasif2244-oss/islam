@@ -18,9 +18,13 @@ import {
   getDuaOverrides,
   mergeDuaOverrides,
   prefetchDuaOverrides,
+  getTopicBase,
+  getTopicOverrides,
+  prefetchTopicOverrides,
 } from '@/lib/quran-static'
+import { mergeTopicOverrides } from '@/lib/topic-merge'
 
-type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about' | 'books'
+type Tab = 'quran' | 'hadith' | 'wordbyword' | 'tafseer' | 'duas' | 'topics' | 'fahmul' | 'mutradif' | 'more' | 'search' | 'about' | 'books' | 'listen'
 
 const API = ''
 
@@ -70,6 +74,7 @@ async function api(path: string, init?: RequestInit): Promise<any> {
   /* ---- Baked static lists ---- */
   if (route === '/quran/topics') return statJson('/static/topics.json')
   if (route === '/quran/amazing_topics') return statJson('/static/amazing_topics.json')
+  if (route === '/quran/quran_audio') return statJson('/static/quran_audio.json')
   if (route === '/quran/fahmul_quran') return statJson('/static/fahmul_quran.json')
   if (route === '/quran/mutradif') return statJson('/static/mutradif.json')
   if (route === '/quran/subjects') return statJson('/static/subjects_english.json')
@@ -204,6 +209,9 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
   // Same for the Duas tab: fetch the small admin overlay in the background so
   // edited titles are ready before the tab is opened.
   useEffect(() => { prefetchDuaOverrides() }, [])
+
+  // Topics and Amazing share one overlay; fetch it before either tab is opened.
+  useEffect(() => { prefetchTopicOverrides() }, [])
 
   // Only offer translations / tafseers that actually contain text. The baked
   // lists carry a database row count (all 6,349 for every entry) even for the
@@ -354,7 +362,7 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
 
         {/* Tabs */}
         <div className="bg-[#2a7a4e] flex px-3 sm:px-5 gap-0.5 overflow-x-auto scrollbar-none">
-          {(['quran', 'hadith', 'wordbyword', 'tafseer', 'duas', 'topics', 'fahmul', 'mutradif', 'more', 'about', 'books'] as Tab[]).map(t => (
+          {(['quran', 'hadith', 'wordbyword', 'tafseer', 'duas', 'topics', 'listen', 'fahmul', 'mutradif', 'more', 'books', 'about'] as Tab[]).map(t => (
             <button key={t} onClick={() => showTab(t)}
               className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm border-none cursor-pointer capitalize whitespace-nowrap shrink-0
                 ${tab === t ? 'bg-[#f5f5f5] text-[#1a5c3a] font-bold rounded-t-lg' : 'text-[#ddd] hover:bg-[#3a8a5e] hover:text-white'}`}
@@ -376,6 +384,7 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
           {tab === 'search' && <SearchTab />}
           {tab === 'about' && <AboutTab />}
           {tab === 'books' && <BooksTab />}
+          {tab === 'listen' && <ListenTab />}
         </div>
 
         {/* Settings Modal */}
@@ -1485,7 +1494,26 @@ function TopicsTab() {
   const [filter, setFilter] = useState('')
   const [page, setPage] = useState(0)
 
-  useEffect(() => { api('/quran/topics').then(setTopics); api('/quran/amazing_topics').then(setAmazing) }, [])
+  useEffect(() => {
+    let alive = true
+    let baseTopics: any[] | null = null
+    let baseAmazing: any[] | null = null
+    let overrides: any[] | null = null
+
+    // Paint the baked list immediately, then apply the small admin overlay when
+    // it arrives. Saves in the admin page must show up on a normal reload.
+    const paint = () => {
+      if (!alive) return
+      if (baseTopics) setTopics(mergeTopicOverrides(baseTopics, overrides || [], 'topics'))
+      if (baseAmazing) setAmazing(mergeTopicOverrides(baseAmazing, overrides || [], 'amazing'))
+    }
+
+    getTopicBase('topics').then(rows => { baseTopics = rows; paint() }).catch(() => {})
+    getTopicBase('amazing').then(rows => { baseAmazing = rows; paint() }).catch(() => {})
+    getTopicOverrides().then(rows => { overrides = rows; paint() }).catch(() => {})
+
+    return () => { alive = false }
+  }, [])
 
   if (view === 'amazing') {
     const filtered = amazing.filter(t => (t.urdu + ' ' + t.english).toLowerCase().includes(filter.toLowerCase()))
@@ -1494,8 +1522,8 @@ function TopicsTab() {
     return (
       <div>
         <div className="flex gap-1.5 mb-3 flex-wrap">
-          <button onClick={() => { setView('topics'); setPage(0) }} className="bg-[#2a7a4e] text-[#ddd] px-4 py-1.5 text-sm border-none rounded cursor-pointer">Topics (2101)</button>
-          <button className="bg-[#f5f5f5] text-[#1a5c3a] px-4 py-1.5 text-sm border-none rounded cursor-pointer font-bold">Amazing (369)</button>
+          <button onClick={() => { setView('topics'); setPage(0) }} className="bg-[#2a7a4e] text-[#ddd] px-4 py-1.5 text-sm border-none rounded cursor-pointer">Topics ({topics.length})</button>
+          <button className="bg-[#f5f5f5] text-[#1a5c3a] px-4 py-1.5 text-sm border-none rounded cursor-pointer font-bold">Amazing ({amazing.length})</button>
         </div>
         <p className="text-xs text-[#999] mb-2.5">{filtered.length} amazing facts</p>
         {pageItems.map((t, i) => (
@@ -1516,8 +1544,8 @@ function TopicsTab() {
   return (
     <div>
       <div className="flex gap-1.5 mb-3 flex-wrap">
-        <button className="bg-[#f5f5f5] text-[#1a5c3a] px-4 py-1.5 text-sm border-none rounded cursor-pointer font-bold">Topics (2101)</button>
-        <button onClick={() => { setView('amazing'); setPage(0) }} className="bg-[#2a7a4e] text-[#ddd] px-4 py-1.5 text-sm border-none rounded cursor-pointer">Amazing (369)</button>
+        <button className="bg-[#f5f5f5] text-[#1a5c3a] px-4 py-1.5 text-sm border-none rounded cursor-pointer font-bold">Topics ({topics.length})</button>
+        <button onClick={() => { setView('amazing'); setPage(0) }} className="bg-[#2a7a4e] text-[#ddd] px-4 py-1.5 text-sm border-none rounded cursor-pointer">Amazing ({amazing.length})</button>
       </div>
       <input type="text" placeholder="Search topics..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
       <p className="text-xs text-[#999] mb-2.5">{filtered.length} topics</p>
@@ -1579,7 +1607,71 @@ function AmazingDetail({ t }: { t: any }) {
   )
 }
 
-// ============== FAHMUL ==============
+// ============== LISTEN ==============
+function ListenTab() {
+  const [items, setItems] = useState<any[]>([])
+  const [filter, setFilter] = useState('')
+  const [page, setPage] = useState(0)
+  const [playing, setPlaying] = useState<number | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => { api('/quran/quran_audio').then(setItems) }, [])
+
+  const filtered = items.filter(i => (i.name + ' ' + i.surah).toLowerCase().includes(filter.toLowerCase()))
+  const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
+  const pageItems = filtered.slice(page * LIST_PAGE_SIZE, (page + 1) * LIST_PAGE_SIZE)
+
+  function formatDuration(sec: number) {
+    const m = Math.floor((sec || 0) / 60)
+    const s = Math.floor((sec || 0) % 60)
+    return `${m}:${String(s).padStart(2, '0')}`
+  }
+
+  function togglePlay(item: any) {
+    if (!audioRef.current) return
+    if (playing === item.surah) {
+      audioRef.current.pause()
+      setPlaying(null)
+    } else {
+      audioRef.current.src = item.playUrl
+      audioRef.current.play().catch(() => {})
+      setPlaying(item.surah)
+    }
+  }
+
+  return (
+    <div>
+      <h2 className="text-[#1a5c3a] mb-2.5">Listen to the Quran</h2>
+      <input type="text" placeholder="Search surah..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
+      <p className="text-xs text-[#999] mb-2.5">{filtered.length} surahs · Abdul Basit (Mujawwad)</p>
+      <audio ref={audioRef} onEnded={() => setPlaying(null)} className="hidden" />
+      <div className="space-y-1">
+        {pageItems.map(item => (
+          <div key={item.surah} className="flex items-center gap-2 p-2 border border-[#e0e0e0] rounded bg-white hover:bg-[#f8fbf8]">
+            <span className="w-8 text-center text-xs font-bold text-[#1a5c3a] shrink-0">{item.surah}</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">{item.name}</div>
+              <div className="text-[10px] text-[#999]">{formatDuration(item.durationSec)}</div>
+            </div>
+            <button
+              onClick={() => togglePlay(item)}
+              className="text-[11px] text-white bg-[#1a5c3a] border-none rounded px-2.5 py-1 cursor-pointer hover:bg-[#2a7a4e] whitespace-nowrap"
+            >{playing === item.surah ? '⏸ Pause' : '▶ Play'}</button>
+            <a
+              href={item.downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-2.5 py-1 no-underline hover:bg-[#d0ead8] whitespace-nowrap"
+            >⬇ Download</a>
+          </div>
+        ))}
+      </div>
+      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
+    </div>
+  )
+}
+
+// ============== FAHMUL =============='
 function FahmulTab() {
   const [items, setItems] = useState<any[]>([])
   const [filter, setFilter] = useState('')

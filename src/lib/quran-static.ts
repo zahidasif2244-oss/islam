@@ -11,6 +11,7 @@
 import { quranWords, arabicQuranMatches, encodeUrduPhrase, decodeUrduInline } from './quran-search'
 import { normalizeArabicVariants } from './arabic'
 import { duaRowKey, normalizeDuaTitles } from './dua-titles'
+import { mergeTopicOverrides, type TopicKind } from './topic-merge'
 
 const BASE = '/data'
 
@@ -324,6 +325,53 @@ export function mergeDuaOverrides(base: any[], overrides: any[]): any[] {
   }
 
   return sortDuaRows(normalizeDuaTitles(out))
+}
+
+/* ------------------------------------------------------------------ */
+/* Topics — baked lists from the CDN, admin edits applied when available */
+/* ------------------------------------------------------------------ */
+
+type TopicOverrides = any[] | null
+
+let topicOverridesPromise: Promise<TopicOverrides> | null = null
+
+/** Admin topic edits live in Turso; they are optional and must not block the tab. */
+function loadTopicOverrides(): Promise<TopicOverrides> {
+  if (!topicOverridesPromise) {
+    topicOverridesPromise = Promise.race([
+      fetch('/api/topics/overrides', { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : null))
+        .catch(() => null),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 4000)),
+    ]).then((data: any) => (Array.isArray(data?.rows) ? data.rows : null)) as Promise<TopicOverrides>
+  }
+  return topicOverridesPromise
+}
+
+/** Start the tiny overlay request before the Topics tab is opened. */
+export function prefetchTopicOverrides(): void {
+  loadTopicOverrides().catch(() => {})
+}
+
+export async function getTopicBase(kind: TopicKind): Promise<any[]> {
+  const baked = await statJson<any[]>(kind === 'topics' ? '/static/topics.json' : '/static/amazing_topics.json')
+  return Array.isArray(baked) ? baked : []
+}
+
+export async function getTopicOverrides(): Promise<any[]> {
+  const rows = await loadTopicOverrides()
+  return rows || []
+}
+
+/** Merged convenience helpers; the tab itself paints the base list first. */
+export async function getTopics(): Promise<any[]> {
+  const [base, overrides] = await Promise.all([getTopicBase('topics'), getTopicOverrides()])
+  return mergeTopicOverrides(base, overrides, 'topics')
+}
+
+export async function getAmazingTopics(): Promise<any[]> {
+  const [base, overrides] = await Promise.all([getTopicBase('amazing'), getTopicOverrides()])
+  return mergeTopicOverrides(base, overrides, 'amazing')
 }
 
 /* ------------------------------------------------------------------ */

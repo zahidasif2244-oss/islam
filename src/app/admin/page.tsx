@@ -41,6 +41,13 @@ function Hub() {
             <p className="text-sm text-[#666]">Manage duas across Duas / More Duas / Prayers / Janaza / Roza.</p>
             <div className="mt-4 text-sm text-[#1a5c3a] font-semibold">Open →</div>
           </a>
+          <a href="/admin/topics"
+            className="no-underline bg-white rounded-xl border border-[#d5e8da] p-6 hover:shadow-lg transition-shadow hover:border-[#1a5c3a]">
+            <div className="text-4xl mb-3">📖</div>
+            <h2 className="text-lg font-bold text-[#1a5c3a] mb-1">Topics</h2>
+            <p className="text-sm text-[#666]">Add, edit, delete topics and amazing facts, import CSV, export CSV.</p>
+            <div className="mt-4 text-sm text-[#1a5c3a] font-semibold">Open →</div>
+          </a>
         </div>
       </div>
     </div>
