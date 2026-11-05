@@ -2,8 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import AdminGate, { useAdminAuth } from '../components/AdminGate'
+import { downloadCsv } from '@/lib/csv'
 
 const API = process.env.NEXT_PUBLIC_API_BASE || ''
+
+const BOOK_EXPORT_HEADER = [
+  'Title', 'Author_Name', 'Number_Of_Pages', 'Cover_Image_URL', 'Thumbnail_URL',
+  'Book_URL', 'PDF_Download_URL', 'Audio_Book_URL', 'Audio_Play_URL', 'Audio_Download_URL',
+]
+
+const bookSelectKey = (b: any) => String(b.key || b.id || b.title || '')
 
 async function api(path: string, init?: RequestInit) {
   const res = await fetch(`${API}${path}`, init)
@@ -30,6 +38,8 @@ function BooksManager() {
   const [uploadingCsv, setUploadingCsv] = useState(false)
   const [listMsg, setListMsg] = useState<string | null>(null)
   const [listError, setListError] = useState<string | null>(null)
+  const [exportAllBooks, setExportAllBooks] = useState(true)
+  const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set())
 
   const [bTitle, setBTitle] = useState('')
   const [bAuthor, setBAuthor] = useState('')
@@ -230,6 +240,42 @@ function BooksManager() {
     } catch { setListError('Failed to restore — server error') }
   }
 
+  function toggleBookSelection(key: string) {
+    setSelectedBooks(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function exportBooksCsv() {
+    setListMsg(null)
+    setListError(null)
+    const visible = allBooks.filter(b => !b.deleted)
+    const rows = exportAllBooks ? visible : visible.filter(b => selectedBooks.has(bookSelectKey(b)))
+    if (rows.length === 0) {
+      setListError(exportAllBooks ? 'No visible books available to export.' : 'Select at least one book to export.')
+      return
+    }
+    const header = BOOK_EXPORT_HEADER
+    const data = rows.map(b => [
+      b.title ?? '',
+      b.author ?? '',
+      b.pages ?? '',
+      b.cover ?? '',
+      b.thumbnail ?? '',
+      b.url ?? '',
+      b.pdf ?? '',
+      b.audioUrl ?? '',
+      b.audioPlay ?? '',
+      b.audioDownload ?? '',
+    ])
+    const date = new Date().toISOString().slice(0, 10)
+    downloadCsv(`books-${exportAllBooks ? 'all' : 'selected'}-${date}.csv`, header, data)
+    setListMsg(`Exported ${rows.length} book${rows.length === 1 ? '' : 's'} to CSV.`)
+  }
+
   const q = search.trim().toLowerCase()
   const filtered = allBooks.filter(b =>
     !q ||
@@ -237,6 +283,7 @@ function BooksManager() {
     (b.author || '').toLowerCase().includes(q) ||
     (b.key || '').toLowerCase().includes(q)
   )
+  const visibleBookCount = allBooks.filter(b => !b.deleted).length
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] p-4 sm:p-6">
@@ -316,6 +363,24 @@ function BooksManager() {
             <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Search title / author / url..."
               className="flex-1 min-w-[140px] p-2 border border-[#ccc] rounded text-sm" />
           </div>
+          <div className="flex flex-wrap items-center gap-2 mb-2 pb-2 border-b border-[#f0f0f0]">
+            <label className="flex items-center gap-1.5 text-xs text-[#1a5c3a] cursor-pointer select-none">
+              <input type="checkbox" checked={exportAllBooks} onChange={e => setExportAllBooks(e.target.checked)}
+                className="w-3.5 h-3.5 accent-[#1a5c3a] cursor-pointer" />
+              Export all books ({visibleBookCount})
+            </label>
+            <button onClick={exportBooksCsv}
+              className="text-xs bg-[#1a5c3a] text-white border-none rounded px-3 py-1.5 cursor-pointer hover:bg-[#2a7a4e]">⬇️ Export CSV</button>
+            {!exportAllBooks && (
+              <span className="text-[11px] text-[#666]">
+                {selectedBooks.size} selected
+                {selectedBooks.size > 0 && (
+                  <button onClick={() => setSelectedBooks(new Set())} className="ml-2 text-red-500 bg-transparent border-none cursor-pointer hover:underline">Clear</button>
+                )}
+              </span>
+            )}
+            <span className="text-[10px] text-[#999] ml-auto">Hidden books are excluded from exports.</span>
+          </div>
           {listMsg && <div className="text-xs mb-2 p-2 rounded bg-[#e8f5e9] text-[#1a5c3a]">{listMsg}</div>}
           {listError && <div className="text-xs mb-2 p-2 rounded bg-[#ffebee] text-red-700">{listError}</div>}
           <div className="max-h-[45vh] overflow-y-auto border border-[#e0e0e0] rounded">
@@ -324,6 +389,12 @@ function BooksManager() {
             ) : (
               filtered.map((b) => (
                 <div key={b.key || b.id || b.title} className="flex items-center gap-2 p-1.5 border-b border-[#f0f0f0] last:border-b-0 hover:bg-[#f4faf4]">
+                  <input type="checkbox"
+                    checked={!b.deleted && (exportAllBooks || selectedBooks.has(bookSelectKey(b)))}
+                    disabled={exportAllBooks || b.deleted}
+                    onChange={() => toggleBookSelection(bookSelectKey(b))}
+                    title={b.deleted ? 'Hidden books cannot be exported' : exportAllBooks ? 'Uncheck "Export all books" to pick individual books' : 'Select this book for export'}
+                    className="w-3.5 h-3.5 shrink-0 accent-[#1a5c3a] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" />
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#e8f5e9] text-[#1a5c3a] whitespace-nowrap">{b.source}</span>
                   {b.deleted && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 whitespace-nowrap">HIDDEN</span>}
                   <span className="text-xs font-medium flex-1 min-w-0 truncate" style={{ direction: 'rtl' }}>{b.title}</span>

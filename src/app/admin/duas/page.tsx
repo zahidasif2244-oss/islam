@@ -2,8 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import AdminGate, { useAdminAuth } from '../components/AdminGate'
+import { downloadCsv } from '@/lib/csv'
 
 const API = process.env.NEXT_PUBLIC_API_BASE || ''
+
+const DUA_EXPORT_HEADER = [
+  'category', 'table', 'title', 'seq', 'desc', 'arabic', 'urdu', 'english', 'ref',
+]
+
+const duaSelectKey = (d: any) => String(d.key || `${d.source || ''}-${d.id}-${d.seq}`)
 
 const CATEGORIES = [
   { source: 'tbl_dua', label: 'Duas' },
@@ -43,6 +50,8 @@ function DuasManager() {
 
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [exportAllDuas, setExportAllDuas] = useState(true)
+  const [selectedDuas, setSelectedDuas] = useState<Set<string>>(new Set())
 
   async function load() {
     setLoading(true)
@@ -226,6 +235,47 @@ function DuasManager() {
     } finally { setUploading(false) }
   }
 
+  // ============== CSV export ==============
+  function toggleDuaSelection(key: string) {
+    setSelectedDuas(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function exportDuasCsv() {
+    setMsg(null); setErr(null)
+    const rows: unknown[][] = []
+    for (const cat of categories) {
+      const label = cat.label || CATEGORIES.find(c => c.source === cat.source)?.label || cat.source
+      for (const d of cat.duas || []) {
+        if (!exportAllDuas && !selectedDuas.has(duaSelectKey(d))) continue
+        rows.push([
+          label,
+          cat.source,
+          d.title ?? '',
+          d.seq ?? '',
+          d.desc ?? '',
+          d.arabic ?? '',
+          d.urdu ?? '',
+          d.english ?? '',
+          d.ref ?? '',
+        ])
+      }
+    }
+    if (rows.length === 0) {
+      setErr(exportAllDuas ? 'No duas available to export.' : 'Select at least one dua to export.')
+      return
+    }
+    const date = new Date().toISOString().slice(0, 10)
+    downloadCsv(`duas-${exportAllDuas ? 'all' : 'selected'}-${date}.csv`, DUA_EXPORT_HEADER, rows)
+    setMsg(`Exported ${rows.length} dua${rows.length === 1 ? '' : 's'} to CSV.`)
+  }
+
+  const totalDuaCount = categories.reduce((n, c) => n + (c.duas?.length ?? c.count ?? 0), 0)
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] p-4 sm:p-6">
       <div className="max-w-[960px] mx-auto">
@@ -289,6 +339,24 @@ function DuasManager() {
             <h2 className="font-bold text-[#1a5c3a] text-sm">{activeCat?.label} ({activeCat?.count ?? 0})</h2>
             <button onClick={openAdd} className="px-3 py-1.5 bg-[#1a5c3a] text-white text-sm border-none rounded cursor-pointer hover:bg-[#2a7a4e]">➕ Add New Dua</button>
           </div>
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-[#f0f0f0] bg-[#fbfdfb]">
+            <label className="flex items-center gap-1.5 text-xs text-[#1a5c3a] cursor-pointer select-none">
+              <input type="checkbox" checked={exportAllDuas} onChange={e => setExportAllDuas(e.target.checked)}
+                className="w-3.5 h-3.5 accent-[#1a5c3a] cursor-pointer" />
+              Export all categories ({totalDuaCount})
+            </label>
+            <button onClick={exportDuasCsv}
+              className="text-xs bg-[#1a5c3a] text-white border-none rounded px-3 py-1.5 cursor-pointer hover:bg-[#2a7a4e]">⬇️ Export CSV</button>
+            {!exportAllDuas && (
+              <span className="text-[11px] text-[#666]">
+                {selectedDuas.size} selected
+                {selectedDuas.size > 0 && (
+                  <button onClick={() => setSelectedDuas(new Set())} className="ml-2 text-red-500 bg-transparent border-none cursor-pointer hover:underline">Clear</button>
+                )}
+              </span>
+            )}
+            <span className="text-[10px] text-[#999] ml-auto">Selections persist across category tabs.</span>
+          </div>
           {loading ? (
             <div className="loading p-6 text-sm text-[#999]">Loading duas…</div>
           ) : !activeCat || activeCat.duas.length === 0 ? (
@@ -297,6 +365,12 @@ function DuasManager() {
             <div className="divide-y divide-[#f0f0f0] max-h-[60vh] overflow-y-auto">
               {activeCat.duas.map((d: any) => (
                 <div key={d.key || `${d.id}-${d.seq}`} className="flex items-start gap-2 p-2.5 hover:bg-[#f8fbf8]">
+                  <input type="checkbox"
+                    checked={exportAllDuas || selectedDuas.has(duaSelectKey(d))}
+                    disabled={exportAllDuas}
+                    onChange={() => toggleDuaSelection(duaSelectKey(d))}
+                    title={exportAllDuas ? 'Uncheck "Export all categories" to pick individual duas' : 'Select this dua for export'}
+                    className="w-3.5 h-3.5 mt-0.5 shrink-0 accent-[#1a5c3a] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#e8f5e9] text-[#1a5c3a]">#{d.id}</span>
