@@ -3,10 +3,13 @@ import { json, error } from '@/lib/api-utils'
 import { createServerCache } from '@/lib/server-cache'
 
 /**
- * One random hadith per five minutes, shared by every visitor on a warm
- * serverless instance. Concurrent cache misses share a single database read.
+ * A rotating pool of random hadiths, cached for five minutes per warm
+ * serverless instance. One database read fills the pool and each request
+ * hands out the next entry, so a burst of visitors costs a single query
+ * while "Another" still returns a different hadith every time.
  */
 const CACHE_TTL = 300_000
+const POOL_SIZE = 20
 const NO_HADITH = 'NO_HADITH'
 
 type RandomHadith = {
@@ -23,17 +26,9 @@ type RandomHadith = {
   volume: string
 }
 
-const randomHadithCache = createServerCache<RandomHadith>('random-hadith', CACHE_TTL)
+const randomHadithPool = createServerCache<RandomHadith[]>('random-hadith-pool', CACHE_TTL)
 
-async function loadRandomHadith(): Promise<RandomHadith> {
-  const db = createQuranClient()
-  // Never let a slow/blocked database hang the client for half a minute.
-  const rows = (await Promise.race([
-    query(db, 'SELECT hadees_number, BookUR, Baab_Eng, Kitab_Eng, Baab, Kitab, Arabic, Ravi, Urdu, English, Volume FROM tbl_random_hadees ORDER BY RANDOM() LIMIT 1'),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000)),
-  ])) as any[]
-  if (!rows.length) throw new Error(NO_HADITH)
-  const r = rows[0]
+function toHadith(r: any): RandomHadith {
   return {
     hadees_number: r.hadees_number, book_ur: getText(r.BookUR),
     baab_eng: getText(r.Baab_Eng), kitab_eng: getText(r.Kitab_Eng),
@@ -44,10 +39,28 @@ async function loadRandomHadith(): Promise<RandomHadith> {
   }
 }
 
+async function loadPool(): Promise<RandomHadith[]> {
+  const db = createQuranClient()
+  // Never let a slow/blocked database hang the client for half a minute.
+  const rows = (await Promise.race([
+    query(db, `SELECT hadees_number, BookUR, Baab_Eng, Kitab_Eng, Baab, Kitab, Arabic, Ravi, Urdu, English, Volume FROM tbl_random_hadees ORDER BY RANDOM() LIMIT ${POOL_SIZE}`),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000)),
+  ])) as any[]
+  if (!rows.length) throw new Error(NO_HADITH)
+  return rows.map(toHadith)
+}
+
+/** Rotates per warm instance; the pool refreshes on its TTL. */
+let cursor = 0
+
 export async function GET() {
   try {
-    const result = await randomHadithCache.load(loadRandomHadith)
-    return json(result, 200, 300)
+    const pool = await randomHadithPool.load(loadPool)
+    const item = pool[cursor % pool.length]
+    cursor = (cursor + 1) % pool.length
+    if (!item) throw new Error(NO_HADITH)
+    // `no-store` is deliberate: a cached "random" answer would repeat.
+    return json(item)
   } catch (e: any) {
     if (e?.message === NO_HADITH) return error('No hadith found')
     return error('Failed to load random hadith')

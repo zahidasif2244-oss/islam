@@ -198,6 +198,44 @@ for (const file of fs.readdirSync(staticDir)) {
   staticFiles++
 }
 
+/* Mutradif: compact index + per-id detail shards ----------------------
+ * The source list is 3.9 MB raw (~1 MB gzip / 640 KB brotli). Browsing and
+ * searching only need the heading plus the short summary, and a full entry
+ * is opened one card at a time, so split it in two:
+ *
+ *   static/mutradif-index.json        ~620 KB raw / ~100 KB brotli
+ *   static/mutradif-details/<n>.json  ~82 KB raw / ~22 KB gzip each
+ *
+ * IDs are NOT sequential (1, 2, 3, 10, ...), so shard by id bucket and look
+ * the exact entry up by `id` on the client (see loadMutradifDetail).
+ */
+const mutradif = readJson(path.join('static', 'mutradif.json'))
+if (Array.isArray(mutradif) && mutradif.length) {
+  const MUTRADIF_SHARD_SIZE = 64
+  const index = mutradif.map(m => ({
+    id: m.id,
+    heading: m.heading || '',
+    word: m.word || '',
+    urdu_head: m.urdu_head || '',
+    alphabet: m.alphabet || '',
+    summary: m.summary || '',
+    total_ayat: m.total_ayat || 0,
+  }))
+  write(path.join('static', 'mutradif-index.json'), index)
+
+  const shards = new Map()
+  for (const m of mutradif) {
+    const id = Number(m.id)
+    if (!Number.isFinite(id) || id < 1) continue
+    const key = Math.floor((id - 1) / MUTRADIF_SHARD_SIZE)
+    if (!shards.has(key)) shards.set(key, [])
+    shards.get(key).push(m)
+  }
+  for (const [key, rows] of shards) {
+    write(path.join('static', 'mutradif-details', `${key}.json`), rows)
+  }
+}
+
 /* Availability ---------------------------------------------------------
  * translations.json / tafseer_types.json carry a `count` from the database
  * that counts rows, not text: 14 of the 23 translations were never imported
