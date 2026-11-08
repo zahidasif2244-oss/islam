@@ -76,7 +76,9 @@ async function api(path: string, init?: RequestInit): Promise<any> {
   if (route === '/quran/amazing_topics') return statJson('/static/amazing_topics.json')
   if (route === '/quran/quran_audio') return statJson('/static/quran_audio.json')
   if (route === '/quran/fahmul_quran') return statJson('/static/fahmul_quran.json')
-  if (route === '/quran/mutradif') return statJson('/static/mutradif.json')
+  // Browsing/searching only needs the compact index; full entries are loaded
+  // from small shards when a card is opened (see loadMutradifDetail).
+  if (route === '/quran/mutradif') return statJson('/static/mutradif-index.json')
   if (route === '/quran/subjects') return statJson('/static/subjects_english.json')
   if (route === '/quran/subjects/urdu') return statJson('/static/subjects_urdu.json')
   if (route === '/quran/tafseer_types') return statJson('/static/tafseer_types.json')
@@ -119,6 +121,105 @@ async function serverJson(path: string, init?: RequestInit): Promise<any> {
   const res = await fetch(`${API}/api${path}`, init)
   if (!res.ok) throw new Error('API error')
   return res.json()
+}
+
+/* ---- Background warm-up for the slower secondary tabs --------------------
+ * Fahmul / Mutradif / More are opened after the reader has already spent time
+ * on the Quran page. Fetch their small data files in the background then, so
+ * the tab paints from the in-session `statJson` cache instead of starting a
+ * cold request on click. The 3.9 MB mutradif file is deliberately NOT warmed
+ * here: only its compact index is fetched, and full details load per card.
+ */
+let slowTabsPrefetched = false
+let subjectsCache: any[] | null = null
+let subjectsUrduCache: any[] | null = null
+
+function prefetchSubjects() {
+  if (subjectsCache) return
+  api('/quran/subjects').then(items => {
+    if (Array.isArray(items)) subjectsCache = items
+  }).catch(() => {})
+}
+
+function prefetchSubjectsUrdu() {
+  if (subjectsUrduCache) return
+  api('/quran/subjects/urdu').then(items => {
+    if (Array.isArray(items)) subjectsUrduCache = items
+  }).catch(() => {})
+}
+
+// Random hadith is a small live endpoint. Keep one ready in memory, and
+// preload the next one after every display so "Another" is instant.
+let randomHadithCache: any | null = null
+let randomHadithInflight: Promise<any> | null = null
+let randomHadithSeq = 0
+
+function requestRandomHadith(): Promise<any> {
+  if (randomHadithInflight) return randomHadithInflight
+  const p = api(`/hadith/random?t=${Date.now()}-${++randomHadithSeq}`)
+    .then(h => {
+      if (!h || h.error) throw new Error('random hadith')
+      randomHadithCache = h
+      return h
+    })
+    .finally(() => {
+      if (randomHadithInflight === p) randomHadithInflight = null
+    })
+  randomHadithInflight = p
+  return p
+}
+
+function prefetchRandomHadith() {
+  if (randomHadithCache || randomHadithInflight) return
+  requestRandomHadith().catch(() => {})
+}
+
+function takeRandomHadith(): Promise<any> {
+  if (randomHadithCache) {
+    const hadith = randomHadithCache
+    randomHadithCache = null
+    requestRandomHadith().catch(() => {})
+    return Promise.resolve(hadith)
+  }
+  return requestRandomHadith().then(h => {
+    if (randomHadithCache === h) randomHadithCache = null
+    requestRandomHadith().catch(() => {})
+    return h
+  })
+}
+
+function prefetchMoreContent() {
+  prefetchSubjects()
+  prefetchSubjectsUrdu()
+  prefetchRandomHadith()
+}
+
+function prefetchSlowTabs() {
+  if (slowTabsPrefetched) return
+  slowTabsPrefetched = true
+  statJson('/static/fahmul_quran.json')
+  statJson('/static/mutradif-index.json')
+  prefetchMoreContent()
+}
+
+function prefetchTabData(t: Tab) {
+  if (t === 'fahmul') statJson('/static/fahmul_quran.json')
+  else if (t === 'mutradif') statJson('/static/mutradif-index.json')
+  else if (t === 'more') prefetchMoreContent()
+}
+
+/* Mutradif full entries live in 64-item shards so opening one card fetches
+ * ~20 KB instead of the whole 3.9 MB source file. */
+const MUTRADIF_SHARD_SIZE = 64
+function loadMutradifDetail(id: number): Promise<any | null> {
+  if (!Number.isFinite(id) || id < 1) return Promise.resolve(null)
+  const shard = Math.floor((id - 1) / MUTRADIF_SHARD_SIZE)
+  return statJson<any[]>(`/static/mutradif-details/${shard}.json`)
+    .then(rows => (Array.isArray(rows) ? rows.find((m: any) => m.id === id) || null : null))
+}
+
+function prefetchMutradifDetail(id: number) {
+  loadMutradifDetail(id).catch(() => {})
 }
 
 // Whole-surah tafseer cache (module-level, survives tab switches/remounts).
@@ -212,6 +313,22 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
 
   // Topics and Amazing share one overlay; fetch it before either tab is opened.
   useEffect(() => { prefetchTopicOverrides() }, [])
+
+  // Warm the secondary tabs once the first screen is idle. They are small,
+  // and by the time a reader opens one the data is already in memory.
+  useEffect(() => {
+    const w = window as any
+    let idle: any
+    if (typeof w.requestIdleCallback === 'function') {
+      idle = w.requestIdleCallback(prefetchSlowTabs, { timeout: 3000 })
+    } else {
+      idle = window.setTimeout(prefetchSlowTabs, 1200)
+    }
+    return () => {
+      if (typeof w.cancelIdleCallback === 'function') w.cancelIdleCallback(idle)
+      else clearTimeout(idle)
+    }
+  }, [])
 
   // Only offer translations / tafseers that actually contain text. The baked
   // lists carry a database row count (all 6,349 for every entry) even for the
@@ -364,6 +481,9 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
         <div className="bg-[#2a7a4e] flex px-3 sm:px-5 gap-0.5 overflow-x-auto scrollbar-none">
           {(['quran', 'hadith', 'wordbyword', 'tafseer', 'duas', 'topics', 'listen', 'fahmul', 'mutradif', 'more', 'books', 'about'] as Tab[]).map(t => (
             <button key={t} onClick={() => showTab(t)}
+              onMouseEnter={() => prefetchTabData(t)}
+              onTouchStart={() => prefetchTabData(t)}
+              onFocus={() => prefetchTabData(t)}
               className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm border-none cursor-pointer capitalize whitespace-nowrap shrink-0
                 ${tab === t ? 'bg-[#f5f5f5] text-[#1a5c3a] font-bold rounded-t-lg' : 'text-[#ddd] hover:bg-[#3a8a5e] hover:text-white'}`}
             >{t === 'wordbyword' ? 'Word-by-Word' : t}</button>
@@ -1490,6 +1610,20 @@ function PaginationBar({ page, totalPages, onPage }: { page: number; totalPages:
   )
 }
 
+function ListSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <div className="space-y-2" role="status" aria-label="Loading content">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="p-3 border border-[#e0e0e0] rounded bg-white animate-pulse">
+          <div className="h-3 w-1/3 bg-[#e9e9e9] rounded mb-2" />
+          <div className="h-4 w-4/5 bg-[#efefef] rounded mb-2" />
+          <div className="h-3 w-full bg-[#f3f3f3] rounded" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ============== DUAS ==============
 function DuasTab() {
   const [allDuas, setAllDuas] = useState<any[]>([])
@@ -1940,8 +2074,17 @@ function FahmulTab() {
   const [items, setItems] = useState<any[]>([])
   const [filter, setFilter] = useState('')
   const [page, setPage] = useState(0)
+  const [loaded, setLoaded] = useState(false)
 
-  useEffect(() => { api('/quran/fahmul_quran').then(setItems) }, [])
+  useEffect(() => {
+    let alive = true
+    api('/quran/fahmul_quran').then(data => {
+      if (!alive) return
+      setItems(Array.isArray(data) ? data : [])
+      setLoaded(true)
+    }).catch(() => { if (alive) setLoaded(true) })
+    return () => { alive = false }
+  }, [])
 
   const filtered = items.filter(item => (item.urdu + ' ' + item.english).toLowerCase().includes(filter.toLowerCase()))
   const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
@@ -1951,17 +2094,21 @@ function FahmulTab() {
     <div>
       <h2 className="text-[#1a5c3a] mb-2.5">Fahmul Quran (Understanding Quran)</h2>
       <input type="text" placeholder="Search verses..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
-      <p className="text-xs text-[#999] mb-2.5">{filtered.length} entries</p>
-      {pageItems.map((item, i) => (
-        <div key={i} className="fahmul-card" style={{ cursor: 'pointer' }} onClick={() => openModal('Fahmul Quran #' + item.id, <FahmulDetail item={item} />)}>
-          <div className="text-xs text-[#999]">#{item.id} | Count: {item.count}</div>
-          <div className="fahmul-ayat">{item.ayat}</div>
-          {item.ayat_ahrab && <div style={{ fontSize: 12, color: '#999', textAlign: 'right' }}>{item.ayat_ahrab}</div>}
-          <div className="fahmul-text">{item.urdu}</div>
-          {item.english && <div style={{ fontSize: 13, color: '#444', marginTop: 4 }}>{item.english}</div>}
-        </div>
-      ))}
-      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
+      <p className="text-xs text-[#999] mb-2.5">{loaded ? `${filtered.length} entries` : 'Loading entries…'}</p>
+      {!loaded ? <ListSkeleton /> : (
+        <>
+          {pageItems.map((item, i) => (
+            <div key={item.id ?? i} className="fahmul-card" style={{ cursor: 'pointer' }} onClick={() => openModal('Fahmul Quran #' + item.id, <FahmulDetail item={item} />)}>
+              <div className="text-xs text-[#999]">#{item.id} | Count: {item.count}</div>
+              <div className="fahmul-ayat">{item.ayat}</div>
+              {item.ayat_ahrab && <div style={{ fontSize: 12, color: '#999', textAlign: 'right' }}>{item.ayat_ahrab}</div>}
+              <div className="fahmul-text">{item.urdu}</div>
+              {item.english && <div style={{ fontSize: 13, color: '#444', marginTop: 4 }}>{item.english}</div>}
+            </div>
+          ))}
+          <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
+        </>
+      )}
     </div>
   )
 }
@@ -1983,28 +2130,84 @@ function MutradifTab() {
   const [items, setItems] = useState<any[]>([])
   const [page, setPage] = useState(0)
   const [filter, setFilter] = useState('')
+  const [loaded, setLoaded] = useState(false)
 
-  useEffect(() => { api('/quran/mutradif').then(setItems) }, [])
+  useEffect(() => {
+    let alive = true
+    api('/quran/mutradif').then(data => {
+      if (!alive) return
+      setItems(Array.isArray(data) ? data : [])
+      setLoaded(true)
+    }).catch(() => { if (alive) setLoaded(true) })
+    return () => { alive = false }
+  }, [])
 
-  const filtered = filter ? items.filter(m => (m.heading + ' ' + m.word + ' ' + m.urdu_head + ' ' + m.details + ' ' + m.summary).toLowerCase().includes(filter.toLowerCase())) : items
+  const filtered = filter ? items.filter(m => (m.heading + ' ' + m.word + ' ' + m.urdu_head + ' ' + m.summary).toLowerCase().includes(filter.toLowerCase())) : items
   const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
   const pageItems = filtered.slice(page * LIST_PAGE_SIZE, (page + 1) * LIST_PAGE_SIZE)
+
+  // Full entries for the visible cards load in the background, so opening a
+  // card is instant even though the large detail file is never fetched whole.
+  useEffect(() => {
+    if (!loaded || !pageItems.length) return
+    const t = window.setTimeout(() => {
+      pageItems.forEach((m: any) => { if (m && typeof m.id === 'number') prefetchMutradifDetail(m.id) })
+    }, 350)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, page, filter, items])
 
   return (
     <div>
       <h2 className="text-[#1a5c3a] mb-2.5">Urdu Mutradif (Synonyms)</h2>
       <input type="text" placeholder="Search words..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
-      <p className="text-xs text-[#999] mb-2.5">{filtered.length} word groups</p>
-      {pageItems.map((m, i) => (
-        <div key={i} className="mutradif-card" style={{ cursor: 'pointer' }} onClick={() => openModal(m.heading || 'Mutradif', <MutradifDetail m={m} />)}>
-          <div className="m-heading">{m.heading}</div>
-          <div className="m-word">{m.word || m.arabic || ''}</div>
-          {m.urdu_head && <div style={{ fontSize: 12, color: '#999', textAlign: 'right' }}>Head word: {m.urdu_head}</div>}
-          <div className="m-details">{m.details || m.summary || ''}</div>
-          <div className="m-meta">{m.total_ayat ? m.total_ayat + ' verses' : ''} {m.alphabet ? '| ' + m.alphabet : ''}</div>
-        </div>
-      ))}
-      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
+      <p className="text-xs text-[#999] mb-2.5">{loaded ? `${filtered.length} word groups` : 'Loading words…'}</p>
+      {!loaded ? <ListSkeleton /> : (
+        <>
+          {pageItems.map((m, i) => (
+            <div
+              key={m.id ?? i}
+              className="mutradif-card"
+              style={{ cursor: 'pointer' }}
+              onClick={() => openModal(m.heading || 'Mutradif', <MutradifDetailLoader id={m.id} fallback={m} />)}
+              onMouseEnter={() => prefetchMutradifDetail(m.id)}
+              onTouchStart={() => prefetchMutradifDetail(m.id)}
+            >
+              <div className="m-heading">{m.heading}</div>
+              <div className="m-word">{m.word || m.arabic || ''}</div>
+              {m.urdu_head && <div style={{ fontSize: 12, color: '#999', textAlign: 'right' }}>Head word: {m.urdu_head}</div>}
+              <div className="m-details">{m.summary || ''}</div>
+              <div className="m-meta">{m.total_ayat ? m.total_ayat + ' verses' : ''} {m.alphabet ? '| ' + m.alphabet : ''}</div>
+            </div>
+          ))}
+          <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
+        </>
+      )}
+    </div>
+  )
+}
+
+function MutradifDetailLoader({ id, fallback }: { id: number; fallback: any }) {
+  const [item, setItem] = useState<any | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    setItem(null)
+    setFailed(false)
+    loadMutradifDetail(id).then(full => {
+      if (!alive) return
+      if (full) setItem(full)
+      else setFailed(true)
+    }).catch(() => { if (alive) setFailed(true) })
+    return () => { alive = false }
+  }, [id])
+
+  if (item) return <MutradifDetail m={item} />
+  return (
+    <div>
+      <MutradifDetail m={fallback} />
+      <div className="text-xs text-[#999] mt-2">{failed ? 'Full entry could not be loaded.' : 'Loading full entry…'}</div>
     </div>
   )
 }
@@ -2025,6 +2228,10 @@ function MutradifDetail({ m }: { m: any }) {
 // ============== MORE ==============
 function MoreTab() {
   const [content, setContent] = useState<React.ReactNode>(null)
+
+  // Subjects and the random hadith are tiny, so start them as soon as the
+  // More grid appears (usually already warmed at app idle).
+  useEffect(() => { prefetchMoreContent() }, [])
 
   const features = [
     { id: 'randomHadith', label: 'Random Hadith', icon: '🎲', desc: 'Display a random hadith from the database' },
@@ -2122,48 +2329,76 @@ function WebLinkModalBody({ name, url }: { name: string; url: string }) {
   )
 }
 
-function loadRandomHadith(setContent: (c: React.ReactNode) => void) {
-  setContent(<div className="loading">Loading random hadith...</div>)
-  api('/hadith/random').then(h => {
-    setContent(
-      <div className="rand-hadees">
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ fontSize: 12, opacity: 0.7 }}>Hadith #{h.hadees_number}</span>
-          <button onClick={() => loadRandomHadith(setContent)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>Another</button>
-        </div>
-        <div className="rh-arabic">{h.arabic}</div>
-        {h.urdu && <div className="rh-urdu">{h.urdu}</div>}
-        {h.english && <div className="rh-english">{h.english}</div>}
-        {h.ravi && <div className="rh-ref">Narrator: {h.ravi}</div>}
-        <div className="rh-ref">{h.kitab || h.kitab_eng || ''} {h.baab ? '- ' + h.baab : ''}</div>
+function RandomHadithCard({ h, setContent }: { h: any; setContent: (c: React.ReactNode) => void }) {
+  return (
+    <div className="rand-hadees">
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 12, opacity: 0.7 }}>Hadith #{h.hadees_number}</span>
+        <button onClick={() => loadRandomHadith(setContent)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>Another</button>
       </div>
-    )
+      <div className="rh-arabic">{h.arabic}</div>
+      {h.urdu && <div className="rh-urdu">{h.urdu}</div>}
+      {h.english && <div className="rh-english">{h.english}</div>}
+      {h.ravi && <div className="rh-ref">Narrator: {h.ravi}</div>}
+      <div className="rh-ref">{h.kitab || h.kitab_eng || ''} {h.baab ? '- ' + h.baab : ''}</div>
+    </div>
+  )
+}
+
+function RandomHadithSkeleton() {
+  return (
+    <div className="rand-hadees animate-pulse" role="status" aria-label="Loading random hadith">
+      <div style={{ height: 12, width: 90, background: 'rgba(255,255,255,0.25)', borderRadius: 4, marginBottom: 14 }} />
+      <div style={{ height: 22, width: '80%', background: 'rgba(255,255,255,0.2)', borderRadius: 4, marginLeft: 'auto', marginBottom: 12 }} />
+      <div style={{ height: 14, width: '100%', background: 'rgba(255,255,255,0.15)', borderRadius: 4, marginBottom: 8 }} />
+      <div style={{ height: 14, width: '70%', background: 'rgba(255,255,255,0.15)', borderRadius: 4 }} />
+    </div>
+  )
+}
+
+function loadRandomHadith(setContent: (c: React.ReactNode) => void) {
+  // With a prefetched hadith ready the card replaces the current view in one
+  // microtask, so no loading flash.
+  if (!randomHadithCache) setContent(<RandomHadithSkeleton />)
+  takeRandomHadith().then(h => {
+    setContent(<RandomHadithCard h={h} setContent={setContent} />)
   }).catch(() => setContent(<div className="error">Failed to load hadith.</div>))
 }
 
 function loadSubjects(setContent: (c: React.ReactNode) => void) {
-  setContent(<div className="loading">Loading subjects...</div>)
+  if (subjectsCache) {
+    setContent(<SubjectsView items={subjectsCache} />)
+    return
+  }
+  setContent(<ListSkeleton />)
   api('/quran/subjects').then(items => {
-    setContent(<SubjectsView items={items} />)
-  })
+    if (Array.isArray(items)) subjectsCache = items
+    setContent(<SubjectsView items={Array.isArray(items) ? items : []} />)
+  }).catch(() => setContent(<div className="error">Failed to load subjects.</div>))
 }
+
+const SUBJECT_PAGE_SIZE = 60
 
 function SubjectsView({ items }: { items: any[] }) {
   const [filter, setFilter] = useState('')
+  const [page, setPage] = useState(0)
   const filtered = items.filter((s: any) => (s.word + ' ' + s.reference).toLowerCase().includes(filter.toLowerCase()))
+  const totalPages = Math.ceil(filtered.length / SUBJECT_PAGE_SIZE)
+  const pageItems = filtered.slice(page * SUBJECT_PAGE_SIZE, (page + 1) * SUBJECT_PAGE_SIZE)
 
   return (
     <div>
       <h3 className="text-[#1a5c3a] mb-2.5">English Subjects ({items.length})</h3>
-      <input type="text" placeholder="Search..." value={filter} onChange={e => setFilter(e.target.value)} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
+      <input type="text" placeholder="Search..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded text-base" />
       <div id="subjList">
-        {filtered.map((s: any, i: number) => (
+        {pageItems.map((s: any, i: number) => (
           <div key={i} className="list-card" style={{ cursor: 'pointer' }} onClick={() => openModal('Subject: ' + s.word, <SubjectDetail s={s} />)}>
             <div className="list-name" style={{ fontSize: 14 }}>{s.word}</div>
             <div style={{ fontSize: 11, color: '#999' }}>Surah {s.surah}:{s.ayah} | {s.reference || ''}</div>
           </div>
         ))}
       </div>
+      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
     </div>
   )
 }
@@ -2190,28 +2425,37 @@ function SubjectDetail({ s }: { s: any }) {
 }
 
 function loadSubjectsUrdu(setContent: (c: React.ReactNode) => void) {
-  setContent(<div className="loading">Loading subjects...</div>)
+  if (subjectsUrduCache) {
+    setContent(<SubjectsUrduView items={subjectsUrduCache} />)
+    return
+  }
+  setContent(<ListSkeleton />)
   api('/quran/subjects/urdu').then(items => {
-    setContent(<SubjectsUrduView items={items} />)
-  })
+    if (Array.isArray(items)) subjectsUrduCache = items
+    setContent(<SubjectsUrduView items={Array.isArray(items) ? items : []} />)
+  }).catch(() => setContent(<div className="error">Failed to load subjects.</div>))
 }
 
 function SubjectsUrduView({ items }: { items: any[] }) {
   const [filter, setFilter] = useState('')
+  const [page, setPage] = useState(0)
   const filtered = items.filter((s: any) => (s.topic + ' ' + s.surah_name).toLowerCase().includes(filter.toLowerCase()))
+  const totalPages = Math.ceil(filtered.length / SUBJECT_PAGE_SIZE)
+  const pageItems = filtered.slice(page * SUBJECT_PAGE_SIZE, (page + 1) * SUBJECT_PAGE_SIZE)
 
   return (
     <div>
       <h3 className="text-[#1a5c3a] mb-2.5">Urdu Subjects ({items.length})</h3>
-      <input type="text" placeholder="Search..." value={filter} onChange={e => setFilter(e.target.value)} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
+      <input type="text" placeholder="Search..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded text-base" />
       <div id="subjUrduList">
-        {filtered.map((s: any, i: number) => (
+        {pageItems.map((s: any, i: number) => (
           <div key={i} className="list-card" style={{ cursor: 'pointer' }} onClick={() => openModal(s.topic, <SubjectUrduDetail s={s} />)}>
             <div className="list-name" style={{ fontFamily: "'Nastaliq',serif", fontSize: 18, textAlign: 'right', direction: 'rtl' }}>{s.topic}</div>
             <div style={{ fontSize: 11, color: '#999' }}>Surah {s.surah}:{s.ayah} | {s.surah_name}</div>
           </div>
         ))}
       </div>
+      <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
     </div>
   )
 }

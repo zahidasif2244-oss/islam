@@ -20,7 +20,13 @@ const OUT = path.join(ROOT, 'public', 'data')
 // instead of rewriting ~100 MB on every dev-server start.
 if (process.argv.includes('--if-missing')) {
   const probe = path.join(OUT, 'quran', '2', 'ar.json')
-  if (fs.existsSync(probe)) {
+  const mutradifIndex = path.join(OUT, 'static', 'mutradif-index.json')
+  const mutradifDetails = path.join(OUT, 'static', 'mutradif-details')
+  const derivedOk =
+    fs.existsSync(mutradifIndex) &&
+    fs.existsSync(mutradifDetails) &&
+    fs.readdirSync(mutradifDetails).length > 0
+  if (fs.existsSync(probe) && derivedOk) {
     console.log('[static-data] public/data already present — skipping export (run `npm run data:export` to refresh)')
     process.exit(0)
   }
