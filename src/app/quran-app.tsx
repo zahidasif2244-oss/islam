@@ -1690,14 +1690,35 @@ function ListenTab() {
   const [items, setItems] = useState<any[]>([])
   const [filter, setFilter] = useState('')
   const [page, setPage] = useState(0)
-  const [playing, setPlaying] = useState<number | null>(null)
+  const [activeSurah, setActiveSurah] = useState<number | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [playerError, setPlayerError] = useState('')
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => { api('/quran/quran_audio').then(setItems) }, [])
 
+  // Leaving the Listen tab unmounts this component; stop any audio so it
+  // does not keep playing invisibly.
+  useEffect(() => {
+    const audio = audioRef.current
+    return () => {
+      if (!audio) return
+      audio.pause()
+      audio.removeAttribute('src')
+      audio.load()
+    }
+  }, [])
+
   const filtered = items.filter(i => (i.name + ' ' + i.surah).toLowerCase().includes(filter.toLowerCase()))
   const totalPages = Math.ceil(filtered.length / LIST_PAGE_SIZE)
   const pageItems = filtered.slice(page * LIST_PAGE_SIZE, (page + 1) * LIST_PAGE_SIZE)
+
+  const activeIndex = activeSurah == null ? -1 : items.findIndex(i => i.surah === activeSurah)
+  const activeItem = activeIndex >= 0 ? items[activeIndex] : null
+  const effectiveDuration = duration > 0 ? duration : (activeItem?.durationSec || 0)
+  const sliderValue = Math.min(currentTime, effectiveDuration || 0)
 
   function formatDuration(sec: number) {
     const m = Math.floor((sec || 0) / 60)
@@ -1705,46 +1726,211 @@ function ListenTab() {
     return `${m}:${String(s).padStart(2, '0')}`
   }
 
-  function togglePlay(item: any) {
-    if (!audioRef.current) return
-    if (playing === item.surah) {
-      audioRef.current.pause()
-      setPlaying(null)
+  // Load and start a surah synchronously from the user's click so mobile
+  // browsers allow playback. The audio source is managed imperatively.
+  function loadAndPlay(surah: number) {
+    const audio = audioRef.current
+    const item = items.find(i => i.surah === surah)
+    if (!audio || !item) return
+    setActiveSurah(surah)
+    setCurrentTime(0)
+    setDuration(item.durationSec || 0)
+    setPlayerError('')
+    if (audio.getAttribute('src') !== item.playUrl) {
+      audio.src = item.playUrl
+      audio.load()
     } else {
-      audioRef.current.src = item.playUrl
-      audioRef.current.play().catch(() => {})
-      setPlaying(item.surah)
+      try { audio.currentTime = 0 } catch { }
+    }
+    const play = audio.play()
+    if (play) play.catch(() => {
+      setIsPlaying(false)
+      setPlayerError('Tap play to start playback.')
+    })
+  }
+
+  function togglePlayPause() {
+    const audio = audioRef.current
+    if (!audio || !activeItem) return
+    if (audio.paused) {
+      if (audio.ended) {
+        audio.currentTime = 0
+        setCurrentTime(0)
+      }
+      const play = audio.play()
+      if (play) play.catch(() => setPlayerError('Tap play to start playback.'))
+    } else {
+      audio.pause()
     }
   }
 
+  function handleRowPlay(item: any) {
+    if (activeSurah === item.surah) {
+      togglePlayPause()
+    } else {
+      loadAndPlay(item.surah)
+    }
+  }
+
+  function skip(delta: number) {
+    if (activeIndex < 0) return
+    const target = items[activeIndex + delta]
+    if (target) loadAndPlay(target.surah)
+  }
+
+  function handleEnded() {
+    const next = activeIndex >= 0 ? items[activeIndex + 1] : null
+    if (next) loadAndPlay(next.surah)
+    else setIsPlaying(false)
+  }
+
+  function seekTo(value: number) {
+    const audio = audioRef.current
+    if (!audio) return
+    const max = effectiveDuration || 0
+    const next = Math.max(0, Math.min(value, max))
+    audio.currentTime = next
+    setCurrentTime(next)
+  }
+
+  function closePlayer() {
+    const audio = audioRef.current
+    if (audio) {
+      audio.pause()
+      audio.removeAttribute('src')
+      audio.load()
+    }
+    setActiveSurah(null)
+    setIsPlaying(false)
+    setCurrentTime(0)
+    setDuration(0)
+    setPlayerError('')
+  }
+
   return (
-    <div>
+    <div className={activeSurah != null ? 'pb-44 sm:pb-40' : ''}>
       <h2 className="text-[#1a5c3a] mb-2.5">Listen to the Quran</h2>
-      <input type="text" placeholder="Search surah..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded" />
+      <input type="text" placeholder="Search surah..." value={filter} onChange={e => { setFilter(e.target.value); setPage(0) }} className="w-full p-2 mb-2.5 border border-[#ccc] rounded text-base" />
       <p className="text-xs text-[#999] mb-2.5">{filtered.length} surahs · Abdul Basit (Mujawwad)</p>
-      <audio ref={audioRef} onEnded={() => setPlaying(null)} className="hidden" />
       <div className="space-y-1">
-        {pageItems.map(item => (
-          <div key={item.surah} className="flex items-center gap-2 p-2 border border-[#e0e0e0] rounded bg-white hover:bg-[#f8fbf8]">
-            <span className="w-8 text-center text-xs font-bold text-[#1a5c3a] shrink-0">{item.surah}</span>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">{item.name}</div>
-              <div className="text-[10px] text-[#999]">{formatDuration(item.durationSec)}</div>
+        {pageItems.map(item => {
+          const isActive = activeSurah === item.surah
+          return (
+            <div
+              key={item.surah}
+              className={`flex items-center gap-2 p-2 border rounded transition-colors ${isActive ? 'border-[#1a5c3a] bg-[#f0f7f3]' : 'border-[#e0e0e0] bg-white hover:bg-[#f8fbf8]'}`}
+            >
+              <span className="w-8 text-center text-xs font-bold text-[#1a5c3a] shrink-0">{item.surah}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{item.name}</div>
+                <div className="text-[10px] text-[#999]">{formatDuration(item.durationSec)}</div>
+              </div>
+              <button
+                onClick={() => handleRowPlay(item)}
+                aria-label={isActive && isPlaying ? `Pause ${item.name}` : `Play ${item.name}`}
+                className="text-[11px] text-white bg-[#1a5c3a] border-none rounded px-2.5 py-1 cursor-pointer hover:bg-[#2a7a4e] whitespace-nowrap"
+              >{isActive ? (isPlaying ? '⏸ Pause' : '▶ Resume') : '▶ Play'}</button>
+              <a
+                href={item.downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-2.5 py-1 no-underline hover:bg-[#d0ead8] whitespace-nowrap"
+              >⬇ Download</a>
             </div>
-            <button
-              onClick={() => togglePlay(item)}
-              className="text-[11px] text-white bg-[#1a5c3a] border-none rounded px-2.5 py-1 cursor-pointer hover:bg-[#2a7a4e] whitespace-nowrap"
-            >{playing === item.surah ? '⏸ Pause' : '▶ Play'}</button>
-            <a
-              href={item.downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-[#1a5c3a] bg-[#e8f5e9] border border-[#b5d6c0] rounded px-2.5 py-1 no-underline hover:bg-[#d0ead8] whitespace-nowrap"
-            >⬇ Download</a>
-          </div>
-        ))}
+          )
+        })}
       </div>
       <PaginationBar page={page} totalPages={totalPages} onPage={setPage} />
+
+      <audio
+        ref={audioRef}
+        preload="metadata"
+        className="hidden"
+        onPlay={() => { setIsPlaying(true); setPlayerError('') }}
+        onPause={() => setIsPlaying(false)}
+        onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={e => {
+          const d = e.currentTarget.duration
+          if (Number.isFinite(d) && d > 0) setDuration(d)
+        }}
+        onDurationChange={e => {
+          const d = e.currentTarget.duration
+          if (Number.isFinite(d) && d > 0) setDuration(d)
+        }}
+        onEnded={handleEnded}
+        onError={() => {
+          if (activeSurah != null) {
+            setIsPlaying(false)
+            setPlayerError('Could not load this audio. Try Download instead.')
+          }
+        }}
+      />
+
+      {activeItem && (
+        <div className="listen-player" role="region" aria-label="Quran audio player">
+          <div className="mx-auto w-full max-w-[1200px] px-3 sm:px-4 pt-2.5 pb-2">
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-bold text-[#1a5c3a] truncate">{activeItem.name}</div>
+                <div className="text-[10px] text-[#888] truncate">Surah {activeItem.surah} · Abdul Basit (Mujawwad)</div>
+              </div>
+              <button
+                onClick={closePlayer}
+                aria-label="Close player"
+                className="listen-close"
+              >&times;</button>
+            </div>
+
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-[10px] text-[#777] tabular-nums w-12 text-right shrink-0">{formatDuration(currentTime)}</span>
+              <input
+                type="range"
+                min={0}
+                max={Math.max(effectiveDuration, 1)}
+                step={1}
+                value={sliderValue}
+                onChange={e => seekTo(Number(e.target.value))}
+                aria-label="Playback position"
+                aria-valuetext={`${formatDuration(currentTime)} of ${formatDuration(effectiveDuration)}`}
+                className="listen-seek flex-1 min-w-0"
+              />
+              <span className="text-[10px] text-[#777] tabular-nums w-12 shrink-0">{formatDuration(effectiveDuration)}</span>
+            </div>
+
+            <div className="flex items-center justify-center gap-6 sm:gap-10 mt-1">
+              <button
+                onClick={() => skip(-1)}
+                disabled={activeIndex <= 0}
+                aria-label="Previous surah"
+                className="listen-ctrl"
+              >
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" /></svg>
+              </button>
+
+              <button
+                onClick={togglePlayPause}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+                className="listen-play"
+              >
+                {isPlaying
+                  ? <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zm6.5 0H17v14h-3.5z" /></svg>
+                  : <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>}
+              </button>
+
+              <button
+                onClick={() => skip(1)}
+                disabled={activeIndex < 0 || activeIndex >= items.length - 1}
+                aria-label="Next surah"
+                className="listen-ctrl"
+              >
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z" /></svg>
+              </button>
+            </div>
+
+            {playerError && <div className="text-[10px] text-[#c62828] text-center pb-1">{playerError}</div>}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
