@@ -169,7 +169,7 @@ function BookmarkBtn({ item, showText = false, className = '' }: { item: any; sh
     <button
       onClick={e => { e.stopPropagation(); toggleBookmark(item) }}
       title={saved ? 'Remove bookmark' : 'Save bookmark'}
-      className={`inline-flex items-center gap-1 rounded border-none cursor-pointer shrink-0 ${saved ? 'text-[#b8860b] bg-[#fff8e1]' : 'text-[#999] bg-[#f0f0f0] hover:text-[#1a5c3a] hover:bg-[#e8f5e9]'} ${showText ? 'px-2.5 py-1 text-xs font-bold' : 'w-7 h-7 justify-center'} ${className}`}
+      className={`inline-flex items-center gap-1 rounded border-none cursor-pointer shrink-0 ${saved ? 'text-[#b8860b] bg-[#fff8e1]' : 'text-[#999] bg-[#f0f0f0] hover:text-[#1a5c3a] hover:bg-[#e8f5e9]'} ${showText ? 'px-3 py-2 text-xs font-bold min-h-[40px]' : 'w-7 h-7 justify-center'} ${className}`}
     >
       <BookmarkIcon saved={saved} />
       {showText && (saved ? 'Bookmarked' : 'Save bookmark')}
@@ -389,11 +389,11 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
 
         {/* Settings Modal */}
         {settingsOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-[5%]">
-            <div className="bg-white p-4 sm:p-5 rounded-xl w-[95%] sm:w-[90%] max-w-[450px] max-h-[80vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-[#1a5c3a] text-lg font-bold">&#9881; Reading Settings</h3>
-                <button onClick={() => setSettingsOpen(false)} className="text-2xl cursor-pointer text-[#999] hover:text-[#333]">&times;</button>
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4">
+            <div className="bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5 rounded-t-2xl sm:rounded-xl w-full sm:w-[90%] max-w-[450px] max-h-[92dvh] sm:max-h-[80vh] overflow-y-auto overscroll-contain">
+              <div className="flex justify-between items-center mb-4 gap-2">
+                <h3 className="text-[#1a5c3a] text-lg font-bold min-w-0">&#9881; Reading Settings</h3>
+                <button onClick={() => setSettingsOpen(false)} aria-label="Close settings" className="w-10 h-10 -mr-2 -mt-1 shrink-0 inline-flex items-center justify-center rounded-full text-2xl cursor-pointer text-[#999] hover:text-[#333] hover:bg-[#f0f4f2]">&times;</button>
               </div>
               <div className="mb-3">
                 <label className="font-bold text-sm block mb-1">Tarjma (Translation):</label>
@@ -427,33 +427,111 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
 }
 
 // ============== MODAL ==============
-let modalState: any = { open: false, title: '', body: null as React.ReactNode | null }
+let modalState: any = { open: false, title: '', body: null as React.ReactNode | null, seq: 0 }
 let modalListeners: (() => void)[] = []
 
 function openModal(title: string, body: React.ReactNode) {
-  modalState = { open: true, title, body }
+  modalState = { open: true, title, body, seq: (modalState.seq || 0) + 1 }
   modalListeners.forEach(fn => fn())
 }
 function closeModal() {
-  modalState = { open: false, title: '', body: null }
+  modalState = { open: false, title: '', body: null, seq: modalState.seq || 0 }
   modalListeners.forEach(fn => fn())
 }
 
 function Modal() {
   const [, setTick] = useState(0)
+  const bodyRef = useRef<HTMLDivElement | null>(null)
+  const closeRef = useRef<HTMLButtonElement | null>(null)
+  const wasOpen = useRef(false)
+
   useEffect(() => {
-    modalListeners.push(() => setTick(t => t + 1))
-    return () => { modalListeners = [] }
+    const listener = () => setTick(t => t + 1)
+    modalListeners.push(listener)
+    return () => { modalListeners = modalListeners.filter(fn => fn !== listener) }
   }, [])
-  if (!modalState.open) return null
+
+  const open = modalState.open
+
+  // Lock the page behind the dialog. `position: fixed` keeps iOS Safari from
+  // scrolling the article underneath the sheet while the reader is open.
+  useEffect(() => {
+    if (!open) return
+    const body = document.body
+    const scrollY = window.scrollY
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      paddingRight: body.style.paddingRight,
+    }
+    const scrollbar = window.innerWidth - document.documentElement.clientWidth
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    body.style.width = '100%'
+    body.style.overflow = 'hidden'
+    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`
+    return () => {
+      body.style.position = prev.position
+      body.style.top = prev.top
+      body.style.left = prev.left
+      body.style.right = prev.right
+      body.style.width = prev.width
+      body.style.overflow = prev.overflow
+      body.style.paddingRight = prev.paddingRight
+      window.scrollTo(0, scrollY)
+    }
+  }, [open])
+
+  // New content in an already-open dialog starts at the top.
+  useEffect(() => {
+    if (open) bodyRef.current?.scrollTo({ top: 0 })
+  }, [open, modalState.seq])
+
+  // Move focus into the dialog only when it first opens, so Next/Previous
+  // buttons inside the dialog keep keyboard focus during navigation.
+  useEffect(() => {
+    if (open && !wasOpen.current) closeRef.current?.focus({ preventScroll: true })
+    wasOpen.current = open
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.stopPropagation(); closeModal() }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  if (!open) return null
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white p-3 sm:p-5 rounded-xl w-[98vw] sm:w-[95vw] max-w-[900px] h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-[#1a5c3a] font-bold">{modalState.title}</h3>
-          <button onClick={closeModal} className="text-2xl cursor-pointer text-[#999] hover:text-[#333]">&times;</button>
+    <div
+      className="app-modal-overlay"
+      onMouseDown={e => { if (e.target === e.currentTarget) closeModal() }}
+    >
+      <div
+        className="app-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={modalState.title || 'Details'}
+      >
+        <div className="app-modal-head">
+          {modalState.title ? <h3 className="app-modal-title">{modalState.title}</h3> : <span className="app-modal-title" />}
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={closeModal}
+            className="app-modal-close"
+            aria-label="Close"
+          >&times;</button>
         </div>
-        <div>{modalState.body}</div>
+        <div ref={bodyRef} className="app-modal-body">{modalState.body}</div>
       </div>
     </div>
   )
@@ -1161,16 +1239,16 @@ function HadithDetailBody({ h, bookId, bookName }: { h: any; bookId: string; boo
   }, [h.number, bookId])
 
   return (
-    <div className="hadith-card">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div style={{ fontSize: 14, color: '#999' }}>Hadith #{detail.number}{bookName ? ` — ${bookName}` : ''}</div>
-        <BookmarkBtn item={bmItem(detail, bookId, bookName || detail.bookName || '')} showText />
+    <div className="hadith-card hadith-detail">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div className="hadith-detail-meta">Hadith #{detail.number}{bookName ? ` — ${bookName}` : ''}</div>
+        <BookmarkBtn item={bmItem(detail, bookId, bookName || detail.bookName || '')} showText className="ml-auto" />
       </div>
-      <div style={{ fontFamily: "'NooreHuda','Nastaliq','Traditional Arabic',serif", fontSize: 22, lineHeight: 2, textAlign: 'right', direction: 'rtl', color: '#1a3a1a', marginBottom: 10 }}>{detail.arabic}</div>
-      {detail.urdu && <div style={{ fontFamily: "'Nastaliq',serif", fontSize: 20, textAlign: 'right', direction: 'rtl', color: '#2d2d2d', marginBottom: 5, fontWeight: 500, lineHeight: 1.8 }}>{detail.urdu}</div>}
-      {detail.urdu_ravi && <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic', marginBottom: 5 }}>{detail.urdu_ravi}</div>}
-      {detail.english && <div style={{ fontSize: 14, lineHeight: 1.6, color: '#444', marginBottom: 5 }}>{detail.english}</div>}
-      {detail.english_ravi && <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>{detail.english_ravi}</div>}
+      <div className="hadith-detail-arabic" dir="rtl">{detail.arabic}</div>
+      {detail.urdu && <div className="hadith-detail-urdu" dir="rtl">{detail.urdu}</div>}
+      {detail.urdu_ravi && <div className="hadith-detail-narrator" dir="auto">{detail.urdu_ravi}</div>}
+      {detail.english && <div className="hadith-detail-english">{detail.english}</div>}
+      {detail.english_ravi && <div className="hadith-detail-narrator" dir="auto">{detail.english_ravi}</div>}
     </div>
   )
 }
