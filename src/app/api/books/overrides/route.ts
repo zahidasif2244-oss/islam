@@ -11,9 +11,9 @@ export const dynamic = 'force-dynamic'
  * the small delta, and a slow/unavailable database must never block the page —
  * the client gives this route 1.5 s and falls back to the baked list.
  *
- * Both overlay tables are read in one batch and cached for 30 s per instance
- * (the same window the CDN already uses), so a burst of visitors produces at
- * most one Turso read.
+ * Both overlay tables are read in one batch. The response is edge-cached for
+ * five minutes and the in-memory copy matches that window, so Turso sees at
+ * most one read per region per five minutes.
  */
 export async function GET() {
   const cacheHit = bookOverridesCache.get() !== null
@@ -23,7 +23,7 @@ export async function GET() {
       { custom, hidden: [...hidden.keys()] },
       {
         headers: {
-          'cache-control': 'public, max-age=0, s-maxage=30, stale-while-revalidate=300',
+          'cache-control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
           'x-overlay-cache': cacheHit ? 'hit' : 'miss',
         },
       }

@@ -70,11 +70,12 @@ export function ensureTopicOverrides(client?: Client): Promise<void> {
 }
 
 /**
- * The overlay is tiny and read on every page load. Five seconds collapses a
- * burst of visitors into one Turso read; admin writes invalidate the local copy
- * immediately so the next reload sees the edit.
+ * The overlay is tiny and read only when the Topics tab is opened. The route
+ * is edge-cached for five minutes and this in-memory copy matches that window,
+ * so a warm instance performs at most one Turso read per five minutes. Admin
+ * writes invalidate the local copy immediately.
  */
-export const topicOverridesCache = createServerCache<TopicOverride[]>('topic-overrides', 5_000)
+export const topicOverridesCache = createServerCache<TopicOverride[]>('topic-overrides', 300_000)
 
 export function invalidateTopicOverrides(): void {
   topicOverridesCache.invalidate()
@@ -111,10 +112,7 @@ function rowToOverride(r: any): TopicOverride {
   }
 }
 
-/** Strict read used by the admin API; throws so a database error is visible. */
-export async function readTopicOverrides(): Promise<TopicOverride[]> {
-  const db = createQuranClient()
-  await ensureTopicOverrides(db)
+async function selectTopicOverrides(db: Client): Promise<TopicOverride[]> {
   const rows = await query(
     db,
     `SELECT row_key, kind, topic_id, surah, surah_name, start_ayah, end_ayah,
@@ -125,11 +123,20 @@ export async function readTopicOverrides(): Promise<TopicOverride[]> {
   return rows.map(rowToOverride)
 }
 
+/** Strict read used by the admin API; throws so a database error is visible. */
+export async function readTopicOverrides(): Promise<TopicOverride[]> {
+  const db = createQuranClient()
+  await ensureTopicOverrides(db)
+  return selectTopicOverrides(db)
+}
+
 /** Best-effort read for the public site; a DB failure must not break the tab. */
 export async function listTopicOverrides(): Promise<TopicOverride[]> {
   return topicOverridesCache.load(async () => {
     try {
-      return await readTopicOverrides()
+      // No table-creation DDL on the public path: admin writes create the
+      // table, and a missing table simply means "no overrides yet".
+      return await selectTopicOverrides(createQuranClient())
     } catch {
       return []
     }

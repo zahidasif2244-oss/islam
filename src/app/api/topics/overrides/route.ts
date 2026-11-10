@@ -8,12 +8,12 @@ export const dynamic = 'force-dynamic'
  *
  * `/data/static/topics.json` and `/data/static/amazing_topics.json` stay on the
  * CDN (instant tab open). Admin edits live in Turso; the visitor only downloads
- * the delta and applies it to the static rows. `no-store` is intentional: after
- * an admin saves, the next normal reload must show the new row, not a cached
- * copy.
+ * the delta and applies it to the static rows.
  *
- * The per-instance five-second cache collapses bursts of visitors into one
- * Turso read; every admin write invalidates it immediately.
+ * Edge-cached for five minutes (shared by every visitor), with an in-memory
+ * copy matching that window, so Turso reads stay at most one per region per
+ * five minutes instead of one per page load. Admin writes invalidate the
+ * in-memory copy immediately.
  */
 export async function GET() {
   const cacheHit = topicOverridesCache.get() !== null
@@ -23,7 +23,7 @@ export async function GET() {
       { rows },
       {
         headers: {
-          'cache-control': 'no-store',
+          'cache-control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
           'x-overlay-cache': cacheHit ? 'hit' : 'miss',
         },
       }

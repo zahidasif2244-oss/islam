@@ -163,3 +163,101 @@ Uncommitted at the end of this session:
 ```
 
 The local production server on port `3126` was stopped.
+
+---
+
+## 7. Turso minimisation pass — 2026-11-10
+
+### Request
+
+> everything is working perfectly keep all as it is, just decrease turso.app usage minimize it usage near to zero or maximum low level usage consumption
+
+Constraint: preserve every feature, UI state, API contract, admin page, and the 114-surah Listen player. The fast-tab work above must stay intact.
+
+### Audit — every runtime Turso path
+
+| Source | Trigger before | Cost |
+|---|---|---|
+| `/api/duas/overrides` | Every page load (global `useEffect`) | One overlay query per visit, `no-store`, 5 s cache |
+| `/api/topics/overrides` | Every page load | Same |
+| `/api/books/overrides` | Every page load | Two queries per visit, 30 s cache |
+| `/api/hadith/random` | Any page load via idle warm-up + More | `ORDER BY RANDOM()` scan per 5 min per instance |
+| `/api/admin/*` | Admin action only | Unchanged |
+| Hadith/tafseer/Quran routes | — | Static files, no Turso |
+
+`grep` confirms the only API files importing `@/lib/db` are the three overlay modules, `hadith/random`, and admin routes.
+
+### Changes
+
+**`src/app/quran-app.tsx`**
+- Removed the three global overlay `useEffect` prefetches (Books, Duas, Topics).
+- `prefetchTabData()` now warms an overlay only when its own nav tab is hovered, focused, touched, or opened.
+- Split idle warm-up: `prefetchStaticMoreContent()` warms English/Urdu Subjects only. Random hadith is no longer requested during page idle; it starts when More is actually opened.
+- Subjects keep their fast prefetch (`prefetchSlowTabs`), Fahmul and the Mutradif index still warm at idle.
+
+**`src/lib/quran-static.ts`**
+- Removed `cache: 'no-store'` from the three overlay fetches, so the browser may reuse the route's 60 s `max-age`. Session-level promise dedupe is unchanged.
+
+**`src/lib/dua-overrides.ts`**
+- Per-instance cache 5 s → 300 s.
+- `listDuaOverrides()` no longer runs `CREATE TABLE`/DDL on the public read path. Admin write paths still ensure the table; a missing table means "no overrides".
+
+**`src/lib/topic-overrides.ts`**
+- Cache 5 s → 300 s.
+- Extracted `selectTopicOverrides(db)`; strict `readTopicOverrides()` (admin) keeps DDL, public `listTopicOverrides()` skips DDL.
+
+**`src/lib/custom-books.ts`**
+- Cache 30 s → 300 s.
+- `listBookOverrides()` no longer calls `ensureTables(db)`; admin paths still do.
+
+**Overlay routes** (`duas`, `topics`, `books`)
+- Success: `cache-control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400`
+- Errors remain `no-store` so a transient DB failure is retried immediately.
+- Admin writes still invalidate the in-memory cache on the handling instance.
+
+**`src/app/api/hadith/random/route.ts`**
+- Pool TTL 5 min → 24 h; pool size 20 → 100.
+- Worst case drops from ~288 `ORDER BY RANDOM()` scans per instance per day to one; the cursor still returns a different hadith for "Another".
+- `no-store` retained — caching a random answer would repeat it.
+
+### Resulting Turso traffic
+
+- A casual page load: **zero API requests, zero Turso reads**.
+- Opening Duas / Topics / Books: one overlay request for that tab only; shared edge cache for 5 minutes, browser cache for 60 s, and a 5-minute per-instance cache.
+- Opening More: Subjects come from CDN; random hadith is one pooled query per warm instance per day.
+- Admin panel: unchanged, reads the database directly.
+
+### Verification
+
+- `npx tsc --noEmit` — passed.
+- `npm run build` — passed (30 static pages).
+- curl on the local production build:
+  - `/api/duas/overrides` → `200`, `public, max-age=60, s-maxage=300, stale-while-revalidate=86400`
+  - `/api/topics/overrides` → same header
+  - `/api/books/overrides` → `no-store` locally only because Turso env vars are absent (fallback path)
+- Fresh browser load, 4 s idle window: **no `/api/` entries**; Fahmul JSON and Mutradif index still prefetched.
+- Duas 107 ms, Topics 145 ms, Books rendered "Showing 40 of 2471 books", More 26 ms.
+- More → Random Hadith fired `/api/hadith/random` and showed "Failed to load hadith." locally, which is the expected error path without Turso credentials.
+- No changes to the Listen player, hadith reader, admin pages, static data, or API shapes.
+
+### Working tree
+
+Fast-tab work plus the export script and CSS clamp are committed (`31ee82a`, `2fc8829`); `main` matches `origin/main` apart from the Turso edits.
+
+Uncommitted at the end of this pass:
+
+```text
+ M src/app/quran-app.tsx
+ M src/lib/quran-static.ts
+ M src/lib/dua-overrides.ts
+ M src/lib/topic-overrides.ts
+ M src/lib/custom-books.ts
+ M src/app/api/duas/overrides/route.ts
+ M src/app/api/topics/overrides/route.ts
+ M src/app/api/books/overrides/route.ts
+ M src/app/api/hadith/random/route.ts
+```
+
+### Open item
+
+The live deployment is still the stale build noted in section 6; `/data/static/mutradif-index.json` remains 404 until Vercel rebuilds. The Turso reductions take effect on that same redeploy.

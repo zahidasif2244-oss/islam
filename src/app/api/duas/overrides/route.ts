@@ -8,11 +8,13 @@ export const dynamic = 'force-dynamic'
  *
  * `/data/static/duas.json` stays on the CDN (instant tab open). Admin edits
  * live in Turso; the visitor only downloads the delta and applies it to the
- * static rows. `no-store` is intentional: after an admin saves, the next page
- * reload must show the new title, not a five-minute-old CDN copy.
+ * static rows.
  *
- * The per-instance five-second cache collapses bursts of visitors into one
- * Turso read; every admin write invalidates it immediately.
+ * The response is edge-cached for five minutes (shared by every visitor) and
+ * the in-memory copy matches that window. That keeps Turso reads to at most
+ * one per edge region per five minutes, instead of one per page load. An
+ * admin save is visible on the public site within that window and immediately
+ * in the admin panel (which reads the database directly).
  */
 export async function GET() {
   const cacheHit = duaOverridesCache.get() !== null
@@ -22,7 +24,7 @@ export async function GET() {
       { rows },
       {
         headers: {
-          'cache-control': 'no-store',
+          'cache-control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
           'x-overlay-cache': cacheHit ? 'hit' : 'miss',
         },
       }

@@ -260,11 +260,13 @@ let duaOverridesPromise: Promise<DuaOverrides> | null = null
 /**
  * Admin edits live in Turso; they are optional and must never block the tab.
  * The static list paints first, then this small delta arrives and is merged.
+ * The browser/edge cache is allowed here (the route sets a short max-age), so
+ * repeat page loads do not invoke a serverless function or touch the DB.
  */
 function loadDuaOverrides(): Promise<DuaOverrides> {
   if (!duaOverridesPromise) {
     duaOverridesPromise = Promise.race([
-      fetch('/api/duas/overrides', { cache: 'no-store' })
+      fetch('/api/duas/overrides')
         .then(r => (r.ok ? r.json() : null))
         .catch(() => null),
       new Promise<null>(resolve => setTimeout(() => resolve(null), 4000)),
@@ -339,7 +341,7 @@ let topicOverridesPromise: Promise<TopicOverrides> | null = null
 function loadTopicOverrides(): Promise<TopicOverrides> {
   if (!topicOverridesPromise) {
     topicOverridesPromise = Promise.race([
-      fetch('/api/topics/overrides', { cache: 'no-store' })
+      fetch('/api/topics/overrides')
         .then(r => (r.ok ? r.json() : null))
         .catch(() => null),
       new Promise<null>(resolve => setTimeout(() => resolve(null), 4000)),
@@ -388,7 +390,7 @@ let overridesPromise: Promise<BookOverrides> | null = null
 function loadOverrides(): Promise<BookOverrides> {
   if (!overridesPromise) {
     overridesPromise = Promise.race([
-      fetch('/api/books/overrides', { cache: 'no-store' })
+      fetch('/api/books/overrides')
         .then(r => (r.ok ? r.json() : null))
         .catch(() => null),
       new Promise<null>(resolve => setTimeout(() => resolve(null), 4000)),

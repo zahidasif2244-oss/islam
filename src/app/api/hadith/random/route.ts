@@ -3,13 +3,16 @@ import { json, error } from '@/lib/api-utils'
 import { createServerCache } from '@/lib/server-cache'
 
 /**
- * A rotating pool of random hadiths, cached for five minutes per warm
- * serverless instance. One database read fills the pool and each request
- * hands out the next entry, so a burst of visitors costs a single query
- * while "Another" still returns a different hadith every time.
+ * A rotating pool of random hadiths, cached for a day per warm serverless
+ * instance. One database read fills the pool and each request hands out the
+ * next entry, so "Another" still returns a different hadith without touching
+ * Turso again.
+ *
+ * The old five-minute TTL meant up to 288 full `ORDER BY RANDOM()` scans per
+ * day per instance. A daily pool cuts that to one scan per day.
  */
-const CACHE_TTL = 300_000
-const POOL_SIZE = 20
+const CACHE_TTL = 86_400_000
+const POOL_SIZE = 100
 const NO_HADITH = 'NO_HADITH'
 
 type RandomHadith = {

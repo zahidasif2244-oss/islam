@@ -58,12 +58,12 @@ export function ensureDuaOverrides(client?: Client): Promise<void> {
 }
 
 /**
- * The overlay is tiny and read on every page load. Five seconds is enough to
- * collapse a burst of visitors into one Turso read, while still letting an
- * admin edit appear on the next normal reload (admin writes also invalidate
- * this cache immediately on the instance that handled the write).
+ * The overlay is tiny and read only when the Duas tab is opened. The route is
+ * edge-cached for five minutes and this in-memory copy matches that window, so
+ * a warm instance performs at most one Turso read per five minutes. Admin
+ * writes invalidate the local copy immediately.
  */
-export const duaOverridesCache = createServerCache<DuaOverride[]>('dua-overrides', 5_000)
+export const duaOverridesCache = createServerCache<DuaOverride[]>('dua-overrides', 300_000)
 
 export function invalidateDuaOverrides(): void {
   duaOverridesCache.invalidate()
@@ -94,7 +94,8 @@ function rowToOverride(r: any): DuaOverride {
 export async function listDuaOverrides(): Promise<DuaOverride[]> {
   return duaOverridesCache.load(async () => {
     try {
-      await ensureDuaOverrides()
+      // No table-creation DDL on the public path: admin writes create the
+      // table, and a missing table simply means "no overrides yet".
       const rows = await query(
         createQuranClient(),
         `SELECT row_key, table_name, dua_id, dua_seq, title, description, arabic, urdu, english, reference, deleted

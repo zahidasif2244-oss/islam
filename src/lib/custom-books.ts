@@ -74,11 +74,12 @@ export function ensureTables(db = createQuranClient()): Promise<void> {
 export type BookOverrides = { custom: any[]; hidden: Map<string, string> }
 
 /**
- * The public Books tab reads this overlay on every page load. Thirty seconds
- * matches the route's existing CDN `s-maxage`, so visitors never see anything
- * staler than they already could; admin writes invalidate the local copy.
+ * The public Books tab reads this overlay only when the tab is opened. The
+ * route is edge-cached for five minutes and this copy matches that window, so
+ * a warm instance performs at most one Turso read per five minutes. Admin
+ * writes invalidate the local copy.
  */
-export const bookOverridesCache = createServerCache<BookOverrides>('book-overrides', 30_000)
+export const bookOverridesCache = createServerCache<BookOverrides>('book-overrides', 300_000)
 
 export function invalidateBookOverrides(): void {
   bookOverridesCache.invalidate()
@@ -87,8 +88,9 @@ export function invalidateBookOverrides(): void {
 /** One batched read (one round trip) for both overlay lists. */
 export async function listBookOverrides(): Promise<BookOverrides> {
   return bookOverridesCache.load(async () => {
+    // No table-creation DDL on the public path: admin writes create the tables,
+    // and a missing table simply means "no overrides yet".
     const db = createQuranClient()
-    await ensureTables(db)
 
     const [customResult, hiddenResult] = await db.batch(
       [

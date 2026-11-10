@@ -194,18 +194,29 @@ function prefetchMoreContent() {
   prefetchRandomHadith()
 }
 
+/* Subjects are plain CDN files, so they are safe to warm on any page load.
+ * The random hadith hits Turso, so it is only warmed when More is actually
+ * opened/hovered (see MoreTab and prefetchTabData). */
+function prefetchStaticMoreContent() {
+  prefetchSubjects()
+  prefetchSubjectsUrdu()
+}
+
 function prefetchSlowTabs() {
   if (slowTabsPrefetched) return
   slowTabsPrefetched = true
   statJson('/static/fahmul_quran.json')
   statJson('/static/mutradif-index.json')
-  prefetchMoreContent()
+  prefetchStaticMoreContent()
 }
 
 function prefetchTabData(t: Tab) {
   if (t === 'fahmul') statJson('/static/fahmul_quran.json')
   else if (t === 'mutradif') statJson('/static/mutradif-index.json')
   else if (t === 'more') prefetchMoreContent()
+  else if (t === 'duas') prefetchDuaOverrides()
+  else if (t === 'topics') prefetchTopicOverrides()
+  else if (t === 'books') prefetchBookOverrides()
 }
 
 /* Mutradif full entries live in 64-item shards so opening one card fetches
@@ -303,16 +314,9 @@ export default function QuranApp({ initial }: { initial: InitialData }) {
     try { setBookmarks(JSON.parse(localStorage.getItem('islam360_hadith_bookmarks') || '[]')) } catch { }
   }, [])
 
-  // Tiny background request so the Books tab's optional admin overlay is
-  // already resolved by the time the tab is opened.
-  useEffect(() => { prefetchBookOverrides() }, [])
-
-  // Same for the Duas tab: fetch the small admin overlay in the background so
-  // edited titles are ready before the tab is opened.
-  useEffect(() => { prefetchDuaOverrides() }, [])
-
-  // Topics and Amazing share one overlay; fetch it before either tab is opened.
-  useEffect(() => { prefetchTopicOverrides() }, [])
+  // Admin overlays are Turso-backed. They are fetched only when their tab is
+  // hovered/opened (see prefetchTabData), not on every page load, so casual
+  // readers never cause a database read.
 
   // Warm the secondary tabs once the first screen is idle. They are small,
   // and by the time a reader opens one the data is already in memory.
